@@ -25,6 +25,9 @@ void WindowCallbacks::handleInitialWindowSize() {
     int windowWidth, windowHeight;
     window.getWindowSize(windowWidth, windowHeight);
     onWindowSizeCallback(windowWidth, windowHeight);
+
+    if (game.getPrimaryUserOptions()->getFullscreen())
+        window.setFullscreen(true);
 }
 
 void WindowCallbacks::onWindowSizeCallback(int w, int h) {
