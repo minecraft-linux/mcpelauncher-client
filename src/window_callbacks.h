@@ -1,8 +1,9 @@
 #pragma once
 
+#include <game_window.h>
+
 class MinecraftGame;
 class LauncherAppPlatform;
-class GameWindow;
 
 class WindowCallbacks {
 
@@ -29,5 +30,13 @@ public:
     void onDraw();
 
     void onClose();
+
+    void onMouseButton(double x, double y, int btn, MouseButtonAction action);
+    void onMousePosition(double x, double y);
+    void onMouseRelativePosition(double x, double y);
+    void onMouseScroll(double x, double y, double dx, double dy);
+    void onKeyboard(int key, KeyAction action);
+    void onKeyboardText(std::string const& c);
+    void onPaste(std::string const& str);
 
 };
