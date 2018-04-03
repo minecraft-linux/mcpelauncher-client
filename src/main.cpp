@@ -5,6 +5,7 @@
 #include <mcpelauncher/crash_handler.h>
 #include <mcpelauncher/path_helper.h>
 #include <minecraft/Common.h>
+#include <minecraft/MinecraftGame.h>
 #include "client_app_platform.h"
 
 int main(int argc, char *argv[]) {
@@ -34,14 +35,23 @@ int main(int argc, char *argv[]) {
     window->show();
 
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");
-    LauncherAppPlatform::initVtable(handle);
+    ClientAppPlatform::initVtable(handle);
     Log::trace("Launcher", "Initializing AppPlatform (create instance)");
     std::unique_ptr<ClientAppPlatform> appPlatform (new ClientAppPlatform());
     appPlatform->setWindow(window);
     Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
     appPlatform->initialize();
+    mce::Platform::OGL::InitBindings();
 
+    Log::trace("Launcher", "Initializing MinecraftGame (create instance)");
+    std::unique_ptr<MinecraftGame> game (new MinecraftGame(argc, argv));
+    Log::trace("Launcher", "Initializing MinecraftGame (init call)");
+    AppContext ctx;
+    ctx.platform = appPlatform.get();
+    ctx.doRender = true;
+    game->init(ctx);
     Log::info("Launcher", "Game initialized");
+
     window->runLoop();
 
     return 0;

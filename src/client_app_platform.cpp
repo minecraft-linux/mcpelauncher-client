@@ -4,8 +4,49 @@
 #include <minecraft/ImagePickingCallback.h>
 #include <minecraft/FilePickerSettings.h>
 #include <file_picker_factory.h>
+#include <hybris/dlfcn.h>
 
 const char* ClientAppPlatform::TAG = "ClientAppPlatform";
+
+void** ClientAppPlatform::myVtable = nullptr;
+
+void ClientAppPlatform::initVtable(void* lib) {
+    if (LauncherAppPlatform::myVtable == nullptr)
+        LauncherAppPlatform::initVtable(lib);
+    void** vt = LauncherAppPlatform::myVtable;
+
+    // get vtable size
+    int size;
+    for (size = 0; ; size++) {
+        if (vt[size] == nullptr)
+            break;
+    }
+    Log::trace("AppPlatform", "Vtable size = %i", size);
+
+    myVtable = (void**) ::operator new(size * sizeof(void*));
+    memcpy(&myVtable[0], &vt[0], size * sizeof(void*));
+
+    replaceVtableEntry(&LauncherAppPlatform::hideMousePointer, &ClientAppPlatform::hideMousePointer);
+    replaceVtableEntry(&LauncherAppPlatform::showMousePointer, &ClientAppPlatform::showMousePointer);
+    replaceVtableEntry(&LauncherAppPlatform::pickImage, &ClientAppPlatform::pickImage);
+    replaceVtableEntry(&LauncherAppPlatform::pickFile, &ClientAppPlatform::pickFile);
+    replaceVtableEntry(&LauncherAppPlatform::setFullscreenMode, &ClientAppPlatform::setFullscreenMode);
+}
+
+void ClientAppPlatform::replaceVtableEntry(void* src, void* dest) {
+    for (int i = 0; ; i++) {
+        if (myVtable[i] == nullptr)
+            break;
+        if (myVtable[i] == src) {
+            myVtable[i] = dest;
+            return;
+        }
+    }
+}
+
+ClientAppPlatform::ClientAppPlatform() {
+    vtable = myVtable;
+}
 
 void ClientAppPlatform::hideMousePointer() {
     window->setCursorDisabled(true);

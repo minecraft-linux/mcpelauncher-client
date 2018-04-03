@@ -10,18 +10,30 @@ private:
 
     std::shared_ptr<GameWindow> window;
 
+    static void replaceVtableEntry(void* src, void* dest);
+
+    template <typename T, typename T2>
+    static void replaceVtableEntry(T src, T2 dest) {
+        replaceVtableEntry(PatchUtils::memberFuncCast(src), PatchUtils::memberFuncCast(dest));
+    }
+
 public:
+    static void** myVtable;
+    static void initVtable(void* lib);
+
+    ClientAppPlatform();
+
     void setWindow(std::shared_ptr<GameWindow> window) {
         window = std::move(window);
     }
 
-    void hideMousePointer() override;
-    void showMousePointer() override;
+    void hideMousePointer();
+    void showMousePointer();
 
-    void pickImage(ImagePickingCallback& callback) override;
-    void pickFile(FilePickerSettings& callback) override;
-    bool supportsFilePicking() override { return true; }
+    void pickImage(ImagePickingCallback& callback);
+    void pickFile(FilePickerSettings& callback);
+    bool supportsFilePicking() { return true; }
 
-    void setFullscreenMode(int mode) override;
+    void setFullscreenMode(int mode);
 
 };
