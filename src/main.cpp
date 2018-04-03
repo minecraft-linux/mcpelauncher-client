@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Creating window");
     int windowWidth = 720;
     int windowHeight = 480;
+    float pixelSize = 2.f;
     GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
     auto window = windowManager->createWindow("Minecraft", windowWidth, windowHeight, graphicsApi);
     window->setIcon(PathHelper::getIconPath());
@@ -63,6 +64,9 @@ int main(int argc, char *argv[]) {
 
     WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
     windowCallbacks.registerCallbacks();
+    window->getWindowSize(windowWidth, windowHeight);
+    game->setRenderingSize(windowWidth, windowHeight);
+    game->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     window->runLoop();
 
     return 0;
