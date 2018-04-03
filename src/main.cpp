@@ -64,10 +64,9 @@ int main(int argc, char *argv[]) {
 
     WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
     windowCallbacks.registerCallbacks();
-    window->getWindowSize(windowWidth, windowHeight);
-    game->setRenderingSize(windowWidth, windowHeight);
-    game->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
+    windowCallbacks.handleInitialWindowSize();
     window->runLoop();
 
+    MinecraftUtils::workaroundShutdownCrash(handle);
     return 0;
 }
