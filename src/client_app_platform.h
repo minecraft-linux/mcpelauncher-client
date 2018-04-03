@@ -24,7 +24,7 @@ public:
     ClientAppPlatform();
 
     void setWindow(std::shared_ptr<GameWindow> window) {
-        window = std::move(window);
+        this->window = std::move(window);
     }
 
     void hideMousePointer();
