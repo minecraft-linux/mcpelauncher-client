@@ -7,6 +7,7 @@
 #include <minecraft/Common.h>
 #include <minecraft/MinecraftGame.h>
 #include "client_app_platform.h"
+#include "store.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -25,6 +26,9 @@ int main(int argc, char *argv[]) {
     Log::debug("Launcher", "Minecraft is at offset 0x%x", MinecraftUtils::getLibraryBase(handle));
     MinecraftUtils::initSymbolBindings(handle);
     Log::info("Launcher", "Game version: %s", Common::getGameVersionStringNet().c_str());
+
+    Log::info("Launcher", "Applying patches");
+    LauncherStore::install(handle);
 
     Log::info("Launcher", "Creating window");
     int windowWidth = 720;
