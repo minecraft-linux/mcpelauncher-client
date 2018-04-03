@@ -7,6 +7,7 @@
 #include <minecraft/Common.h>
 #include <minecraft/MinecraftGame.h>
 #include "client_app_platform.h"
+#include "xbox_live_patches.h"
 #include "store.h"
 
 int main(int argc, char *argv[]) {
@@ -29,6 +30,7 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Applying patches");
     LauncherStore::install(handle);
+    XboxLivePatches::install(handle);
 
     Log::info("Launcher", "Creating window");
     int windowWidth = 720;
