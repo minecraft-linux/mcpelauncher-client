@@ -9,6 +9,7 @@
 #include "client_app_platform.h"
 #include "xbox_live_patches.h"
 #include "store.h"
+#include "window_callbacks.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -58,6 +59,8 @@ int main(int argc, char *argv[]) {
     game->init(ctx);
     Log::info("Launcher", "Game initialized");
 
+    WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
+    windowCallbacks.registerCallbacks();
     window->runLoop();
 
     return 0;
