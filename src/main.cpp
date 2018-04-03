@@ -10,6 +10,7 @@
 #include "xbox_live_patches.h"
 #include "store.h"
 #include "window_callbacks.h"
+#include "http_request_stub.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -32,6 +33,7 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Applying patches");
     LauncherStore::install(handle);
     XboxLivePatches::install(handle);
+    LinuxHttpRequestHelper::install(handle);
 
     Log::info("Launcher", "Creating window");
     int windowWidth = 720;
