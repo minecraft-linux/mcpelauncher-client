@@ -5,6 +5,7 @@
 #include <mcpelauncher/crash_handler.h>
 #include <mcpelauncher/path_helper.h>
 #include <minecraft/Common.h>
+#include "client_app_platform.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -32,6 +33,15 @@ int main(int argc, char *argv[]) {
     window->setIcon(PathHelper::getIconPath());
     window->show();
 
+    Log::trace("Launcher", "Initializing AppPlatform (vtable)");
+    LauncherAppPlatform::initVtable(handle);
+    Log::trace("Launcher", "Initializing AppPlatform (create instance)");
+    std::unique_ptr<ClientAppPlatform> appPlatform (new ClientAppPlatform());
+    appPlatform->setWindow(window);
+    Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
+    appPlatform->initialize();
+
+    Log::info("Launcher", "Game initialized");
     window->runLoop();
 
     return 0;
