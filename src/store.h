@@ -7,6 +7,11 @@
 
 struct StoreListener;
 struct PurchaseInfo;
+struct ExtraLicenseData {
+    long long validationTime = 0L;
+    long long retryUntilTime = 0L;
+    long long retryAttempts = 0L;
+};
 
 class LauncherStore {
 
@@ -76,6 +81,14 @@ public:
         Log::trace("Store", "isGameLicensed: true");
         return true;
     }
+    virtual bool receivedLicenseResponse() {
+        Log::trace("Store", "receivedLicenseResponse: true");
+        return true;
+    }
+    virtual ExtraLicenseData getExtraLicenseData() {
+        Log::warn("Store", "getExtraLicenseData");
+        return ExtraLicenseData();
+    }
     virtual mcpe::string getAppReceipt() {
         Log::trace("Store", "getAppReceipt");
         return mcpe::string();
@@ -115,6 +128,9 @@ public:
     }
     virtual void onNewPrimaryUser() {
         Log::trace("Store", "onNewPrimaryUser");
+    }
+    virtual void onPrimaryUserConnectedToPlatform() {
+        Log::trace("Store", "onPrimaryUserConnectedToPlatform");
     }
 
 };
