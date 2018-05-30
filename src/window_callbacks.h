@@ -1,6 +1,7 @@
 #pragma once
 
 #include <game_window.h>
+#include <unordered_map>
 
 class MinecraftGame;
 class LauncherAppPlatform;
@@ -8,10 +9,18 @@ class LauncherAppPlatform;
 class WindowCallbacks {
 
 private:
+    struct GamepadData {
+        float stickLeft[2];
+        float stickRight[2];
+
+        GamepadData();
+    };
+
     MinecraftGame& game;
     LauncherAppPlatform& appPlatform;
     GameWindow& window;
     float pixelScale = 2.f;
+    std::unordered_map<int, GamepadData> gamepads;
 
 public:
     WindowCallbacks(MinecraftGame& game, LauncherAppPlatform& appPlatform, GameWindow& window) :
@@ -38,5 +47,8 @@ public:
     void onKeyboard(int key, KeyAction action);
     void onKeyboardText(std::string const& c);
     void onPaste(std::string const& str);
+    void onGamepadState(int gamepad, bool connected);
+    void onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed);
+    void onGamepadAxis(int gamepad, GamepadAxisId ax, float value);
 
 };

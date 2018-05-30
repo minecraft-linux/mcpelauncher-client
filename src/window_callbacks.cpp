@@ -1,10 +1,12 @@
 #include "window_callbacks.h"
+#include "minecraft_gamepad_mapping.h"
 
 #include <mcpelauncher/app_platform.h>
 #include <minecraft/MinecraftGame.h>
 #include <minecraft/Mouse.h>
 #include <minecraft/Keyboard.h>
 #include <minecraft/Options.h>
+#include <minecraft/GameControllerManager.h>
 
 void WindowCallbacks::registerCallbacks() {
     using namespace std::placeholders;
@@ -19,6 +21,9 @@ void WindowCallbacks::registerCallbacks() {
     window.setKeyboardCallback(std::bind(&WindowCallbacks::onKeyboard, this, _1, _2));
     window.setKeyboardTextCallback(std::bind(&WindowCallbacks::onKeyboardText, this, _1));
     window.setPasteCallback(std::bind(&WindowCallbacks::onPaste, this, _1));
+    window.setGamepadStateCallback(std::bind(&WindowCallbacks::onGamepadState, this, _1, _2));
+    window.setGamepadButtonCallback(std::bind(&WindowCallbacks::onGamepadButton, this, _1, _2, _3));
+    window.setGamepadAxisCallback(std::bind(&WindowCallbacks::onGamepadAxis, this, _1, _2, _3));
 }
 
 void WindowCallbacks::handleInitialWindowSize() {
@@ -85,4 +90,44 @@ void WindowCallbacks::onPaste(std::string const& str) {
         Keyboard::feedText(mcpe::string(&str[i], (size_t) l), false, 0);
         i += l;
     }
+}
+void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
+    Log::trace("WindowCallbacks", "Gamepad %s #%i", connected ? "connected" : "disconnected", gamepad);
+    if (connected)
+        gamepads.insert({gamepad, GamepadData()});
+    else
+        gamepads.erase(gamepad);
+    if (GameControllerManager::sGamePadManager != nullptr)
+        GameControllerManager::sGamePadManager->setGameControllerConnected(gamepad, connected);
+}
+
+void WindowCallbacks::onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed) {
+    int mid = MinecraftGamepadMapping::mapButton(btn);
+    auto state = pressed ? GameControllerButtonState::PRESSED : GameControllerButtonState::RELEASED;
+    if (GameControllerManager::sGamePadManager != nullptr && mid != -1)
+        GameControllerManager::sGamePadManager->feedButton(gamepad, mid, state, true);
+}
+
+void WindowCallbacks::onGamepadAxis(int gamepad, GamepadAxisId ax, float value) {
+    auto gpi = gamepads.find(gamepad);
+    if (gpi == gamepads.end())
+        return;
+    auto& gp = gpi->second;
+
+    if (ax == GamepadAxisId::LEFT_X || ax == GamepadAxisId::LEFT_Y) {
+        gp.stickLeft[ax == GamepadAxisId::LEFT_Y ? 1 : 0] = value;
+        GameControllerManager::sGamePadManager->feedStick(gamepad, 0, (GameControllerStickState) 3, gp.stickLeft[0], -gp.stickLeft[1]);
+    } else if (ax == GamepadAxisId::RIGHT_X || ax == GamepadAxisId::RIGHT_Y) {
+        gp.stickRight[ax == GamepadAxisId::RIGHT_Y ? 1 : 0] = value;
+        GameControllerManager::sGamePadManager->feedStick(gamepad, 1, (GameControllerStickState) 3, gp.stickRight[0], -gp.stickRight[1]);
+    } else if (ax == GamepadAxisId::LEFT_TRIGGER) {
+        GameControllerManager::sGamePadManager->feedTrigger(gamepad, 0, value);
+    } else if (ax == GamepadAxisId::RIGHT_TRIGGER) {
+        GameControllerManager::sGamePadManager->feedTrigger(gamepad, 1, value);
+    }
+}
+
+WindowCallbacks::GamepadData::GamepadData() {
+    stickLeft[0] = stickLeft[1] = 0.f;
+    stickRight[0] = stickRight[1] = 0.f;
 }
