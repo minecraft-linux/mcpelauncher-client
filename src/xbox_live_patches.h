@@ -19,6 +19,8 @@ private:
     static xbox::services::xbox_live_result<void>
     initSignInActivity(xbox::services::system::user_auth_android *th, int requestCode);
 
+    static void invokeAuthFlow(xbox::services::system::user_auth_android* auth);
+
     static std::vector<mcpe::string> getLocaleList();
 
     static void registerJavaInteropNatives();
