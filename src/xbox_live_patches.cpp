@@ -129,7 +129,10 @@ void XboxLivePatches::invokeAuthFlow(xbox::services::system::user_auth_android* 
 
     XboxLiveHelper::getInstance().invokeMsaAuthFlow([auth](std::string const& cid, std::string const& token) {
         Log::trace(TAG, "Got account CID and token");
-        auto ret = XboxLiveHelper::getInstance().invokeXblLogin(auth, cid, token);
+        Log::trace(TAG, "Invoking XBL login");
+        auto ret = XboxLiveHelper::getInstance().invokeXblLogin(cid, token);
+        Log::trace(TAG, "Invoking XBL event init");
+        auto retEv = XboxLiveHelper::getInstance().invokeEventInit();
         Log::trace(TAG, "Xbox Live login completed");
 
         auth->auth_flow_result.code = 0;
@@ -140,6 +143,7 @@ void XboxLivePatches::invokeAuthFlow(xbox::services::system::user_auth_android* 
         auth->auth_flow_result.user_settings_restrictions = ret.data.user_settings_restrictions;
         auth->auth_flow_result.user_enforcement_restrictions = ret.data.user_enforcement_restrictions;
         auth->auth_flow_result.user_title_restrictions = ret.data.user_title_restrictions;
+        auth->auth_flow_result.event_token = retEv.data.token;
         auth->auth_flow_result.cid = cid;
         auth->auth_flow_event.set(auth->auth_flow_result);
     }, [auth](simpleipc::rpc_error_code, std::string const& msg) {

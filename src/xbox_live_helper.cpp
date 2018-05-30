@@ -17,15 +17,14 @@ void XboxLiveHelper::invokeMsaAuthFlow(
             return;
         }
 
-        std::string cid = res.data();
-        requestXblToken(cid, false, success_cb, error_cb);
+        requestXblToken(res.data(), false, success_cb, error_cb);
     });
 }
 
 xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> XboxLiveHelper::invokeXblLogin(
-        xbox::services::system::user_auth_android* auth, std::string const& cid, std::string const& binaryToken) {
+        std::string const& cid, std::string const& binaryToken) {
     using namespace xbox::services::system;
-    auto auth_mgr = xbox::services::system::auth_manager::get_auth_manager_instance();
+    auto auth_mgr = auth_manager::get_auth_manager_instance();
     auth_mgr->set_rps_ticket(binaryToken);
     auto initTask = auth_mgr->initialize_default_nsal();
     auto initRet = initTask.get();
@@ -37,11 +36,24 @@ xbox::services::xbox_live_result<xbox::services::system::token_and_signature_res
     config->set_xtoken_composition(types);
     std::string const& endpoint = config->xbox_live_endpoint().std();
     Log::trace("XboxLiveHelper", "Xbox Live Endpoint: %s", endpoint.c_str());
-    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string()); // I'm unsure about the vector (and pretty much only about the vector)
+    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string());
     Log::trace("XboxLiveHelper", "Get token and signature task started!");
     auto ret = task.get();
     Log::debug("XboxLiveHelper", "User info received! Status: %i", ret.code);
     Log::debug("XboxLiveHelper", "Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
+    return ret;
+}
+
+xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> XboxLiveHelper::invokeEventInit() {
+    using namespace xbox::services::system;
+    auto auth_mgr = auth_manager::get_auth_manager_instance();
+    std::string endpoint = "https://vortex-events.xboxlive.com";
+    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string());
+    auto ret = task.get();
+
+    auto tid = xbox::services::xbox_live_app_config::get_app_config_singleton()->title_id();
+    auth_mgr->initialize_title_nsal(std::to_string(tid)).get();
+
     return ret;
 }
 
