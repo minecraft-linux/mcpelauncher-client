@@ -175,3 +175,18 @@ xbox::services::xbox_live_result<void> XboxLivePatches::logCLL(void *th, mcpe::s
 bool XboxLivePatches::useMinecraftVersionOfXBLUI() {
     return true;
 }
+
+void XboxLivePatches::workaroundShutdownFreeze(void* handle) {
+    auto userAndroidInstance = xbox::services::system::user_impl_android::get_instance();
+    if (userAndroidInstance)
+        userAndroidInstance->user_signed_out();
+    destroyXsapiSingleton(handle);
+}
+
+void XboxLivePatches::destroyXsapiSingleton(void* handle) {
+    unsigned int off = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services19get_xsapi_singletonEb");
+    unsigned int ebx = off + 0xb;
+    ebx += *((unsigned int*) (off + 0xc + 2));
+    unsigned int ptr = ebx + *((unsigned int*) (off + (0x661 - 0x4F0) + 2));
+    ((std::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
+}

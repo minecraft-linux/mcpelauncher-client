@@ -30,7 +30,11 @@ private:
 
     static bool useMinecraftVersionOfXBLUI();
 
+    static void destroyXsapiSingleton(void* handle);
+
 public:
     static void install(void* handle);
+
+    static void workaroundShutdownFreeze(void* handle);
 
 };

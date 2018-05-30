@@ -68,5 +68,7 @@ int main(int argc, char *argv[]) {
     window->runLoop();
 
     MinecraftUtils::workaroundShutdownCrash(handle);
+    game.reset();
+    XboxLivePatches::workaroundShutdownFreeze(handle);
     return 0;
 }
