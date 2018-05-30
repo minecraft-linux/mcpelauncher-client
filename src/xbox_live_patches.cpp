@@ -90,13 +90,30 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
 
     auto local_conf = xbox::services::local_config::get_local_config_singleton();
-    th->cid = local_conf->get_value_from_local_storage("cid").std();
+    th->cid = local_conf->get_value_from_local_storage("cid");
 
     if (requestCode == 1) { // silent signin
-        xbox::services::system::java_rps_ticket ticket;
-        ticket.error_code = 1;
-        ticket.error_text = "Must show UI to acquire an account.";
-        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+        if (th->cid.length() > 0) {
+            XboxLiveHelper::getInstance().requestXblToken(th->cid.std(), true,
+                    [](std::string const& cid, std::string const& token) {
+                        xbox::services::system::java_rps_ticket ticket;
+                        ticket.token = token;
+                        ticket.error_code = 0;
+                        ticket.error_text = "Got ticket";
+                        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+                    }, [](simpleipc::rpc_error_code, std::string const& msg) {
+                        xbox::services::system::java_rps_ticket ticket;
+                        Log::error(TAG, "Xbox Live sign in failed: %s", msg.c_str());
+                        ticket.error_code = 0x800704CF;
+                        ticket.error_text = msg.c_str();
+                        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+                    });
+        } else {
+            xbox::services::system::java_rps_ticket ticket;
+            ticket.error_code = 1;
+            ticket.error_text = "Must show UI to acquire an account.";
+            xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+        }
     } else if (requestCode == 6) { // sign out
         xbox::services::xbox_live_result<void> arg;
         arg.code = 0;
@@ -125,8 +142,8 @@ void XboxLivePatches::invokeAuthFlow(xbox::services::system::user_auth_android* 
         auth->auth_flow_result.user_title_restrictions = ret.data.user_title_restrictions;
         auth->auth_flow_result.cid = cid;
         auth->auth_flow_event.set(auth->auth_flow_result);
-    }, [auth]() {
-        Log::trace(TAG, "Sign in error");
+    }, [auth](simpleipc::rpc_error_code, std::string const& msg) {
+        Log::trace(TAG, "Sign in error: %s", msg.c_str());
         auth->auth_flow_result.code = 2;
         auth->auth_flow_event.set(auth->auth_flow_result);
     });

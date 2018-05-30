@@ -10,23 +10,15 @@ std::string const XboxLiveHelper::MSA_COBRAND_ID = "90023";
 
 void XboxLiveHelper::invokeMsaAuthFlow(
         std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
-        std::function<void()> error_cb) {
+        std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb) {
     client.pickAccount(MSA_CLIENT_ID, MSA_COBRAND_ID).call([this, success_cb, error_cb](rpc_result<std::string> res) {
         if (!res.success()) {
-            error_cb();
+            error_cb(res.error_code(), res.error_text());
             return;
         }
 
         std::string cid = res.data();
-        client.requestToken(cid, {"user.auth.xboxlive.com", "mbi_ssl"}, MSA_CLIENT_ID, false)
-                .call([cid, success_cb, error_cb](rpc_result<std::shared_ptr<msa::client::Token>> res) {
-                    if (res.success() && res.data() && res.data()->getType() == msa::client::TokenType::Compact) {
-                        auto token = msa::client::token_pointer_cast<msa::client::CompactToken>(res.data());
-                        success_cb(cid, token->getBinaryToken());
-                    } else {
-                        error_cb();
-                    }
-                });
+        requestXblToken(cid, false, success_cb, error_cb);
     });
 }
 
@@ -51,4 +43,26 @@ xbox::services::xbox_live_result<xbox::services::system::token_and_signature_res
     Log::debug("XboxLiveHelper", "User info received! Status: %i", ret.code);
     Log::debug("XboxLiveHelper", "Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
     return ret;
+}
+
+simpleipc::client::rpc_call<std::shared_ptr<msa::client::Token>> XboxLiveHelper::requestXblToken(std::string const& cid,
+                                                                                                 bool silent) {
+    return client.requestToken(cid, {"user.auth.xboxlive.com", "mbi_ssl"}, MSA_CLIENT_ID, silent);
+}
+
+void XboxLiveHelper::requestXblToken
+        (std::string const& cid, bool silent,
+         std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
+         std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb) {
+    requestXblToken(cid, silent).call([cid, success_cb, error_cb](rpc_result<std::shared_ptr<msa::client::Token>> res) {
+        if (res.success() && res.data() && res.data()->getType() == msa::client::TokenType::Compact) {
+            auto token = msa::client::token_pointer_cast<msa::client::CompactToken>(res.data());
+            success_cb(cid, token->getBinaryToken());
+        } else {
+            if (res.success())
+                error_cb(simpleipc::rpc_error_codes::internal_error, "Invalid token received from the MSA daemon");
+            else
+                error_cb(res.error_code(), res.error_text());
+        }
+    });
 }
