@@ -42,6 +42,10 @@ void XboxLivePatches::install(void *handle) {
     ptr = hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
     PatchUtils::patchCallInstruction(ptr, (void*) &logCLL, true);
 
+
+    ptr = hybris_dlsym(handle, "_ZNK13MinecraftGame26useMinecraftVersionOfXBLUIEv");
+    PatchUtils::patchCallInstruction(ptr, (void*) &useMinecraftVersionOfXBLUI, true);
+
     // Set global variables
 
     JavaVM** jvmPtr = (JavaVM**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
@@ -145,4 +149,8 @@ xbox::services::xbox_live_result<void> XboxLivePatches::logCLL(void *th, mcpe::s
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
     ret.message = " ";
     return ret;
+}
+
+bool XboxLivePatches::useMinecraftVersionOfXBLUI() {
+    return true;
 }

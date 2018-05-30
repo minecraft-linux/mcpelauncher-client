@@ -28,6 +28,8 @@ private:
     static xbox::services::xbox_live_result<void>
     logCLL(void *th, mcpe::string const &a, mcpe::string const &b, mcpe::string const &c);
 
+    static bool useMinecraftVersionOfXBLUI();
+
 public:
     static void install(void* handle);
 
