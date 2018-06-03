@@ -104,8 +104,11 @@ void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
 void WindowCallbacks::onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed) {
     int mid = MinecraftGamepadMapping::mapButton(btn);
     auto state = pressed ? GameControllerButtonState::PRESSED : GameControllerButtonState::RELEASED;
-    if (GameControllerManager::sGamePadManager != nullptr && mid != -1)
+    if (GameControllerManager::sGamePadManager != nullptr && mid != -1) {
         GameControllerManager::sGamePadManager->feedButton(gamepad, mid, state, true);
+        if (btn == GamepadButtonId::START && pressed)
+            GameControllerManager::sGamePadManager->feedJoinGame(gamepad, true);
+    }
 }
 
 void WindowCallbacks::onGamepadAxis(int gamepad, GamepadAxisId ax, float value) {
