@@ -11,6 +11,7 @@
 #include "store.h"
 #include "window_callbacks.h"
 #include "http_request_stub.h"
+#include "splitscreen_patch.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]) {
     LauncherStore::install(handle);
     XboxLivePatches::install(handle);
     LinuxHttpRequestHelper::install(handle);
+    SplitscreenPatch::install(handle);
 
     Log::info("Launcher", "Creating window");
     int windowWidth = 720;
