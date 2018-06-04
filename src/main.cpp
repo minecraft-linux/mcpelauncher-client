@@ -46,6 +46,8 @@ int main(int argc, char *argv[]) {
     window->setIcon(PathHelper::getIconPath());
     window->show();
 
+    SplitscreenPatch::onGLContextCreated();
+
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");
     ClientAppPlatform::initVtable(handle);
     Log::trace("Launcher", "Initializing AppPlatform (create instance)");

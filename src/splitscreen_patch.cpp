@@ -10,9 +10,11 @@ void SplitscreenPatch::setScissorRect(void*, int x, int y, unsigned int w, unsig
 }
 
 void SplitscreenPatch::install(void* handle) {
-    auto getProcAddr = GameWindowManager::getManager()->getProcAddrFunc();
-    glScissor = (void (*)(int, int, unsigned int, unsigned int)) getProcAddr("glScissor");
-
     void* ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce13RenderContext26setViewportWithFullScissorERKNS_12ViewportInfoE") + (0x85E - 0x740));
     PatchUtils::patchCallInstruction(ptr, (void*) &setScissorRect, false);
+}
+
+void SplitscreenPatch::onGLContextCreated() {
+    auto getProcAddr = GameWindowManager::getManager()->getProcAddrFunc();
+    glScissor = (void (*)(int, int, unsigned int, unsigned int)) getProcAddr("glScissor");
 }

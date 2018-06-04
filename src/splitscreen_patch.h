@@ -10,4 +10,6 @@ private:
 public:
     static void install(void* handle);
 
+    static void onGLContextCreated();
+
 };
