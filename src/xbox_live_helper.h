@@ -5,6 +5,7 @@
 #include <msa/client/service_client.h>
 #include <minecraft/Xbox.h>
 #include <cll/event_manager.h>
+#include "cll_upload_auth_step.h"
 
 class XboxLiveHelper {
 
@@ -15,6 +16,7 @@ private:
     msa::client::ServiceLauncher launcher;
     msa::client::ServiceClient client;
     std::unique_ptr<cll::EventManager> cll;
+    CllUploadAuthStep* cllAuthStep = nullptr;
 
     void initCll();
 
@@ -51,6 +53,8 @@ public:
     static std::string getCllXToken(bool refresh);
 
     static std::string getCllXTicket(std::string const& xuid);
+
+    CllUploadAuthStep& getCllAuthStep() { return *cllAuthStep; }
 
     void logCll(cll::Event const& event);
 

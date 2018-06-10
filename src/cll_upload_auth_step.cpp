@@ -45,7 +45,7 @@ void CllUploadAuthStep::onRequest(cll::EventUploadRequest& request) {
         std::stringstream ss;
         bool f = true;
         for (auto const& ticket : tickets) {
-            if (f)
+            if (!f)
                 ss << ';';
             ss << '"' << ticket.first << "\"=\"" << ticket.second << '"';
             f = false;
