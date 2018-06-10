@@ -78,3 +78,29 @@ void XboxLiveHelper::requestXblToken
         }
     });
 }
+
+
+std::string const& XboxLiveHelper::getCllMsaToken(std::string const& cid) {
+    auto token = client.requestToken(cid, {"vortex.data.microsoft.com", "mbi_ssl"}, MSA_CLIENT_ID, true).call();
+    if (!token.success() || !token.data() || token.data()->getType() != msa::client::TokenType::Compact)
+        return std::string();
+    return msa::client::token_pointer_cast<msa::client::CompactToken>(token.data())->getBinaryToken();
+}
+
+std::string const& XboxLiveHelper::getCllXToken(bool refresh) {
+    using namespace xbox::services::system;
+    auto auth_mgr = auth_manager::get_auth_manager_instance();
+    std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
+                                              (token_identity_type) 2};
+    auto config = auth_mgr->get_auth_config();
+    config->set_xtoken_composition(types);
+    std::string endpoint = "https://test.vortex.data.microsoft.com";
+    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, refresh, std::string());
+    auto ret = task.get();
+    return ret.data.token.std();
+}
+
+std::string const& XboxLiveHelper::getCllXTicket(std::string const& xuid) {
+    auto local_conf = xbox::services::local_config::get_local_config_singleton();
+    return local_conf->get_value_from_local_storage(xuid).std();
+}

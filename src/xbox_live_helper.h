@@ -39,4 +39,11 @@ public:
                          std::function<void (std::string const& cid, std::string const& binaryToken)> success_cb,
                          std::function<void (simpleipc::rpc_error_code, std::string const&)> error_cb);
 
+
+    std::string const& getCllMsaToken(std::string const& cid);
+
+    static std::string const& getCllXToken(bool refresh);
+
+    static std::string const& getCllXTicket(std::string const& xuid);
+
 };
