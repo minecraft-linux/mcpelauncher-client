@@ -96,7 +96,7 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
         if (th->cid.length() > 0) {
             XboxLiveHelper::getInstance().requestXblToken(th->cid.std(), true,
                     [](std::string const& cid, std::string const& token) {
-                        XboxLiveHelper::getInstance().getCllAuthStep().setAccount(cid);
+                        XboxLiveHelper::getInstance().initCll(cid);
 
                         xbox::services::system::java_rps_ticket ticket;
                         ticket.token = token;
@@ -134,7 +134,7 @@ void XboxLivePatches::invokeAuthFlow(xbox::services::system::user_auth_android* 
         Log::trace(TAG, "Invoking XBL login");
         auto ret = XboxLiveHelper::getInstance().invokeXblLogin(cid, token);
         Log::trace(TAG, "Invoking XBL event init");
-        XboxLiveHelper::getInstance().getCllAuthStep().setAccount(cid);
+        XboxLiveHelper::getInstance().initCll(cid);
         auto retEv = XboxLiveHelper::getInstance().invokeEventInit();
         Log::trace(TAG, "Xbox Live login completed");
 

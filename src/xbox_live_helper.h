@@ -15,10 +15,9 @@ private:
 
     msa::client::ServiceLauncher launcher;
     msa::client::ServiceClient client;
+    std::mutex cllMutex;
     std::unique_ptr<cll::EventManager> cll;
-    CllUploadAuthStep* cllAuthStep = nullptr;
-
-    void initCll();
+    CllUploadAuthStep cllAuthStep;
 
 public:
     static XboxLiveHelper& getInstance() {
@@ -27,7 +26,10 @@ public:
     }
 
     XboxLiveHelper() : launcher(std::string()), client(launcher) {
-        initCll();
+    }
+
+    ~XboxLiveHelper() {
+        cll.reset();
     }
 
 
@@ -54,7 +56,7 @@ public:
 
     static std::string getCllXTicket(std::string const& xuid);
 
-    CllUploadAuthStep& getCllAuthStep() { return *cllAuthStep; }
+    void initCll(std::string const& cid = std::string());
 
     void logCll(cll::Event const& event);
 

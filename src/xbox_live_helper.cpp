@@ -83,7 +83,12 @@ void XboxLiveHelper::requestXblToken
 }
 
 
-void XboxLiveHelper::initCll() {
+void XboxLiveHelper::initCll(std::string const& cid) {
+    std::lock_guard<std::mutex> lock (cllMutex);
+    if (!cid.empty())
+        cllAuthStep.setAccount(cid);
+    if (cll)
+        return;
     auto tid = xbox::services::xbox_live_app_config::get_app_config_singleton()->title_id();
     std::string iKey = "P-XBL-T" + std::to_string(tid);
     auto cllEvents = PathHelper::getPrimaryDataDirectory() + "cll_events";
@@ -91,8 +96,7 @@ void XboxLiveHelper::initCll() {
     FileUtil::mkdirRecursive(cllEvents);
     FileUtil::mkdirRecursive(cacheDir);
     cll = std::unique_ptr<cll::EventManager>(new cll::EventManager(iKey, cllEvents, cacheDir));
-    cllAuthStep = new CllUploadAuthStep();
-    cll->addUploadStep(std::unique_ptr<CllUploadAuthStep>(cllAuthStep));
+    cll->addUploadStep(cllAuthStep);
     cll->setApp("A:com.mojang.minecraftpe", Common::getGameVersionStringNet().std());
     cll->start();
 }
@@ -123,5 +127,6 @@ std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
 }
 
 void XboxLiveHelper::logCll(cll::Event const& event) {
+    initCll();
     cll->add(event);
 }
