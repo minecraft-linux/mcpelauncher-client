@@ -56,4 +56,5 @@ void CllUploadAuthStep::onRequest(cll::EventUploadRequest& request) {
 
 bool CllUploadAuthStep::onAuthenticationFailed() {
     refreshTokens(true);
+    return true;
 }

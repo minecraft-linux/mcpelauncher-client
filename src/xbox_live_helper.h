@@ -4,6 +4,7 @@
 #include <msa/client/service_launcher.h>
 #include <msa/client/service_client.h>
 #include <minecraft/Xbox.h>
+#include <cll/event_manager.h>
 
 class XboxLiveHelper {
 
@@ -13,6 +14,9 @@ private:
 
     msa::client::ServiceLauncher launcher;
     msa::client::ServiceClient client;
+    std::unique_ptr<cll::EventManager> cll;
+
+    void initCll();
 
 public:
     static XboxLiveHelper& getInstance() {
@@ -21,7 +25,9 @@ public:
     }
 
     XboxLiveHelper() : launcher(std::string()), client(launcher) {
+        initCll();
     }
+
 
     void invokeMsaAuthFlow(std::function<void (std::string const& cid, std::string const& binaryToken)> success_cb,
                            std::function<void (simpleipc::rpc_error_code, std::string const&)> error_cb);
@@ -40,10 +46,12 @@ public:
                          std::function<void (simpleipc::rpc_error_code, std::string const&)> error_cb);
 
 
-    std::string const& getCllMsaToken(std::string const& cid);
+    std::string getCllMsaToken(std::string const& cid);
 
-    static std::string const& getCllXToken(bool refresh);
+    static std::string getCllXToken(bool refresh);
 
-    static std::string const& getCllXTicket(std::string const& xuid);
+    static std::string getCllXTicket(std::string const& xuid);
+
+    void logCll(cll::Event const& event);
 
 };

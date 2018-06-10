@@ -1,6 +1,9 @@
 #include <msa/client/compact_token.h>
 #include <minecraft/Xbox.h>
 #include <log.h>
+#include <mcpelauncher/path_helper.h>
+#include <FileUtil.h>
+#include <minecraft/Common.h>
 #include "xbox_live_helper.h"
 
 using namespace simpleipc;
@@ -80,14 +83,26 @@ void XboxLiveHelper::requestXblToken
 }
 
 
-std::string const& XboxLiveHelper::getCllMsaToken(std::string const& cid) {
+void XboxLiveHelper::initCll() {
+    auto tid = xbox::services::xbox_live_app_config::get_app_config_singleton()->title_id();
+    std::string iKey = "P-XBL-T" + std::to_string(tid);
+    auto cllEvents = PathHelper::getPrimaryDataDirectory() + "cll_events";
+    auto cacheDir = PathHelper::getCacheDirectory() + "cll";
+    FileUtil::mkdirRecursive(cllEvents);
+    FileUtil::mkdirRecursive(cacheDir);
+    cll = std::unique_ptr<cll::EventManager>(new cll::EventManager(iKey, cllEvents, cacheDir));
+    cll->setApp("A:com.mojang.minecraftpe", Common::getGameVersionStringNet().std());
+    cll->start();
+}
+
+std::string XboxLiveHelper::getCllMsaToken(std::string const& cid) {
     auto token = client.requestToken(cid, {"vortex.data.microsoft.com", "mbi_ssl"}, MSA_CLIENT_ID, true).call();
     if (!token.success() || !token.data() || token.data()->getType() != msa::client::TokenType::Compact)
         return std::string();
     return msa::client::token_pointer_cast<msa::client::CompactToken>(token.data())->getBinaryToken();
 }
 
-std::string const& XboxLiveHelper::getCllXToken(bool refresh) {
+std::string XboxLiveHelper::getCllXToken(bool refresh) {
     using namespace xbox::services::system;
     auto auth_mgr = auth_manager::get_auth_manager_instance();
     std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
@@ -100,7 +115,11 @@ std::string const& XboxLiveHelper::getCllXToken(bool refresh) {
     return ret.data.token.std();
 }
 
-std::string const& XboxLiveHelper::getCllXTicket(std::string const& xuid) {
+std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
     auto local_conf = xbox::services::local_config::get_local_config_singleton();
     return local_conf->get_value_from_local_storage(xuid).std();
+}
+
+void XboxLiveHelper::logCll(cll::Event const& event) {
+    cll->add(event);
 }

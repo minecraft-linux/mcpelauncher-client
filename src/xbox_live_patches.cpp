@@ -161,10 +161,13 @@ void XboxLivePatches::registerJavaInteropNatives() {
     Log::trace(TAG, "register_natives stub");
 }
 
-xbox::services::xbox_live_result<void> XboxLivePatches::logCLL(void *th, mcpe::string const &a, mcpe::string const &b,
-                                                               mcpe::string const &c) {
-    Log::trace(TAG, "log_cll %s %s %s", a.c_str(), b.c_str(), c.c_str());
-    // TODO: add it as an CLL event
+xbox::services::xbox_live_result<void> XboxLivePatches::logCLL(void* th, mcpe::string const& ticket,
+                                                               mcpe::string const& name, mcpe::string const& data) {
+    Log::trace(TAG, "log_cll %s %s %s", ticket.c_str(), name.c_str(), data.c_str());
+    cll::Event event(name.std(), nlohmann::json::parse(data.std()),
+                     cll::EventFlags::PersistenceCritical | cll::EventFlags::LatencyRealtime, {ticket.std()});
+    XboxLiveHelper::getInstance().logCll(event);
+
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
