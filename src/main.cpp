@@ -1,6 +1,7 @@
 #include <log.h>
 #include <hybris/hook.h>
 #include <game_window_manager.h>
+#include <argparser.h>
 #include <mcpelauncher/minecraft_utils.h>
 #include <mcpelauncher/crash_handler.h>
 #include <mcpelauncher/path_helper.h>
@@ -19,8 +20,13 @@ int main(int argc, char *argv[]) {
     CrashHandler::registerCrashHandler();
     MinecraftUtils::workaroundLocaleBug();
 
-    int windowWidth = 720;
-    int windowHeight = 480;
+    argparser::arg_parser p;
+    argparser::arg<int> windowWidth (p, "--width", "-ww", "Window width", 720);
+    argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
+    argparser::arg<float> pixelScale (p, "--scale", "-s", "Pixel Scale", 2.f);
+    if (!p.parse(argc, (const char**) argv))
+        return 1;
+
     GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
 
     Log::trace("Launcher", "Loading hybris libraries");
@@ -71,6 +77,7 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Game initialized");
 
     WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
+    windowCallbacks.setPixelScale(pixelScale);
     windowCallbacks.registerCallbacks();
     windowCallbacks.handleInitialWindowSize();
     window->runLoop();
