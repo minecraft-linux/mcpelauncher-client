@@ -12,11 +12,16 @@
 #include "window_callbacks.h"
 #include "http_request_stub.h"
 #include "splitscreen_patch.h"
+#include "gl_core_patch.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
     CrashHandler::registerCrashHandler();
     MinecraftUtils::workaroundLocaleBug();
+
+    int windowWidth = 720;
+    int windowHeight = 480;
+    GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
 
     Log::trace("Launcher", "Loading hybris libraries");
     MinecraftUtils::loadFMod();
@@ -36,17 +41,16 @@ int main(int argc, char *argv[]) {
     XboxLivePatches::install(handle);
     LinuxHttpRequestHelper::install(handle);
     SplitscreenPatch::install(handle);
+    if (graphicsApi == GraphicsApi::OPENGL)
+        GLCorePatch::install(handle);
 
     Log::info("Launcher", "Creating window");
-    int windowWidth = 720;
-    int windowHeight = 480;
-    float pixelSize = 2.f;
-    GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
     auto window = windowManager->createWindow("Minecraft", windowWidth, windowHeight, graphicsApi);
     window->setIcon(PathHelper::getIconPath());
     window->show();
 
     SplitscreenPatch::onGLContextCreated();
+    GLCorePatch::onGLContextCreated();
 
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");
     ClientAppPlatform::initVtable(handle);
