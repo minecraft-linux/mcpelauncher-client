@@ -21,11 +21,14 @@ int main(int argc, char *argv[]) {
     MinecraftUtils::workaroundLocaleBug();
 
     argparser::arg_parser p;
+    argparser::arg<std::string> gameDir (p, "--game-dir", "-dg", "Directory with the game and assets");
     argparser::arg<int> windowWidth (p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
     argparser::arg<float> pixelScale (p, "--scale", "-s", "Pixel Scale", 2.f);
     if (!p.parse(argc, (const char**) argv))
         return 1;
+    if (!gameDir.get().empty())
+        PathHelper::setGameDir(gameDir);
 
     GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
 

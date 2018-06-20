@@ -62,7 +62,7 @@ bool XboxLivePatches::verifyCertChain() {
 
 mcpe::string XboxLivePatches::readXboxConfigFile(void* th) {
     Log::trace(TAG, "Reading xbox config file");
-    std::ifstream f(PathHelper::findDataFile("assets/xboxservices.config"));
+    std::ifstream f(PathHelper::findGameFile("assets/xboxservices.config"));
     std::stringstream s;
     s << f.rdbuf();
     return s.str();
