@@ -14,6 +14,7 @@
 #include "http_request_stub.h"
 #include "splitscreen_patch.h"
 #include "gl_core_patch.h"
+#include "xbox_live_helper.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -91,8 +92,10 @@ int main(int argc, char *argv[]) {
     windowCallbacks.handleInitialWindowSize();
     window->runLoop();
 
-    MinecraftUtils::workaroundShutdownCrash(handle);
     game.reset();
+    MinecraftUtils::workaroundShutdownCrash(handle);
     XboxLivePatches::workaroundShutdownFreeze(handle);
+
+    XboxLiveHelper::getInstance().shutdownCll();
     return 0;
 }

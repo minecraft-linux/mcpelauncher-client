@@ -32,6 +32,10 @@ public:
         cll.reset();
     }
 
+    void shutdownCll() {
+        cll.reset();
+    }
+
 
     void invokeMsaAuthFlow(std::function<void (std::string const& cid, std::string const& binaryToken)> success_cb,
                            std::function<void (simpleipc::rpc_error_code, std::string const&)> error_cb);
