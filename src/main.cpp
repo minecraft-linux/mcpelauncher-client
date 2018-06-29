@@ -15,6 +15,7 @@
 #include "splitscreen_patch.h"
 #include "gl_core_patch.h"
 #include "xbox_live_helper.h"
+#include "xbox_sleep_shutdown_patch.h"
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Applying patches");
     LauncherStore::install(handle);
     XboxLivePatches::install(handle);
+    XboxSleepShutdownPatch::install(handle);
     LinuxHttpRequestHelper::install(handle);
     SplitscreenPatch::install(handle);
     if (graphicsApi == GraphicsApi::OPENGL)
@@ -95,6 +97,7 @@ int main(int argc, char *argv[]) {
     game.reset();
     MinecraftUtils::workaroundShutdownCrash(handle);
     XboxLivePatches::workaroundShutdownFreeze(handle);
+    XboxSleepShutdownPatch::notifyShutdown();
 
     XboxLiveHelper::getInstance().shutdownCll();
     return 0;
