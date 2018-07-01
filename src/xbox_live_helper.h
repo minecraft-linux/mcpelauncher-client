@@ -19,13 +19,15 @@ private:
     std::unique_ptr<cll::EventManager> cll;
     CllUploadAuthStep cllAuthStep;
 
+    static std::string findMsa();
+
 public:
     static XboxLiveHelper& getInstance() {
         static XboxLiveHelper instance;
         return instance;
     }
 
-    XboxLiveHelper() : launcher(std::string()), client(launcher) {
+    XboxLiveHelper() : launcher(findMsa()), client(launcher) {
     }
 
     ~XboxLiveHelper() {

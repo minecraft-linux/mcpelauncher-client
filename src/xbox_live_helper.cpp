@@ -11,6 +11,17 @@ using namespace simpleipc;
 std::string const XboxLiveHelper::MSA_CLIENT_ID = "android-app://com.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y";
 std::string const XboxLiveHelper::MSA_COBRAND_ID = "90023";
 
+std::string XboxLiveHelper::findMsa() {
+    std::string path;
+#ifdef MSA_DAEMON_PATH
+    if (EnvPathUtil::findInPath("msa-daemon", path, MSA_DAEMON_PATH, EnvPathUtil::getAppDir().c_str()))
+        return path;
+#endif
+    if (EnvPathUtil::findInPath("msa-daemon", path))
+        return path;
+    return std::string();
+}
+
 void XboxLiveHelper::invokeMsaAuthFlow(
         std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
         std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb) {
