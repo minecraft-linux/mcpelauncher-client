@@ -14,7 +14,7 @@ private:
     static std::string const MSA_COBRAND_ID;
 
     msa::client::ServiceLauncher launcher;
-    msa::client::ServiceClient client;
+    std::unique_ptr<msa::client::ServiceClient> client;
     std::mutex cllMutex;
     std::unique_ptr<cll::EventManager> cll;
     CllUploadAuthStep cllAuthStep;
@@ -27,8 +27,7 @@ public:
         return instance;
     }
 
-    XboxLiveHelper() : launcher(findMsa()), client(launcher) {
-    }
+    XboxLiveHelper();
 
     ~XboxLiveHelper() {
         cll.reset();
