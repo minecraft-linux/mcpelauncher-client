@@ -103,11 +103,16 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
                         ticket.error_code = 0;
                         ticket.error_text = "Got ticket";
                         xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
-                    }, [](simpleipc::rpc_error_code, std::string const& msg) {
+                    }, [](simpleipc::rpc_error_code err, std::string const& msg) {
                         xbox::services::system::java_rps_ticket ticket;
                         Log::error(TAG, "Xbox Live sign in failed: %s", msg.c_str());
-                        ticket.error_code = 0x800704CF;
-                        ticket.error_text = msg.c_str();
+                        if (err == -100) { // No such account
+                            ticket.error_code = 1;
+                            ticket.error_text = "Must show UI to acquire an account.";
+                        } else {
+                            ticket.error_code = 0x800704CF;
+                            ticket.error_text = msg.c_str();
+                        }
                         xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
                     });
         } else {
