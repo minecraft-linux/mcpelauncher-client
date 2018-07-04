@@ -9,6 +9,6 @@ set(CPACK_INSTALL_CMAKE_PROJECTS
         "${CMAKE_BINARY_DIR};mcpelauncher-bin-libs;mcpelauncher-bin-libs;/"
         "${CMAKE_CURRENT_BINARY_DIR};mcpelauncher-client;mcpelauncher-client;/")
 set(CPACK_OUTPUT_CONFIG_FILE CPackConfig.cmake)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>=2.14), libcurl4")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>=2.14), libstdc++6, libcurl4, libx11-6, zlib1g, libpng16-16, libevdev2, libudev1")
 
 include(CPack)
