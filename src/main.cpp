@@ -79,6 +79,9 @@ int main(int argc, char *argv[]) {
     appPlatform->initialize();
     mce::Platform::OGL::InitBindings();
 
+    Log::info("Launcher", "OpenGL: version: %s, renderer: %s, vendor: %s",
+              gl::getOpenGLVersion().c_str(), gl::getOpenGLRenderer().c_str(), gl::getOpenGLVendor().c_str());
+
     Log::trace("Launcher", "Initializing MinecraftGame (create instance)");
     std::unique_ptr<MinecraftGame> game (new MinecraftGame(argc, argv));
     Log::trace("Launcher", "Initializing MinecraftGame (init call)");
