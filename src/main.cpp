@@ -7,6 +7,7 @@
 #include <mcpelauncher/path_helper.h>
 #include <minecraft/Common.h>
 #include <minecraft/MinecraftGame.h>
+#include <mcpelauncher/mod_loader.h>
 #include "client_app_platform.h"
 #include "xbox_live_patches.h"
 #include "store.h"
@@ -48,8 +49,11 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Loading Minecraft library");
     void* handle = MinecraftUtils::loadMinecraftLib();
     Log::info("Launcher", "Loaded Minecraft library");
-
     Log::debug("Launcher", "Minecraft is at offset 0x%x", MinecraftUtils::getLibraryBase(handle));
+
+    ModLoader modLoader;
+    modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
+
     MinecraftUtils::initSymbolBindings(handle);
     Log::info("Launcher", "Game version: %s", Common::getGameVersionStringNet().c_str());
 
@@ -90,6 +94,8 @@ int main(int argc, char *argv[]) {
     ctx.doRender = true;
     game->init(ctx);
     Log::info("Launcher", "Game initialized");
+
+    modLoader.onGameInitialized(game.get());
 
     WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
     windowCallbacks.setPixelScale(pixelScale);
