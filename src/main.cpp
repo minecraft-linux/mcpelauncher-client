@@ -112,5 +112,6 @@ int main(int argc, char *argv[]) {
     XboxSleepShutdownPatch::notifyShutdown();
 
     XboxLiveHelper::getInstance().shutdownCll();
+    appPlatform->teardown();
     return 0;
 }
