@@ -23,7 +23,8 @@ void ClientAppPlatform::initVtable(void* lib) {
     }
     Log::trace("AppPlatform", "Vtable size = %i", size);
 
-    myVtable = (void**) ::operator new(size * sizeof(void*));
+    myVtable = (void**) ::operator new((size + 1) * sizeof(void*));
+    myVtable[size] = nullptr;
     memcpy(&myVtable[0], &vt[0], size * sizeof(void*));
 
     replaceVtableEntry(&LauncherAppPlatform::hideMousePointer, &ClientAppPlatform::hideMousePointer);
@@ -49,10 +50,12 @@ ClientAppPlatform::ClientAppPlatform() {
 }
 
 void ClientAppPlatform::hideMousePointer() {
-    window->setCursorDisabled(true);
+    if (window)
+        window->setCursorDisabled(true);
 }
 void ClientAppPlatform::showMousePointer() {
-    window->setCursorDisabled(false);
+    if (window)
+        window->setCursorDisabled(false);
 }
 
 void ClientAppPlatform::pickImage(ImagePickingCallback &callback) {

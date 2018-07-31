@@ -18,6 +18,8 @@
 #include "xbox_live_helper.h"
 #include "xbox_sleep_shutdown_patch.h"
 
+static std::unique_ptr<ClientAppPlatform> appPlatform;
+
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
     CrashHandler::registerCrashHandler();
@@ -80,7 +82,7 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");
     ClientAppPlatform::initVtable(handle);
     Log::trace("Launcher", "Initializing AppPlatform (create instance)");
-    std::unique_ptr<ClientAppPlatform> appPlatform (new ClientAppPlatform());
+    appPlatform = std::unique_ptr<ClientAppPlatform>(new ClientAppPlatform());
     appPlatform->setWindow(window);
     Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
     appPlatform->initialize();
@@ -106,12 +108,19 @@ int main(int argc, char *argv[]) {
     windowCallbacks.handleInitialWindowSize();
     window->runLoop();
 
+    game->requestLeaveGame(true, false);
+    game->continueLeaveGame();
+    game->startLeaveGame();
+    game->getPrimaryClientInstance()->_startLeaveGame();
+    game->getPrimaryClientInstance()->_syncDestroyGame();
     game.reset();
+
     MinecraftUtils::workaroundShutdownCrash(handle);
     XboxLivePatches::workaroundShutdownFreeze(handle);
     XboxSleepShutdownPatch::notifyShutdown();
 
     XboxLiveHelper::getInstance().shutdownCll();
     appPlatform->teardown();
+    appPlatform->setWindow(nullptr);
     return 0;
 }
