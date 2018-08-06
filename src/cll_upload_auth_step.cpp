@@ -33,10 +33,11 @@ void CllUploadAuthStep::onRequest(cll::EventUploadRequest& request) {
             break;
         nlohmann::json event = nlohmann::json::parse(nlohmann::detail::input_adapter(ptr, e - ptr - 1));
         for (auto const& ticket : event["ext"]["android"]["tickets"]) {
-            if (tickets.count(ticket) == 0) {
-                auto tk = XboxLiveHelper::getCllXTicket(ticket);
+            std::string ticketStr = ticket;
+            if (tickets.count(ticketStr) == 0) {
+                auto tk = XboxLiveHelper::getCllXTicket(ticketStr);
                 if (!tk.empty())
-                    tickets.insert({ticket, "x:" + tk});
+                    tickets.insert({ticketStr, "x:" + tk});
             }
         }
         ptr = e + 1;
