@@ -12,19 +12,19 @@ void (*GLCorePatch::reflectShaderUniformsOriginal)(void*);
 void (*GLCorePatch::bindVertexArrayOriginal)(void*, void*, void*);
 
 void GLCorePatch::install(void* handle) {
-    void* ptr = hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
-    if (((unsigned char*) ptr)[0x90C - 0x7F0 + 1] != 0xA0) {
+    void* ptr = hybris_dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsS2_S2_S2_");
+    if (((unsigned char*) ptr)[0x5C9 - 0x4C0 + 1] != 0xAC) {
         Log::error("Launcher", "Graphics patch error: unexpected byte");
         exit(1);
     }
-    ((unsigned char*) ptr)[0x90C - 0x7F0 + 1] += 4;
+    ((unsigned char*) ptr)[0x5C9 - 0x4C0 + 1] += 4;
 
     reflectShaderUniformsOriginal = (void (*)(void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
     ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERNS_11ShaderCacheERNS_13ShaderProgramES4_S4_") + (0x720 - 0x6A0));
     PatchUtils::patchCallInstruction(ptr, (void*) &reflectShaderUniformsHook, false);
 
     bindVertexArrayOriginal = (void (*)(void*, void*, void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
-    ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x72 - 0x10));
+    ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x83E - 0x7E0));
     PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
 
     ptr = hybris_dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
@@ -52,12 +52,12 @@ void GLCorePatch::reflectShaderUniformsHook(void* th) {
     unsigned int vertexArr;
     glGenVertexArrays(1, &vertexArr);
     glBindVertexArray(vertexArr);
-    *((unsigned int*) ((unsigned int) th + 0xA0)) = vertexArr;
+    *((unsigned int*) ((unsigned int) th + 0xAC)) = vertexArr;
     reflectShaderUniformsOriginal(th);
 }
 
 void GLCorePatch::bindVertexArrayHook(void* th, void* a, void* b) {
-    unsigned int vertexArr = *((unsigned int*) ((unsigned int) th + 0xA0));
+    unsigned int vertexArr = *((unsigned int*) ((unsigned int) th + 0xAC));
     if (bindVertexArrayOriginal == nullptr)
         abort();
     glBindVertexArray(vertexArr);
