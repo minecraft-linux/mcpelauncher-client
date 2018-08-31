@@ -108,11 +108,13 @@ int main(int argc, char *argv[]) {
     windowCallbacks.handleInitialWindowSize();
     window->runLoop();
 
-    game->requestLeaveGame(true, false);
-    game->continueLeaveGame();
-    game->startLeaveGame();
-    game->getPrimaryClientInstance()->_startLeaveGame();
-    game->getPrimaryClientInstance()->_syncDestroyGame();
+    if (game->isInGame()) {
+        game->requestLeaveGame(true, false);
+        game->continueLeaveGame();
+        game->startLeaveGame();
+        game->getPrimaryClientInstance()->_startLeaveGame();
+        game->getPrimaryClientInstance()->_syncDestroyGame();
+    }
     game.reset();
 
     MinecraftUtils::workaroundShutdownCrash(handle);
