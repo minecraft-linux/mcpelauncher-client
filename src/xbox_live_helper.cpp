@@ -142,6 +142,11 @@ std::string XboxLiveHelper::getCllMsaToken(std::string const& cid) {
 std::string XboxLiveHelper::getCllXToken(bool refresh) {
     using namespace xbox::services::system;
     auto auth_mgr = auth_manager::get_auth_manager_instance();
+    if (refresh) {
+        auto initRet = auth_mgr->initialize_default_nsal().get();
+        if (initRet.code != 0)
+            throw std::runtime_error("Failed to initialize default nsal");
+    }
     std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
                                               (token_identity_type) 2};
     auto config = auth_mgr->get_auth_config();
