@@ -14,35 +14,18 @@ void ClientAppPlatform::initVtable(void* lib) {
     if (LauncherAppPlatform::myVtable == nullptr)
         LauncherAppPlatform::initVtable(lib);
     void** vt = LauncherAppPlatform::myVtable;
-
-    // get vtable size
-    int size;
-    for (size = 0; ; size++) {
-        if (vt[size] == nullptr)
-            break;
-    }
-    Log::trace("AppPlatform", "Vtable size = %i", size);
+    size_t size = LauncherAppPlatform::myVtableSize;
 
     myVtable = (void**) ::operator new((size + 1) * sizeof(void*));
     myVtable[size] = nullptr;
     memcpy(&myVtable[0], &vt[0], size * sizeof(void*));
 
-    replaceVtableEntry(&LauncherAppPlatform::hideMousePointer, &ClientAppPlatform::hideMousePointer);
-    replaceVtableEntry(&LauncherAppPlatform::showMousePointer, &ClientAppPlatform::showMousePointer);
-    replaceVtableEntry(&LauncherAppPlatform::pickImage, &ClientAppPlatform::pickImage);
-    replaceVtableEntry(&LauncherAppPlatform::pickFile, &ClientAppPlatform::pickFile);
-    replaceVtableEntry(&LauncherAppPlatform::setFullscreenMode, &ClientAppPlatform::setFullscreenMode);
-}
-
-void ClientAppPlatform::replaceVtableEntry(void* src, void* dest) {
-    for (int i = 0; ; i++) {
-        if (myVtable[i] == nullptr)
-            break;
-        if (myVtable[i] == src) {
-            myVtable[i] = dest;
-            return;
-        }
-    }
+    PatchUtils::VtableReplaceHelper vtr (lib, myVtable, vt);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::hideMousePointer), &ClientAppPlatform::hideMousePointer);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::showMousePointer), &ClientAppPlatform::showMousePointer);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickImage), &ClientAppPlatform::pickImage);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickFile), &ClientAppPlatform::pickFile);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::setFullscreenMode), &ClientAppPlatform::setFullscreenMode);
 }
 
 ClientAppPlatform::ClientAppPlatform() {

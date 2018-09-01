@@ -10,13 +10,6 @@ private:
 
     std::shared_ptr<GameWindow> window;
 
-    static void replaceVtableEntry(void* src, void* dest);
-
-    template <typename T, typename T2>
-    static void replaceVtableEntry(T src, T2 dest) {
-        replaceVtableEntry(PatchUtils::memberFuncCast(src), PatchUtils::memberFuncCast(dest));
-    }
-
 public:
     static void** myVtable;
     static void initVtable(void* lib);
