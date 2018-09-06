@@ -5,6 +5,7 @@
 #include <hybris/dlfcn.h>
 #include <mcpelauncher/patch_utils.h>
 #include <mcpelauncher/path_helper.h>
+#include <minecraft/MinecraftScreenModel.h>
 #include <minecraft/Xbox.h>
 #include <log.h>
 #include "fake_jni.h"
@@ -41,6 +42,14 @@ void XboxLivePatches::install(void *handle) {
 
     ptr = hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
     PatchUtils::patchCallInstruction(ptr, (void*) &logCLL, true);
+
+    ptr = hybris_dlsym(handle, "_ZN20MinecraftScreenModel6signInESt8functionIFvvEES0_IFvN6Social12SignInResultEbEE");
+    PatchUtils::patchCallInstruction(ptr, (void*) (void (*)(MinecraftScreenModel*)) [](MinecraftScreenModel* t) {
+        XboxLiveHelper::getInstance().startMsaRemoteLoginFlow([t](std::string const& code) {
+            t->navigateToXblConsoleSignInScreen(code, "xbox.signin.url");
+        }, [](std::string const& err) {
+        });
+    }, true);
 
 
     ptr = hybris_dlsym(handle, "_ZNK13MinecraftGame26useMinecraftVersionOfXBLUIEv");

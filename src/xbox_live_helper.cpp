@@ -22,7 +22,7 @@ std::string XboxLiveHelper::findMsa() {
     return std::string();
 }
 
-XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()) {
+XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()), msaRemoteLogin(MSA_CLIENT_ID) {
     try {
         client = std::unique_ptr<msa::client::ServiceClient>(new msa::client::ServiceClient(launcher));
     } catch (std::exception& exception) {
@@ -165,4 +165,15 @@ std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
 void XboxLiveHelper::logCll(cll::Event const& event) {
     initCll();
     cll->add(event);
+}
+
+void XboxLiveHelper::startMsaRemoteLoginFlow(std::function<void(std::string const& code)> success_cb,
+                                             std::function<void(std::string const&)> error_cb) {
+    try {
+        MsaDeviceAuthConnectResponse resp =
+                msaRemoteLogin.startDeviceAuthConnect("service::user.auth.xboxlive.com::MBI_SSL");
+        success_cb(resp.userCode);
+    } catch (std::exception& e) {
+        error_cb(e.what());
+    }
 }
