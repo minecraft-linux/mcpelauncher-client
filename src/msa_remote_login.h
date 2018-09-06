@@ -30,7 +30,7 @@ private:
     Response send(Request const& req);
 
 public:
-    MsaRemoteLogin(std::string clientId) : clientId(std::move(clientId)) {}
+    explicit MsaRemoteLogin(std::string clientId) : clientId(std::move(clientId)) {}
 
     MsaDeviceAuthConnectResponse startDeviceAuthConnect(std::string const& scope);
 

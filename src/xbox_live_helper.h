@@ -6,7 +6,7 @@
 #include <minecraft/Xbox.h>
 #include <cll/event_manager.h>
 #include "cll_upload_auth_step.h"
-#include "msa_remote_login.h"
+#include "msa_remote_login_task.h"
 
 class XboxLiveHelper {
 
@@ -19,7 +19,7 @@ private:
     std::mutex cllMutex;
     std::unique_ptr<cll::EventManager> cll;
     CllUploadAuthStep cllAuthStep;
-    MsaRemoteLogin msaRemoteLogin;
+    std::unique_ptr<MsaRemoteLoginTask> msaRemoteLoginTask;
 
     static std::string findMsa();
 
@@ -71,6 +71,6 @@ public:
     void logCll(cll::Event const& event);
 
     void startMsaRemoteLoginFlow(std::function<void (std::string const& code)> success_cb,
-                                 std::function<void (std::string const&)> error_cb);
+                                 std::function<void (std::exception_ptr)> error_cb);
 
 };

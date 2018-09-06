@@ -7,7 +7,9 @@
 #include <mcpelauncher/path_helper.h>
 #include <minecraft/MinecraftScreenModel.h>
 #include <minecraft/Xbox.h>
+#include <minecraft/std/function.h>
 #include <log.h>
+#include <unistd.h>
 #include "fake_jni.h"
 #include "xbox_live_helper.h"
 
@@ -44,11 +46,13 @@ void XboxLivePatches::install(void *handle) {
     PatchUtils::patchCallInstruction(ptr, (void*) &logCLL, true);
 
     ptr = hybris_dlsym(handle, "_ZN20MinecraftScreenModel6signInESt8functionIFvvEES0_IFvN6Social12SignInResultEbEE");
-    PatchUtils::patchCallInstruction(ptr, (void*) (void (*)(MinecraftScreenModel*)) [](MinecraftScreenModel* t) {
+    PatchUtils::patchCallInstruction(ptr, (void*) (void (*)(MinecraftScreenModel*, std::function<void ()>, mcpe::function<void (int, bool)>)) [](MinecraftScreenModel* t, std::function<void ()> r2, mcpe::function<void (int, bool)> r) {
         XboxLiveHelper::getInstance().startMsaRemoteLoginFlow([t](std::string const& code) {
             t->navigateToXblConsoleSignInScreen(code, "xbox.signin.url");
-        }, [](std::string const& err) {
+        }, [r](std::exception_ptr err) {
+            r(0, false);
         });
+
     }, true);
 
 

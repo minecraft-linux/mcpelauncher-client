@@ -22,7 +22,7 @@ std::string XboxLiveHelper::findMsa() {
     return std::string();
 }
 
-XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()), msaRemoteLogin(MSA_CLIENT_ID) {
+XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()) {
     try {
         client = std::unique_ptr<msa::client::ServiceClient>(new msa::client::ServiceClient(launcher));
     } catch (std::exception& exception) {
@@ -167,13 +167,13 @@ void XboxLiveHelper::logCll(cll::Event const& event) {
     cll->add(event);
 }
 
-void XboxLiveHelper::startMsaRemoteLoginFlow(std::function<void(std::string const& code)> success_cb,
-                                             std::function<void(std::string const&)> error_cb) {
-    try {
-        MsaDeviceAuthConnectResponse resp =
-                msaRemoteLogin.startDeviceAuthConnect("service::user.auth.xboxlive.com::MBI_SSL");
-        success_cb(resp.userCode);
-    } catch (std::exception& e) {
-        error_cb(e.what());
-    }
+void XboxLiveHelper::startMsaRemoteLoginFlow(std::function<void (std::string const& code)> success_cb,
+                                             std::function<void (std::exception_ptr)> error_cb) {
+    if (msaRemoteLoginTask != nullptr)
+        return;
+    msaRemoteLoginTask = std::unique_ptr<MsaRemoteLoginTask>(
+            new MsaRemoteLoginTask(MSA_CLIENT_ID, "service::user.auth.xboxlive.com::MBI_SSL"));
+    msaRemoteLoginTask->setCodeCallback(success_cb);
+    msaRemoteLoginTask->setErrorCallback(error_cb);
+    msaRemoteLoginTask->start();
 }
