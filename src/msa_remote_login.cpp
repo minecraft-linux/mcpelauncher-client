@@ -3,6 +3,7 @@
 #include <curl/curl.h>
 #include <sstream>
 #include <nlohmann/json.hpp>
+#include <log.h>
 
 static std::string encodePostData(CURL* curl, std::vector<std::pair<std::string, std::string>> const& v) {
     std::stringstream ss;
@@ -47,7 +48,7 @@ MsaDeviceAuthConnectResponse MsaRemoteLogin::startDeviceAuthConnect(std::string 
     request.postData.emplace_back("response_type", "device_code");
     Response response = send(request);
     if (response.status != 200)
-        throw std::runtime_error("Failed to start sign in flow: non-zero status code");
+        throw std::runtime_error("Failed to start sign in flow: non-200 status code");
     nlohmann::json json = nlohmann::json::parse(response.body);
     MsaDeviceAuthConnectResponse ret;
     ret.userCode = json.at("user_code");
@@ -55,5 +56,32 @@ MsaDeviceAuthConnectResponse MsaRemoteLogin::startDeviceAuthConnect(std::string 
     ret.verificationUri = json.value("verification_uri", "");
     ret.interval = json.value("interval", 5);
     ret.expiresIn = json.value("expiresIn", -1);
+    return ret;
+}
+
+MsaDeviceAuthPollResponse MsaRemoteLogin::pollDeviceAuthState(std::string const& deviceCode) {
+    Request request ("https://login.live.com/oauth20_token.srf");
+    request.postData.emplace_back("client_id", clientId);
+    request.postData.emplace_back("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
+    request.postData.emplace_back("device_code", deviceCode);
+    Response response = send(request);
+    if (response.status != 200 && response.status != 400)
+        throw std::runtime_error("Failed to poll: invalid status code");
+    nlohmann::json json = nlohmann::json::parse(response.body);
+    std::string error = json.value("error", std::string());
+    MsaDeviceAuthPollResponse ret;
+    if (error == "authorization_pending") {
+        ret.userNotSignedInYet = true;
+        return ret;
+    }
+    if (!error.empty())
+        throw std::runtime_error("Error during poll: " + error + "; " + json.value("error_description", std::string()));
+    ret.userId = json.at("user_id");
+    ret.tokenType = json.at("token_type");
+    ret.scope = json.at("scope");
+    ret.accessToken = json.at("access_token");
+    ret.refreshToken = json.at("refresh_token");
+    ret.expiresIn = json.at("expires_in");
+    Log::trace("MsaRemoteLogin", "poll: %i %s", response.status, response.body.c_str());
     return ret;
 }

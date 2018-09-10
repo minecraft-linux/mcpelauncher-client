@@ -7,6 +7,7 @@
 #include <mcpelauncher/path_helper.h>
 #include <minecraft/Common.h>
 #include <minecraft/MinecraftGame.h>
+#include <minecraft/ClientInstance.h>
 #include <mcpelauncher/mod_loader.h>
 #include "client_app_platform.h"
 #include "xbox_live_patches.h"

@@ -18,6 +18,7 @@ private:
     bool started = false;
     bool stopping = false;
     std::function<void (std::string const&)> codeCb;
+    std::function<void (MsaAuthTokenResponse const&)> successCb;
     std::function<void (std::exception_ptr)> errorCb;
 
     void handleThread();
@@ -31,6 +32,11 @@ public:
     void setCodeCallback(std::function<void (std::string const&)> callback) {
         std::lock_guard<std::mutex> lock (mutex);
         codeCb = std::move(callback);
+    }
+
+    void setSuccessCallback(std::function<void (MsaAuthTokenResponse const&)> callback) {
+        std::lock_guard<std::mutex> lock (mutex);
+        successCb = std::move(callback);
     }
 
     void setErrorCallback(std::function<void (std::exception_ptr)> callback) {

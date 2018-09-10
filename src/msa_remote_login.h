@@ -10,6 +10,17 @@ struct MsaDeviceAuthConnectResponse {
     int interval;
     int expiresIn;
 };
+struct MsaAuthTokenResponse {
+    std::string userId;
+    std::string tokenType;
+    std::string scope;
+    std::string accessToken;
+    std::string refreshToken;
+    int expiresIn;
+};
+struct MsaDeviceAuthPollResponse : public MsaAuthTokenResponse {
+    bool userNotSignedInYet = false;
+};
 
 class MsaRemoteLogin {
 
@@ -33,5 +44,7 @@ public:
     explicit MsaRemoteLogin(std::string clientId) : clientId(std::move(clientId)) {}
 
     MsaDeviceAuthConnectResponse startDeviceAuthConnect(std::string const& scope);
+
+    MsaDeviceAuthPollResponse pollDeviceAuthState(std::string const& deviceCode);
 
 };

@@ -13,6 +13,18 @@ void MsaRemoteLoginTask::handleThread() {
         MsaDeviceAuthConnectResponse deviceAuth = login.startDeviceAuthConnect(scope);
         if (codeCb)
             codeCb(deviceAuth.userCode);
+
+        while (true) {
+            cv.wait_for(lock, std::chrono::seconds(deviceAuth.interval));
+            if (stopping)
+                break;
+            MsaDeviceAuthPollResponse poll = login.pollDeviceAuthState(deviceAuth.deviceCode);
+            if (!poll.userNotSignedInYet) {
+                if (successCb)
+                    successCb(poll);
+                break;
+            }
+        }
     } catch (std::exception& e) {
         if (errorCb)
             errorCb(std::make_exception_ptr(e));

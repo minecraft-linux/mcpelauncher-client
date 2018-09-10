@@ -43,6 +43,10 @@ public:
         return client != nullptr;
     }
 
+    bool shouldUseDeviceAuthFlow() const {
+        return true;
+    }
+
     void invokeMsaAuthFlow(std::function<void (std::string const& cid, std::string const& binaryToken)> success_cb,
                            std::function<void (simpleipc::rpc_error_code, std::string const&)> error_cb);
 
@@ -70,7 +74,8 @@ public:
 
     void logCll(cll::Event const& event);
 
-    void startMsaRemoteLoginFlow(std::function<void (std::string const& code)> success_cb,
+    void startMsaRemoteLoginFlow(std::function<void (std::string const& code)> code_cb,
+                                 std::function<void (MsaAuthTokenResponse const&)> success_cb,
                                  std::function<void (std::exception_ptr)> error_cb);
 
 };

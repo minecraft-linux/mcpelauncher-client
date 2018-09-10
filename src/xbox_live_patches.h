@@ -2,6 +2,9 @@
 
 #include <minecraft/std/string.h>
 #include <minecraft/Xbox.h>
+#include <minecraft/MinecraftScreenModel.h>
+
+namespace web { namespace json { class value; } }
 
 class XboxLivePatches {
 
@@ -31,6 +34,17 @@ private:
     static bool useMinecraftVersionOfXBLUI();
 
     static void destroyXsapiSingleton(void* handle);
+
+    static web::json::value (*createDeviceTokenRequestOriginal)(mcpe::string, mcpe::string, void*, mcpe::string,
+                                                                mcpe::string, mcpe::string);
+    static web::json::value createDeviceTokenRequestHook(mcpe::string a, mcpe::string b, void* c, mcpe::string d,
+                                                         mcpe::string e, mcpe::string f);
+
+    static void (*signInOriginal)(MinecraftScreenModel*, mcpe::function<void ()>,
+                                  mcpe::function<void (Social::SignInResult, bool)>);
+
+    static void signInHook(MinecraftScreenModel* th, mcpe::function<void ()> cancelCb,
+                           mcpe::function<void (Social::SignInResult, bool)> cb);
 
 public:
     static void install(void* handle);

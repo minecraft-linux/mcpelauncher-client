@@ -5,15 +5,21 @@
 #include <hybris/dlfcn.h>
 #include <mcpelauncher/patch_utils.h>
 #include <mcpelauncher/path_helper.h>
-#include <minecraft/MinecraftScreenModel.h>
-#include <minecraft/Xbox.h>
-#include <minecraft/std/function.h>
+#include <minecraft/ClientInstance.h>
 #include <log.h>
-#include <unistd.h>
+#include <mcpelauncher/hook.h>
+#include <minecraft/Crypto.h>
 #include "fake_jni.h"
 #include "xbox_live_helper.h"
+#include "client_app_platform.h"
 
 const char* XboxLivePatches::TAG = "XboxLive";
+
+web::json::value (*XboxLivePatches::createDeviceTokenRequestOriginal)(mcpe::string, mcpe::string, void*, mcpe::string,
+                                                                      mcpe::string, mcpe::string);
+void (*XboxLivePatches::signInOriginal)(MinecraftScreenModel*, mcpe::function<void ()>,
+                                        mcpe::function<void (Social::SignInResult, bool)>);
+
 
 void XboxLivePatches::install(void *handle) {
     // Function patches
@@ -45,16 +51,15 @@ void XboxLivePatches::install(void *handle) {
     ptr = hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
     PatchUtils::patchCallInstruction(ptr, (void*) &logCLL, true);
 
-    ptr = hybris_dlsym(handle, "_ZN20MinecraftScreenModel6signInESt8functionIFvvEES0_IFvN6Social12SignInResultEbEE");
-    PatchUtils::patchCallInstruction(ptr, (void*) (void (*)(MinecraftScreenModel*, std::function<void ()>, mcpe::function<void (int, bool)>)) [](MinecraftScreenModel* t, std::function<void ()> r2, mcpe::function<void (int, bool)> r) {
-        XboxLiveHelper::getInstance().startMsaRemoteLoginFlow([t](std::string const& code) {
-            t->navigateToXblConsoleSignInScreen(code, "xbox.signin.url");
-        }, [r](std::exception_ptr err) {
-            r(0, false);
-        });
+    (void*&) createDeviceTokenRequestOriginal = hybris_dlsym(handle, "_ZN4xbox8services6system13token_request27create_device_token_requestESsSsSt10shared_ptrINS1_5ecdsaEESsSsSs");
+    ptr = hybris_dlsym(handle, "_ZN4xbox8services6system25device_token_service_impl24get_d_token_from_serviceERKSsSt10shared_ptrINS1_5ecdsaEES5_INS1_11auth_configEES5_INS0_26xbox_live_context_settingsEEN4pplx18cancellation_tokenE");
+    ptr = (void*) ((size_t) ptr + 0x8BD1 - 0x8A40);
+    PatchUtils::patchCallInstruction(ptr, (void*) &createDeviceTokenRequestHook, false);
 
-    }, true);
-
+    (void*&) signInOriginal = hybris_dlsym(handle, "_ZN20MinecraftScreenModel6signInESt8functionIFvvEES0_IFvN6Social12SignInResultEbEE");
+    ptr = hybris_dlsym(handle, "_ZN25MinecraftScreenController13_handleSignInESt8functionIFvN6Social12SignInResultEbEE");
+    ptr = (void*) ((size_t) ptr + 0x1420 - 0x1210);
+    PatchUtils::patchCallInstruction(ptr, (void*) &signInHook, false);
 
     ptr = hybris_dlsym(handle, "_ZNK13MinecraftGame26useMinecraftVersionOfXBLUIEv");
     PatchUtils::patchCallInstruction(ptr, (void*) &useMinecraftVersionOfXBLUI, true);
@@ -205,6 +210,73 @@ void XboxLivePatches::workaroundShutdownFreeze(void* handle) {
     if (userAndroidInstance)
         userAndroidInstance->user_signed_out();
     destroyXsapiSingleton(handle);
+}
+
+web::json::value XboxLivePatches::createDeviceTokenRequestHook(mcpe::string a, mcpe::string b, void* c, mcpe::string d,
+                                                               mcpe::string e, mcpe::string f) {
+    if (!XboxLiveHelper::getInstance().shouldUseDeviceAuthFlow())
+        return createDeviceTokenRequestOriginal(a, b, c, d, e, f);
+
+    web::json::value ret = createDeviceTokenRequestOriginal(a, b, c, d, e, "ProofOfPossession");
+    auto& props = ret["Properties"];
+    props.erase("RpsTicket");
+    props.erase("SiteName");
+    props["DeviceType"] = web::json::value("Nintendo");
+    props["Id"] = web::json::value(Crypto::Random::generateUUID().asString());
+    props["SerialNumber"] = web::json::value(Crypto::Random::generateUUID().asString());
+    props["Version"] = web::json::value("0.0.0.0");
+    return ret;
+}
+
+void XboxLivePatches::signInHook(MinecraftScreenModel* th, mcpe::function<void()> cancelCb,
+                                 mcpe::function<void(Social::SignInResult, bool)> cb) {
+    if (!XboxLiveHelper::getInstance().shouldUseDeviceAuthFlow()) {
+        signInOriginal(th, std::move(cancelCb), std::move(cb));
+        return;
+    }
+    XboxLiveHelper::getInstance().startMsaRemoteLoginFlow([th](std::string const& code) {
+        Log::trace(TAG, "Got code");
+        ((LauncherAppPlatform*) *AppPlatform::instance)->queueForMainThread([th, code]() {
+            th->navigateToXblConsoleSignInScreen(code, "xbox.signin.url");
+        });
+    }, [th, cb](MsaAuthTokenResponse const& resp) {
+        Log::trace(TAG, "Invoking XBL login: %s", resp.accessToken.c_str());
+        auto ret = XboxLiveHelper::getInstance().invokeXblLogin(resp.userId, "t=" + resp.accessToken);
+        Log::trace(TAG, "Invoking XBL event init");
+        // XboxLiveHelper::getInstance().initCll(cid);
+        auto retEv = XboxLiveHelper::getInstance().invokeEventInit();
+        Log::trace(TAG, "Xbox Live login completed");
+        bool newAccount = retEv.code == 0x8015DC09 /* creation required error code */;
+
+        auto auth = xbox::services::system::user_auth_android::get_instance();
+        auth->auth_flow_result.code = 0;
+        auth->auth_flow_result.xbox_user_id = ret.data.xbox_user_id;
+        auth->auth_flow_result.gamertag = ret.data.gamertag;
+        auth->auth_flow_result.age_group = ret.data.age_group;
+        auth->auth_flow_result.privileges = ret.data.privileges;
+        auth->auth_flow_result.user_settings_restrictions = ret.data.user_settings_restrictions;
+        auth->auth_flow_result.user_enforcement_restrictions = ret.data.user_enforcement_restrictions;
+        auth->auth_flow_result.user_title_restrictions = ret.data.user_title_restrictions;
+        auth->auth_flow_result.event_token = ret.data.token;
+        auth->auth_flow_result.cid = resp.userId;
+
+        ((LauncherAppPlatform*) *AppPlatform::instance)->queueForMainThread([th, cb, resp, newAccount, auth]() {
+            auth->complete_sign_in_with_ui(auth->auth_flow_result);
+
+            xbox::services::system::sign_in_result res;
+            res.result = xbox::services::system::sign_in_status::success;
+            res.new_account = newAccount;
+            th->clientInstance->getUser()->getLiveUser()->_handleUISignInNoError(res, [th, cb](
+                    Social::SignInResult a, bool b) {
+                cb(a, b);
+                th->navigateToXblConsoleSignInSucceededScreen(a, [](Social::SignInResult r) {
+                    Log::trace(TAG, "XblConsoleSignInSucceededScreen callback called");
+                }, b);
+            });
+        });
+    }, [cb](std::exception_ptr err) {
+        cb(Social::SignInResult::Error, false);
+    });
 }
 
 void XboxLivePatches::destroyXsapiSingleton(void* handle) {

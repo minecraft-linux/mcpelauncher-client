@@ -24,7 +24,7 @@ std::string XboxLiveHelper::findMsa() {
 
 XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()) {
     try {
-        client = std::unique_ptr<msa::client::ServiceClient>(new msa::client::ServiceClient(launcher));
+        //client = std::unique_ptr<msa::client::ServiceClient>(new msa::client::ServiceClient(launcher));
     } catch (std::exception& exception) {
         Log::error("XboxLiveHelper", "Failed to connect to the daemon: %s", exception.what());
     }
@@ -167,13 +167,15 @@ void XboxLiveHelper::logCll(cll::Event const& event) {
     cll->add(event);
 }
 
-void XboxLiveHelper::startMsaRemoteLoginFlow(std::function<void (std::string const& code)> success_cb,
+void XboxLiveHelper::startMsaRemoteLoginFlow(std::function<void (std::string const& code)> code_cb,
+                                             std::function<void (MsaAuthTokenResponse const&)> success_cb,
                                              std::function<void (std::exception_ptr)> error_cb) {
     if (msaRemoteLoginTask != nullptr)
         return;
     msaRemoteLoginTask = std::unique_ptr<MsaRemoteLoginTask>(
-            new MsaRemoteLoginTask(MSA_CLIENT_ID, "service::user.auth.xboxlive.com::MBI_SSL"));
-    msaRemoteLoginTask->setCodeCallback(success_cb);
-    msaRemoteLoginTask->setErrorCallback(error_cb);
+            new MsaRemoteLoginTask("00000000441cc96b", "service::user.auth.xboxlive.com::MBI_SSL"));
+    msaRemoteLoginTask->setCodeCallback(std::move(code_cb));
+    msaRemoteLoginTask->setSuccessCallback(std::move(success_cb));
+    msaRemoteLoginTask->setErrorCallback(std::move(error_cb));
     msaRemoteLoginTask->start();
 }
