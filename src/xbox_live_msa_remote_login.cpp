@@ -63,6 +63,13 @@ void XboxLiveMsaRemoteLogin::invokeMsaRemoteAuthFlow(std::function<void(std::str
     msaRemoteLoginTask->start();
 }
 
+void XboxLiveMsaRemoteLogin::cancelMsaRemoteAuthFlow() {
+    if (msaRemoteLoginTask == nullptr)
+        return;
+    msaRemoteLoginTask->cancel();
+    msaRemoteLoginTask = nullptr;
+}
+
 std::string XboxLiveMsaRemoteLogin::getCID() {
     auto local_conf = xbox::services::local_config::get_local_config_singleton();
     return local_conf->get_value_from_local_storage("cid").std();

@@ -11,6 +11,9 @@ class XboxLivePatches {
 private:
     static const char* TAG;
 
+    static bool isShowingDeviceAuthCode;
+    static mcpe::function<void (Social::SignInResult, bool)> deviceAuthSignInCallback;
+
     static bool verifyCertChain();
 
     static mcpe::string readXboxConfigFile(void* th);
@@ -45,6 +48,10 @@ private:
 
     static void signInHook(MinecraftScreenModel* th, mcpe::function<void ()> cancelCb,
                            mcpe::function<void (Social::SignInResult, bool)> cb);
+
+    static void cancelSignInHook(MinecraftScreenModel* th);
+
+    static void leaveDeviceAuthCodeScreen(MinecraftScreenModel* th);
 
 public:
     static void install(void* handle);

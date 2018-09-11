@@ -30,6 +30,8 @@ public:
                                          std::string const& binaryToken)> success_cb,
                                  std::function<void (std::exception_ptr)> error_cb) override;
 
+    void cancelMsaRemoteAuthFlow() override;
+
     bool isRemoteConnect() const override { return true; }
 
 

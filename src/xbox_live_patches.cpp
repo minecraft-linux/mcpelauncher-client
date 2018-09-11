@@ -16,6 +16,9 @@
 
 const char* XboxLivePatches::TAG = "XboxLive";
 
+bool XboxLivePatches::isShowingDeviceAuthCode = false;
+mcpe::function<void (Social::SignInResult, bool)> XboxLivePatches::deviceAuthSignInCallback;
+
 web::json::value (*XboxLivePatches::createDeviceTokenRequestOriginal)(mcpe::string, mcpe::string, void*, mcpe::string,
                                                                       mcpe::string, mcpe::string);
 void (*XboxLivePatches::signInOriginal)(MinecraftScreenModel*, mcpe::function<void ()>,
@@ -61,6 +64,9 @@ void XboxLivePatches::install(void *handle) {
     ptr = hybris_dlsym(handle, "_ZN25MinecraftScreenController13_handleSignInESt8functionIFvN6Social12SignInResultEbEE");
     ptr = (void*) ((size_t) ptr + 0x1420 - 0x1210);
     PatchUtils::patchCallInstruction(ptr, (void*) &signInHook, false);
+
+    ptr = hybris_dlsym(handle, "_ZN20MinecraftScreenModel12cancelSignInEv");
+    PatchUtils::patchCallInstruction(ptr, (void*) &cancelSignInHook, true);
 
     ptr = hybris_dlsym(handle, "_ZNK13MinecraftGame26useMinecraftVersionOfXBLUIEv");
     PatchUtils::patchCallInstruction(ptr, (void*) &useMinecraftVersionOfXBLUI, true);
@@ -236,10 +242,12 @@ void XboxLivePatches::signInHook(MinecraftScreenModel* th, mcpe::function<void()
         signInOriginal(th, std::move(cancelCb), std::move(cb));
         return;
     }
+    deviceAuthSignInCallback = cb;
     XboxLiveHelper::getInstance().getLoginInterface().invokeMsaRemoteAuthFlow([th](std::string const& code) {
         Log::trace(TAG, "Got code");
         ((LauncherAppPlatform*) *AppPlatform::instance)->queueForMainThread([th, code]() {
             th->navigateToXblConsoleSignInScreen(code, "xbox.signin.url");
+            isShowingDeviceAuthCode = true;
         });
     }, [th, cb](std::string const& cid, std::string const& token) {
         Log::trace(TAG, "Invoking XBL login: %s", token.c_str());
@@ -271,14 +279,35 @@ void XboxLivePatches::signInHook(MinecraftScreenModel* th, mcpe::function<void()
             th->clientInstance->getUser()->getLiveUser()->_handleUISignInNoError(res, [th, cb](
                     Social::SignInResult a, bool b) {
                 cb(a, b);
+                deviceAuthSignInCallback = nullptr;
+                if (isShowingDeviceAuthCode)
+                    th->leaveScreen();
+                isShowingDeviceAuthCode = false;
                 th->navigateToXblConsoleSignInSucceededScreen(a, [](Social::SignInResult r) {
                     Log::trace(TAG, "XblConsoleSignInSucceededScreen callback called");
                 }, b);
             });
         });
-    }, [cb](std::exception_ptr err) {
-        cb(Social::SignInResult::Error, false);
+    }, [th, cb](std::exception_ptr err) {
+        ((LauncherAppPlatform*) *AppPlatform::instance)->queueForMainThread([th, cb]() {
+            leaveDeviceAuthCodeScreen(th);
+            cb(Social::SignInResult::Error, false);
+            deviceAuthSignInCallback = nullptr;
+        });
     });
+}
+
+void XboxLivePatches::cancelSignInHook(MinecraftScreenModel* th) {
+    isShowingDeviceAuthCode = false;
+    XboxLiveHelper::getInstance().getLoginInterface().cancelMsaRemoteAuthFlow();
+    deviceAuthSignInCallback(Social::SignInResult::Success, false);
+    deviceAuthSignInCallback = nullptr;
+}
+
+void XboxLivePatches::leaveDeviceAuthCodeScreen(MinecraftScreenModel* th) {
+    if (isShowingDeviceAuthCode)
+        th->leaveScreen();
+    isShowingDeviceAuthCode = false;
 }
 
 void XboxLivePatches::destroyXsapiSingleton(void* handle) {

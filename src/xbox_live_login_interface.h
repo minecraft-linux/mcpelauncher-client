@@ -22,6 +22,8 @@ public:
             std::function<void (std::string const& cid, std::string const& binaryToken)> success_cb,
             std::function<void (std::exception_ptr)> error_cb) {}
 
+    virtual void cancelMsaRemoteAuthFlow() {}
+
     virtual void requestXblToken(std::string const& cid, bool silent,
                                  std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
                                  std::function<void(ErrorCode, std::string const&)> error_cb) = 0;
