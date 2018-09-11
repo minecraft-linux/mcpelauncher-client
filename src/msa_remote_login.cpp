@@ -85,3 +85,28 @@ MsaDeviceAuthPollResponse MsaRemoteLogin::pollDeviceAuthState(std::string const&
     Log::trace("MsaRemoteLogin", "poll: %i %s", response.status, response.body.c_str());
     return ret;
 }
+
+MsaDeviceAuthPollResponse MsaRemoteLogin::refreshToken(std::string const& token, std::string const& scope) {
+    Request request ("https://login.live.com/oauth20_token.srf");
+    request.postData.emplace_back("client_id", clientId);
+    request.postData.emplace_back("scope", scope);
+    request.postData.emplace_back("grant_type", "refresh_token");
+    request.postData.emplace_back("refresh_token", token);
+    Response response = send(request);
+    Log::trace("MsaRemoteLogin", "refreshToken: %i %s", response.status, response.body.c_str());
+    if (response.status != 200)
+        throw std::runtime_error("Failed to refresh token: invalid status code");
+    nlohmann::json json = nlohmann::json::parse(response.body);
+    std::string error = json.value("error", std::string());
+    MsaDeviceAuthPollResponse ret;
+    if (!error.empty())
+        throw std::runtime_error("Error during refreshing token: " + error + "; " +
+                                         json.value("error_description", std::string()));
+    ret.userId = json.at("user_id");
+    ret.tokenType = json.at("token_type");
+    ret.scope = json.at("scope");
+    ret.accessToken = json.at("access_token");
+    ret.refreshToken = json.at("refresh_token");
+    ret.expiresIn = json.at("expires_in");
+    return ret;
+}

@@ -25,7 +25,7 @@ struct MsaDeviceAuthPollResponse : public MsaAuthTokenResponse {
 class MsaRemoteLogin {
 
 private:
-    std::string clientId;
+    const std::string clientId;
 
     struct Request {
         std::string url;
@@ -46,5 +46,7 @@ public:
     MsaDeviceAuthConnectResponse startDeviceAuthConnect(std::string const& scope);
 
     MsaDeviceAuthPollResponse pollDeviceAuthState(std::string const& deviceCode);
+
+    MsaDeviceAuthPollResponse refreshToken(std::string const& token, std::string const& scope);
 
 };
