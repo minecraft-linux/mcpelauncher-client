@@ -1,50 +1,20 @@
-#include <msa/client/compact_token.h>
 #include <minecraft/Xbox.h>
 #include <log.h>
 #include <mcpelauncher/path_helper.h>
 #include <FileUtil.h>
 #include <minecraft/Common.h>
 #include "xbox_live_helper.h"
+#include "xbox_live_msa_login.h"
+#include "xbox_live_msa_remote_login.h"
 
-using namespace simpleipc;
-
-std::string const XboxLiveHelper::MSA_CLIENT_ID = "android-app://com.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y";
-std::string const XboxLiveHelper::MSA_COBRAND_ID = "90023";
-
-std::string XboxLiveHelper::findMsa() {
-    std::string path;
-#ifdef MSA_DAEMON_PATH
-    if (EnvPathUtil::findInPath("msa-daemon", path, MSA_DAEMON_PATH, EnvPathUtil::getAppDir().c_str()))
-        return path;
-#endif
-    if (EnvPathUtil::findInPath("msa-daemon", path))
-        return path;
-    return std::string();
-}
-
-XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()) {
+XboxLiveHelper::XboxLiveHelper() {
     try {
-        //client = std::unique_ptr<msa::client::ServiceClient>(new msa::client::ServiceClient(launcher));
+        loginInterface = std::unique_ptr<XboxLiveLoginInterface>(new XboxLiveMsaLogin());
     } catch (std::exception& exception) {
-        Log::error("XboxLiveHelper", "Failed to connect to the daemon: %s", exception.what());
-    }
-}
+        Log::error("XboxLiveHelper", "Failed to create the daemon login interface: %s", exception.what());
 
-void XboxLiveHelper::invokeMsaAuthFlow(
-        std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
-        std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb) {
-    if (!client) {
-        error_cb(simpleipc::rpc_error_codes::connection_closed, "Could not connect to the daemon");
-        return;
+        loginInterface = std::unique_ptr<XboxLiveLoginInterface>(new XboxLiveMsaRemoteLogin());
     }
-    client->pickAccount(MSA_CLIENT_ID, MSA_COBRAND_ID).call([this, success_cb, error_cb](rpc_result<std::string> res) {
-        if (!res.success()) {
-            error_cb(res.error_code(), res.error_text());
-            return;
-        }
-
-        requestXblToken(res.data(), false, success_cb, error_cb);
-    });
 }
 
 xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> XboxLiveHelper::invokeXblLogin(
@@ -83,35 +53,6 @@ xbox::services::xbox_live_result<xbox::services::system::token_and_signature_res
     return ret;
 }
 
-simpleipc::client::rpc_call<std::shared_ptr<msa::client::Token>> XboxLiveHelper::requestXblToken(std::string const& cid,
-                                                                                                 bool silent) {
-    if (!client)
-        throw std::runtime_error("Could not connect to the daemon");
-    return client->requestToken(cid, {"user.auth.xboxlive.com", "mbi_ssl"}, MSA_CLIENT_ID, silent);
-}
-
-void XboxLiveHelper::requestXblToken
-        (std::string const& cid, bool silent,
-         std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
-         std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb) {
-    if (!client) {
-        error_cb(simpleipc::rpc_error_codes::connection_closed, "Could not connect to the daemon");
-        return;
-    }
-    requestXblToken(cid, silent).call([cid, success_cb, error_cb](rpc_result<std::shared_ptr<msa::client::Token>> res) {
-        if (res.success() && res.data() && res.data()->getType() == msa::client::TokenType::Compact) {
-            auto token = msa::client::token_pointer_cast<msa::client::CompactToken>(res.data());
-            success_cb(cid, token->getBinaryToken());
-        } else {
-            if (res.success())
-                error_cb(simpleipc::rpc_error_codes::internal_error, "Invalid token received from the MSA daemon");
-            else
-                error_cb(res.error_code(), res.error_text());
-        }
-    });
-}
-
-
 void XboxLiveHelper::initCll(std::string const& cid) {
     std::lock_guard<std::mutex> lock (cllMutex);
     if (!cid.empty())
@@ -128,15 +69,6 @@ void XboxLiveHelper::initCll(std::string const& cid) {
     cll->addUploadStep(cllAuthStep);
     cll->setApp("A:com.mojang.minecraftpe", Common::getGameVersionStringNet().std());
     cll->start();
-}
-
-std::string XboxLiveHelper::getCllMsaToken(std::string const& cid) {
-    if (!client)
-        return std::string();
-    auto token = client->requestToken(cid, {"vortex.data.microsoft.com", "mbi_ssl"}, MSA_CLIENT_ID, true).call();
-    if (!token.success() || !token.data() || token.data()->getType() != msa::client::TokenType::Compact)
-        return std::string();
-    return msa::client::token_pointer_cast<msa::client::CompactToken>(token.data())->getBinaryToken();
 }
 
 std::string XboxLiveHelper::getCllXToken(bool refresh) {
@@ -165,17 +97,4 @@ std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
 void XboxLiveHelper::logCll(cll::Event const& event) {
     initCll();
     cll->add(event);
-}
-
-void XboxLiveHelper::startMsaRemoteLoginFlow(std::function<void (std::string const& code)> code_cb,
-                                             std::function<void (MsaAuthTokenResponse const&)> success_cb,
-                                             std::function<void (std::exception_ptr)> error_cb) {
-    if (msaRemoteLoginTask != nullptr)
-        return;
-    msaRemoteLoginTask = std::unique_ptr<MsaRemoteLoginTask>(
-            new MsaRemoteLoginTask("00000000441cc96b", "service::user.auth.xboxlive.com::MBI_SSL"));
-    msaRemoteLoginTask->setCodeCallback(std::move(code_cb));
-    msaRemoteLoginTask->setSuccessCallback(std::move(success_cb));
-    msaRemoteLoginTask->setErrorCallback(std::move(error_cb));
-    msaRemoteLoginTask->start();
 }

@@ -12,6 +12,7 @@
 #include "fake_jni.h"
 #include "xbox_live_helper.h"
 #include "client_app_platform.h"
+#include "xbox_live_msa_remote_login.h"
 
 const char* XboxLivePatches::TAG = "XboxLive";
 
@@ -112,7 +113,7 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
 
     if (requestCode == 1) { // silent signin
         if (th->cid.length() > 0) {
-            XboxLiveHelper::getInstance().requestXblToken(th->cid.std(), true,
+            XboxLiveHelper::getInstance().getLoginInterface().requestXblToken(th->cid.std(), true,
                     [](std::string const& cid, std::string const& token) {
                         XboxLiveHelper::getInstance().initCll(cid);
 
@@ -121,10 +122,10 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
                         ticket.error_code = 0;
                         ticket.error_text = "Got ticket";
                         xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
-                    }, [](simpleipc::rpc_error_code err, std::string const& msg) {
+                    }, [](XboxLiveLoginInterface::ErrorCode err, std::string const& msg) {
                         xbox::services::system::java_rps_ticket ticket;
                         Log::error(TAG, "Xbox Live sign in failed: %s", msg.c_str());
-                        if (err == -100) { // No such account
+                        if (err == XboxLiveLoginInterface::ErrorCode::InternalError) { // No such account
                             ticket.error_code = 1;
                             ticket.error_text = "Must show UI to acquire an account.";
                         } else {
@@ -152,7 +153,8 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
 void XboxLivePatches::invokeAuthFlow(xbox::services::system::user_auth_android* auth) {
     Log::trace(TAG, "invoke_auth_flow");
 
-    XboxLiveHelper::getInstance().invokeMsaAuthFlow([auth](std::string const& cid, std::string const& token) {
+    XboxLiveHelper::getInstance().getLoginInterface().invokeMsaAuthFlow([auth](std::string const& cid,
+                                                                               std::string const& token) {
         Log::trace(TAG, "Got account CID and token");
         Log::trace(TAG, "Invoking XBL login");
         auto ret = XboxLiveHelper::getInstance().invokeXblLogin(cid, token);
@@ -172,7 +174,7 @@ void XboxLivePatches::invokeAuthFlow(xbox::services::system::user_auth_android* 
         auth->auth_flow_result.event_token = retEv.data.token;
         auth->auth_flow_result.cid = cid;
         auth->auth_flow_event.set(auth->auth_flow_result);
-    }, [auth](simpleipc::rpc_error_code, std::string const& msg) {
+    }, [auth](XboxLiveLoginInterface::ErrorCode e, std::string const& msg) {
         Log::trace(TAG, "Sign in error: %s", msg.c_str());
         auth->auth_flow_result.code = 2;
         auth->auth_flow_event.set(auth->auth_flow_result);
@@ -214,7 +216,7 @@ void XboxLivePatches::workaroundShutdownFreeze(void* handle) {
 
 web::json::value XboxLivePatches::createDeviceTokenRequestHook(mcpe::string a, mcpe::string b, void* c, mcpe::string d,
                                                                mcpe::string e, mcpe::string f) {
-    if (!XboxLiveHelper::getInstance().shouldUseDeviceAuthFlow())
+    if (!XboxLiveHelper::getInstance().getLoginInterface().isRemoteConnect())
         return createDeviceTokenRequestOriginal(a, b, c, d, e, f);
 
     web::json::value ret = createDeviceTokenRequestOriginal(a, b, c, d, e, "ProofOfPossession");
@@ -230,20 +232,20 @@ web::json::value XboxLivePatches::createDeviceTokenRequestHook(mcpe::string a, m
 
 void XboxLivePatches::signInHook(MinecraftScreenModel* th, mcpe::function<void()> cancelCb,
                                  mcpe::function<void(Social::SignInResult, bool)> cb) {
-    if (!XboxLiveHelper::getInstance().shouldUseDeviceAuthFlow()) {
+    if (!XboxLiveHelper::getInstance().getLoginInterface().isRemoteConnect()) {
         signInOriginal(th, std::move(cancelCb), std::move(cb));
         return;
     }
-    XboxLiveHelper::getInstance().startMsaRemoteLoginFlow([th](std::string const& code) {
+    XboxLiveHelper::getInstance().getLoginInterface().invokeMsaRemoteAuthFlow([th](std::string const& code) {
         Log::trace(TAG, "Got code");
         ((LauncherAppPlatform*) *AppPlatform::instance)->queueForMainThread([th, code]() {
             th->navigateToXblConsoleSignInScreen(code, "xbox.signin.url");
         });
-    }, [th, cb](MsaAuthTokenResponse const& resp) {
-        Log::trace(TAG, "Invoking XBL login: %s", resp.accessToken.c_str());
-        auto ret = XboxLiveHelper::getInstance().invokeXblLogin(resp.userId, "t=" + resp.accessToken);
+    }, [th, cb](std::string const& cid, std::string const& token) {
+        Log::trace(TAG, "Invoking XBL login: %s", token.c_str());
+        auto ret = XboxLiveHelper::getInstance().invokeXblLogin(cid, token);
         Log::trace(TAG, "Invoking XBL event init");
-        // XboxLiveHelper::getInstance().initCll(cid);
+        XboxLiveHelper::getInstance().initCll(resp.userId);
         auto retEv = XboxLiveHelper::getInstance().invokeEventInit();
         Log::trace(TAG, "Xbox Live login completed");
         bool newAccount = retEv.code == 0x8015DC09 /* creation required error code */;
@@ -258,9 +260,9 @@ void XboxLivePatches::signInHook(MinecraftScreenModel* th, mcpe::function<void()
         auth->auth_flow_result.user_enforcement_restrictions = ret.data.user_enforcement_restrictions;
         auth->auth_flow_result.user_title_restrictions = ret.data.user_title_restrictions;
         auth->auth_flow_result.event_token = ret.data.token;
-        auth->auth_flow_result.cid = resp.userId;
+        auth->auth_flow_result.cid = cid;
 
-        ((LauncherAppPlatform*) *AppPlatform::instance)->queueForMainThread([th, cb, resp, newAccount, auth]() {
+        ((LauncherAppPlatform*) *AppPlatform::instance)->queueForMainThread([th, cb, newAccount, auth]() {
             auth->complete_sign_in_with_ui(auth->auth_flow_result);
 
             xbox::services::system::sign_in_result res;

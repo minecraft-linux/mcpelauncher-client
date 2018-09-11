@@ -12,7 +12,7 @@ void CllUploadAuthStep::setAccount(std::string const& cid) {
 void CllUploadAuthStep::refreshTokens(bool force) {
     std::lock_guard<std::recursive_mutex> lock (mutex);
     if (msaToken.empty() || force)
-        msaToken = XboxLiveHelper::getInstance().getCllMsaToken(cid);
+        msaToken = XboxLiveHelper::getInstance().getLoginInterface().getCllMsaToken(cid);
     if (xToken.empty() || force)
         xToken = XboxLiveHelper::getCllXToken(force);
 }
