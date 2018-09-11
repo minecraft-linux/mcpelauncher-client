@@ -7,6 +7,8 @@ class XboxLiveMsaRemoteLogin : public XboxLiveLoginInterface {
 
 private:
     static std::string const MSA_CLIENT_ID;
+    static std::string const XBOX_LIVE_SCOPE;
+    static std::string const VORTEX_SCOPE;
 
     std::unique_ptr<MsaRemoteLoginTask> msaRemoteLoginTask;
 
@@ -30,6 +32,8 @@ public:
 
     bool isRemoteConnect() const override { return true; }
 
+
+    static std::string getCID();
 
     static std::string getRefreshToken();
 

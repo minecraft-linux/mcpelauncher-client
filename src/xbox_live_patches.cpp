@@ -245,7 +245,7 @@ void XboxLivePatches::signInHook(MinecraftScreenModel* th, mcpe::function<void()
         Log::trace(TAG, "Invoking XBL login: %s", token.c_str());
         auto ret = XboxLiveHelper::getInstance().invokeXblLogin(cid, token);
         Log::trace(TAG, "Invoking XBL event init");
-        XboxLiveHelper::getInstance().initCll(resp.userId);
+        XboxLiveHelper::getInstance().initCll(cid);
         auto retEv = XboxLiveHelper::getInstance().invokeEventInit();
         Log::trace(TAG, "Xbox Live login completed");
         bool newAccount = retEv.code == 0x8015DC09 /* creation required error code */;
