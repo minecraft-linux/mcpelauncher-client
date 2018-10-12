@@ -7,6 +7,7 @@
 #include <mcpelauncher/path_helper.h>
 #include <minecraft/Common.h>
 #include <minecraft/MinecraftGame.h>
+#include <minecraft/ClientInstance.h>
 #include <mcpelauncher/mod_loader.h>
 #include "client_app_platform.h"
 #include "xbox_live_patches.h"
@@ -17,6 +18,7 @@
 #include "gl_core_patch.h"
 #include "xbox_live_helper.h"
 #include "xbox_sleep_shutdown_patch.h"
+#include "tts_patch.h"
 
 static std::unique_ptr<ClientAppPlatform> appPlatform;
 
@@ -64,6 +66,7 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Applying patches");
     LauncherStore::install(handle);
+    TTSPatch::install(handle);
     XboxLivePatches::install(handle);
     XboxSleepShutdownPatch::install(handle);
     LinuxHttpRequestHelper::install(handle);
@@ -105,7 +108,9 @@ int main(int argc, char *argv[]) {
     WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
     windowCallbacks.setPixelScale(pixelScale);
     windowCallbacks.registerCallbacks();
-    windowCallbacks.handleInitialWindowSize();
+    game->doPrimaryClientReadyWork([&windowCallbacks]() {
+        windowCallbacks.handleInitialWindowSize();
+    });
     window->runLoop();
 
     if (game->isInGame()) {

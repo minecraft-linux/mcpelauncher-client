@@ -51,7 +51,7 @@ void WindowCallbacks::onDraw() {
 }
 
 void WindowCallbacks::onClose() {
-    game.quit();
+    game.quit("linux launcher", "window close");
 }
 
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
