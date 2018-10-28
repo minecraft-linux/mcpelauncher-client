@@ -60,6 +60,8 @@ void WindowCallbacks::onClose() {
 }
 
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
+    if (btn < 1 || btn > 3)
+        return;
     Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
