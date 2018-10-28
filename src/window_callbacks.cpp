@@ -1,7 +1,7 @@
 #include "window_callbacks.h"
 #include "minecraft_gamepad_mapping.h"
+#include "client_app_platform.h"
 
-#include <mcpelauncher/app_platform.h>
 #include <mcpelauncher/minecraft_version.h>
 #include <minecraft/MinecraftGame.h>
 #include <minecraft/Mouse.h>
@@ -75,8 +75,18 @@ void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
 }
 void WindowCallbacks::onKeyboard(int key, KeyAction action) {
-    if (key == 112 + 10 && action == KeyAction::PRESS)
-        game.getPrimaryUserOptions()->setFullscreen(!game.getPrimaryUserOptions()->getFullscreen());
+    if (action == KeyAction::PRESS) {
+        if (key == 37)
+            appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::LeftKey);
+        else if (key == 39)
+            appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::RightKey);
+        else if (key == 65360)
+            appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::HomeKey);
+        else if (key == 65367)
+            appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::EndKey);
+        else if (key == 112 + 10)
+            game.getPrimaryUserOptions()->setFullscreen(!game.getPrimaryUserOptions()->getFullscreen());
+    }
     if (action == KeyAction::PRESS)
         Keyboard::feed((unsigned char) key, 1);
     else if (action == KeyAction::RELEASE)
@@ -84,19 +94,13 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
 
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
-    Keyboard::feedText(c, false, 0);
+    if ((c.size() == 1 && c[0] == '\n') || !appPlatform.isKeyboardVisible())
+        Keyboard::feedText(c, false, 0);
+    else
+        appPlatform.onKeyboardText(game, c);
 }
 void WindowCallbacks::onPaste(std::string const& str) {
-    for (int i = 0; i < str.length(); ) {
-        char c = str[i];
-        int l = 1;
-        if ((c & 0b11110000) == 0b11100000)
-            l = 3;
-        else if ((c & 0b11100000) == 0b11000000)
-            l = 2;
-        Keyboard::feedText(mcpe::string(&str[i], (size_t) l), false, 0);
-        i += l;
-    }
+    appPlatform.onKeyboardText(game, str);
 }
 void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
     Log::trace("WindowCallbacks", "Gamepad %s #%i", connected ? "connected" : "disconnected", gamepad);

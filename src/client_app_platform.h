@@ -3,12 +3,18 @@
 #include <mcpelauncher/app_platform.h>
 #include <game_window.h>
 
+class Vec2;
+class MinecraftGame;
+
 class ClientAppPlatform : public LauncherAppPlatform {
 
 private:
     static const char* TAG;
 
     std::shared_ptr<GameWindow> window;
+    std::string currentText;
+    size_t currentTextPosition = 0;
+    size_t currentTextPositionUTF = 0;
 
 public:
     static void** myVtable;
@@ -29,5 +35,16 @@ public:
     bool supportsFilePicking() { return true; }
 
     void setFullscreenMode(int mode);
+
+    void showKeyboard(mcpe::string const& text, int, bool, bool, bool, int, Vec2 const&);
+    void updateTextBoxText(mcpe::string const& text);
+    void hideKeyboard();
+
+    enum DirectionKey {
+        LeftKey, RightKey, HomeKey, EndKey
+    };
+
+    void onKeyboardText(MinecraftGame& game, std::string const& text);
+    void onKeyboardDirectionKey(DirectionKey key);
 
 };
