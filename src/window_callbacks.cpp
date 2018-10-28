@@ -2,11 +2,13 @@
 #include "minecraft_gamepad_mapping.h"
 
 #include <mcpelauncher/app_platform.h>
+#include <mcpelauncher/minecraft_version.h>
 #include <minecraft/MinecraftGame.h>
 #include <minecraft/Mouse.h>
 #include <minecraft/Keyboard.h>
 #include <minecraft/Options.h>
 #include <minecraft/GameControllerManager.h>
+#include <minecraft/legacy/App.h>
 
 void WindowCallbacks::registerCallbacks() {
     using namespace std::placeholders;
@@ -51,7 +53,10 @@ void WindowCallbacks::onDraw() {
 }
 
 void WindowCallbacks::onClose() {
-    game.quit("linux launcher", "window close");
+    if (MinecraftVersion::isAtLeast(1, 8))
+        game.quit("linux launcher", "window close");
+    else
+        ((Legacy::Pre_1_8::App&) game).quit();
 }
 
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {

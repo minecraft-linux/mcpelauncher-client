@@ -3,6 +3,7 @@
 #include <game_window_manager.h>
 #include <argparser.h>
 #include <mcpelauncher/minecraft_utils.h>
+#include <mcpelauncher/minecraft_version.h>
 #include <mcpelauncher/crash_handler.h>
 #include <mcpelauncher/path_helper.h>
 #include <minecraft/Common.h>
@@ -108,9 +109,13 @@ int main(int argc, char *argv[]) {
     WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
     windowCallbacks.setPixelScale(pixelScale);
     windowCallbacks.registerCallbacks();
-    game->doPrimaryClientReadyWork([&windowCallbacks]() {
+    if (MinecraftVersion::isAtLeast(1, 8)) {
+        game->doPrimaryClientReadyWork([&windowCallbacks]() {
+            windowCallbacks.handleInitialWindowSize();
+        });
+    } else {
         windowCallbacks.handleInitialWindowSize();
-    });
+    }
     window->runLoop();
 
     if (game->isInGame()) {

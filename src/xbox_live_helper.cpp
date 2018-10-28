@@ -1,9 +1,11 @@
 #include <msa/client/compact_token.h>
-#include <minecraft/Xbox.h>
 #include <log.h>
-#include <mcpelauncher/path_helper.h>
 #include <FileUtil.h>
+#include <mcpelauncher/path_helper.h>
+#include <mcpelauncher/minecraft_version.h>
 #include <minecraft/Common.h>
+#include <minecraft/Xbox.h>
+#include <minecraft/legacy/Xbox.h>
 #include "xbox_live_helper.h"
 
 using namespace simpleipc;
@@ -159,7 +161,10 @@ std::string XboxLiveHelper::getCllXToken(bool refresh) {
 
 std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
     auto local_conf = xbox::services::local_config::get_local_config_singleton();
-    return local_conf->get_value_from_local_storage(xuid).std();
+    if (MinecraftVersion::isAtLeast(1, 8))
+        return local_conf->get_value_from_local_storage(xuid).std();
+    else
+        return ((Legacy::Pre_1_8::xbox::services::local_config&) *local_conf).get_value_from_local_storage(xuid).std();
 }
 
 void XboxLiveHelper::logCll(cll::Event const& event) {
