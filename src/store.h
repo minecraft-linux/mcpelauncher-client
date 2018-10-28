@@ -17,7 +17,8 @@ class LauncherStore {
 
 private:
     static std::unique_ptr<LauncherStore> createStore(const mcpe::string& idk, StoreListener& listener) {
-        Log::trace("Launcher", "Creating store (%s)", idk.c_str());
+        //Log::trace("Launcher", "Creating store (%s)", idk.c_str());
+        Log::trace("Launcher", "Creating store");
         return std::unique_ptr<LauncherStore>(new LauncherStore());
     }
 
@@ -36,7 +37,7 @@ public:
         return false;
     }
     virtual bool allowsSubscriptions() {
-        Log::trace("Store", "allowsSubscriptions: true");
+        // Log::trace("Store", "allowsSubscriptions: true");
         return true;
     }
     virtual mcpe::string getStoreId() {
@@ -48,11 +49,11 @@ public:
         return "";
     }
     virtual mcpe::string getProductSkuPrefix() {
-        Log::trace("Store", "getProductSkuPrefix: ");
+        // Log::trace("Store", "getProductSkuPrefix: ");
         return "";
     }
     virtual mcpe::string getRealmsSkuPrefix() {
-        Log::trace("Store", "getRealmsSkuPrefix: ");
+        // Log::trace("Store", "getRealmsSkuPrefix: ");
         return "";
     }
     virtual void queryProducts(std::vector<std::string> const& arr) {
@@ -86,7 +87,7 @@ public:
         return true;
     }
     virtual ExtraLicenseData getExtraLicenseData() {
-        Log::warn("Store", "getExtraLicenseData");
+        Log::warn("Store", "getExtraLicenseData - not implemented");
         return ExtraLicenseData();
     }
     virtual mcpe::string getAppReceipt() {
