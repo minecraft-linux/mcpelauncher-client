@@ -75,6 +75,12 @@ void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
 }
 void WindowCallbacks::onKeyboard(int key, KeyAction action) {
+    if (key == 17)
+        modCTRL = (action != KeyAction::RELEASE);
+    if (modCTRL && key == 'C') {
+        appPlatform.copyCurrentText();
+        return;
+    }
     if (action == KeyAction::PRESS) {
         if (key == 37)
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::LeftKey);

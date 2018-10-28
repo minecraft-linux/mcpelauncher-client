@@ -47,4 +47,10 @@ public:
     void onKeyboardText(MinecraftGame& game, std::string const& text);
     void onKeyboardDirectionKey(DirectionKey key);
 
+    void copyCurrentText();
+
+    bool supportsClipboard() const { return true; }
+
+    void setClipboard(mcpe::string const& text);
+
 };

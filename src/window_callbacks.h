@@ -21,6 +21,7 @@ private:
     GameWindow& window;
     float pixelScale = 2.f;
     std::unordered_map<int, GamepadData> gamepads;
+    bool modCTRL = false;
 
 public:
     WindowCallbacks(MinecraftGame& game, ClientAppPlatform& appPlatform, GameWindow& window) :

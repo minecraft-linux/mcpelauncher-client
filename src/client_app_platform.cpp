@@ -33,6 +33,8 @@ void ClientAppPlatform::initVtable(void* lib) {
     vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbiRK4Vec2", &ClientAppPlatform::showKeyboard);
     vtr.replace("_ZN11AppPlatform17updateTextBoxTextERKSs", &ClientAppPlatform::updateTextBoxText);
     vtr.replace("_ZN11AppPlatform12hideKeyboardEv", &ClientAppPlatform::hideKeyboard);
+    vtr.replace("_ZNK11AppPlatform17supportsClipboardEv", &ClientAppPlatform::supportsClipboard);
+    vtr.replace("_ZNK11AppPlatform12setClipboardERKSs", &ClientAppPlatform::setClipboard);
 }
 
 ClientAppPlatform::ClientAppPlatform() {
@@ -167,4 +169,12 @@ void ClientAppPlatform::onKeyboardDirectionKey(DirectionKey key) {
         currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
     }
     Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
+}
+
+void ClientAppPlatform::copyCurrentText() {
+    window->setClipboardText(currentText);
+}
+
+void ClientAppPlatform::setClipboard(mcpe::string const &text) {
+    window->setClipboardText(text.std());
 }
