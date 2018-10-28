@@ -20,10 +20,13 @@
 #include "xbox_live_helper.h"
 #include "xbox_sleep_shutdown_patch.h"
 #include "tts_patch.h"
+#include <build_info.h>
 
 static std::unique_ptr<ClientAppPlatform> appPlatform;
 
 int main(int argc, char *argv[]) {
+    Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
+
     auto windowManager = GameWindowManager::getManager();
     CrashHandler::registerCrashHandler();
     MinecraftUtils::workaroundLocaleBug();
