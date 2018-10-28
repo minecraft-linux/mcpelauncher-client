@@ -25,8 +25,6 @@
 static std::unique_ptr<ClientAppPlatform> appPlatform;
 
 int main(int argc, char *argv[]) {
-    Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
-
     auto windowManager = GameWindowManager::getManager();
     CrashHandler::registerCrashHandler();
     MinecraftUtils::workaroundLocaleBug();
@@ -49,6 +47,8 @@ int main(int argc, char *argv[]) {
         PathHelper::setCacheDir(cacheDir);
     if (mallocZero)
         MinecraftUtils::setMallocZero();
+
+    Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
 
     GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
 
