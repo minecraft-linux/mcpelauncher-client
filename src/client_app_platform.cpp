@@ -24,6 +24,7 @@ void ClientAppPlatform::initVtable(void* lib) {
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::hideMousePointer), &ClientAppPlatform::hideMousePointer);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::showMousePointer), &ClientAppPlatform::showMousePointer);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickImage), &ClientAppPlatform::pickImage);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickImageOld), &ClientAppPlatform::pickImageOld);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickFile), &ClientAppPlatform::pickFile);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::setFullscreenMode), &ClientAppPlatform::setFullscreenMode);
 }
@@ -41,7 +42,18 @@ void ClientAppPlatform::showMousePointer() {
         window->setCursorDisabled(false);
 }
 
-void ClientAppPlatform::pickImage(ImagePickingCallback &callback) {
+void ClientAppPlatform::pickImage(std::shared_ptr<ImagePickingCallback> callback) {
+    Log::trace(TAG, "pickImage");
+    auto picker = FilePickerFactory::createFilePicker();
+    picker->setTitle("Select image");
+    picker->setFileNameFilters({ "*.png" });
+    if (picker->show())
+        callback->onImagePickingSuccess(picker->getPickedFile());
+    else
+        callback->onImagePickingCanceled();
+}
+
+void ClientAppPlatform::pickImageOld(ImagePickingCallback &callback) {
     Log::trace(TAG, "pickImage");
     auto picker = FilePickerFactory::createFilePicker();
     picker->setTitle("Select image");

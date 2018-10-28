@@ -23,7 +23,8 @@ public:
     void hideMousePointer();
     void showMousePointer();
 
-    void pickImage(ImagePickingCallback& callback);
+    void pickImage(std::shared_ptr<ImagePickingCallback>);
+    void pickImageOld(ImagePickingCallback& callback);
     void pickFile(FilePickerSettings& callback);
     bool supportsFilePicking() { return true; }
 
