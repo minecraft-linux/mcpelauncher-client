@@ -2,11 +2,12 @@
 
 #include <memory>
 #include <minecraft/NullTextToSpeechClient.h>
+#include <minecraft/std/shared_ptr.h>
 
 class TTSPatch {
 
 private:
-    static std::shared_ptr<NullTextToSpeechClient> createTTSClient();
+    static mcpe::shared_ptr<NullTextToSpeechClient> createTTSClient();
 
 public:
     static void install(void* handle);

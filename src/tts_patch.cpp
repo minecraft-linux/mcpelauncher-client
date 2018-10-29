@@ -11,8 +11,8 @@ void TTSPatch::install(void* handle) {
     PatchUtils::patchCallInstruction(sym, (void*) &TTSPatch::createTTSClient, true);
 }
 
-std::shared_ptr<NullTextToSpeechClient> TTSPatch::createTTSClient() {
+mcpe::shared_ptr<NullTextToSpeechClient> TTSPatch::createTTSClient() {
     auto ret = new NullTextToSpeechClient;
     ret->vtable = &NullTextToSpeechClient::myVtable[2];
-    return std::shared_ptr<NullTextToSpeechClient>(ret);
+    return mcpe::shared_ptr<NullTextToSpeechClient>(ret);
 }
