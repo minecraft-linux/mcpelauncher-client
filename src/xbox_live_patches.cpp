@@ -9,6 +9,7 @@
 #include <minecraft/Xbox.h>
 #include <minecraft/legacy/Xbox.h>
 #include <log.h>
+#include <minecraft/std/shared_ptr.h>
 #include "fake_jni.h"
 #include "xbox_live_helper.h"
 
@@ -204,5 +205,5 @@ void XboxLivePatches::destroyXsapiSingleton(void* handle) {
     unsigned int ebx = off + 0xb;
     ebx += *((unsigned int*) (off + 0xc + 2));
     unsigned int ptr = ebx + *((unsigned int*) (off + (0x661 - 0x4F0) + 2));
-    ((std::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
+    ((mcpe::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
 }
