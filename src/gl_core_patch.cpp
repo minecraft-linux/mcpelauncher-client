@@ -4,6 +4,7 @@
 #include <log.h>
 #include <mcpelauncher/patch_utils.h>
 #include <game_window_manager.h>
+#include <mcpelauncher/minecraft_version.h>
 
 void (*GLCorePatch::glGenVertexArrays)(int n, unsigned int* arrays);
 void (*GLCorePatch::glBindVertexArray)(unsigned int array);
@@ -13,11 +14,14 @@ void (*GLCorePatch::bindVertexArrayOriginal)(void*, void*, void*);
 
 void GLCorePatch::install(void* handle) {
     void* ptr = hybris_dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsS2_S2_S2_");
-    if (((unsigned char*) ptr)[0x5C9 - 0x4C0 + 1] != 0xAC) {
+    size_t shaderSizeOffset = 0xD8F - 0xB30;
+    if (!MinecraftVersion::isAtLeast(1, 8))
+        shaderSizeOffset = 0x5C9 - 0x4C0;
+    if (((unsigned char*) ptr)[shaderSizeOffset + 1] != 0xAC) {
         Log::error("Launcher", "Graphics patch error: unexpected byte");
         exit(1);
     }
-    ((unsigned char*) ptr)[0x5C9 - 0x4C0 + 1] += 4;
+    ((unsigned char*) ptr)[shaderSizeOffset + 1] += 4;
 
     reflectShaderUniformsOriginal = (void (*)(void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
     ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERNS_11ShaderCacheERNS_13ShaderProgramES4_S4_") + (0x720 - 0x6A0));
