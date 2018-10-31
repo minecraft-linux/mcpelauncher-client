@@ -100,16 +100,21 @@ void ClientAppPlatform::setFullscreenMode(int mode) {
     window->setFullscreen(mode != 0);
 }
 
+void ClientAppPlatform::update() {
+    if (isKeyboardVisible())
+        Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
+}
+
 void ClientAppPlatform::showKeyboard(mcpe::string const &text, int i, bool b, bool b2, bool b3, int i2, Vec2 const &v) {
     AppPlatform::showKeyboard(text, i, b, b2, b3, i2, v);
-    currentText = text.std();
-    currentTextPosition = currentText.size();
-    currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
-    Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
+    updateTextBoxText(text);
 }
 
 void ClientAppPlatform::updateTextBoxText(mcpe::string const &text) {
     currentText = text.std();
+    currentTextPosition = currentText.size();
+    currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
+    Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
 }
 
 void ClientAppPlatform::hideKeyboard() {

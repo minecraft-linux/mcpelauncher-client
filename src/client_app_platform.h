@@ -40,6 +40,8 @@ public:
     void updateTextBoxText(mcpe::string const& text);
     void hideKeyboard();
 
+    void update();
+
     enum DirectionKey {
         LeftKey, RightKey, HomeKey, EndKey
     };

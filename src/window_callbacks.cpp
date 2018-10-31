@@ -49,6 +49,7 @@ void WindowCallbacks::onDraw() {
     }
 
     appPlatform.runMainThreadTasks();
+    appPlatform.update();
     game.update();
 }
 
@@ -81,7 +82,7 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
         appPlatform.copyCurrentText();
         return;
     }
-    if (action == KeyAction::PRESS) {
+    if (action == KeyAction::PRESS || action == KeyAction::REPEAT) {
         if (key == 37)
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::LeftKey);
         else if (key == 39)
@@ -90,9 +91,9 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::HomeKey);
         else if (key == 65367)
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::EndKey);
-        else if (key == 112 + 10)
-            game.getPrimaryUserOptions()->setFullscreen(!game.getPrimaryUserOptions()->getFullscreen());
     }
+    if (key == 112 + 10 && action == KeyAction::PRESS)
+        game.getPrimaryUserOptions()->setFullscreen(!game.getPrimaryUserOptions()->getFullscreen());
     if (action == KeyAction::PRESS)
         Keyboard::feed((unsigned char) key, 1);
     else if (action == KeyAction::RELEASE)
