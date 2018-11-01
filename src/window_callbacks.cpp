@@ -87,9 +87,9 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::LeftKey);
         else if (key == 39)
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::RightKey);
-        else if (key == 65360)
+        else if (key == 36)
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::HomeKey);
-        else if (key == 65367)
+        else if (key == 35)
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::EndKey);
     }
     if (key == 112 + 10 && action == KeyAction::PRESS)
