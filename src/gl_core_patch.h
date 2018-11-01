@@ -1,8 +1,12 @@
 #pragma once
 
+#include <cstddef>
+
 class GLCorePatch {
 
 private:
+    static size_t shaderVertexArrOffset;
+
     static void (*glGenVertexArrays)(int n, unsigned int* arrays);
     static void (*glBindVertexArray)(unsigned int array);
 

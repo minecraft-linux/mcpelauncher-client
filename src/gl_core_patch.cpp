@@ -12,12 +12,20 @@ void (*GLCorePatch::glBindVertexArray)(unsigned int array);
 void (*GLCorePatch::reflectShaderUniformsOriginal)(void*);
 void (*GLCorePatch::bindVertexArrayOriginal)(void*, void*, void*);
 
+size_t GLCorePatch::shaderVertexArrOffset;
+
 void GLCorePatch::install(void* handle) {
     void* ptr = hybris_dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsS2_S2_S2_");
     size_t shaderSizeOffset = 0xD8F - 0xB30;
-    if (!MinecraftVersion::isAtLeast(1, 8))
+    shaderVertexArrOffset = 0xAC;
+    if (!MinecraftVersion::isAtLeast(1, 6)) {
+        ptr = hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
+        shaderSizeOffset = 0x90C - 0x7F0;
+        shaderVertexArrOffset = 0xA0;
+    } else if (!MinecraftVersion::isAtLeast(1, 8)) {
         shaderSizeOffset = 0x5C9 - 0x4C0;
-    if (((unsigned char*) ptr)[shaderSizeOffset + 1] != 0xAC) {
+    }
+    if (((unsigned char*) ptr)[shaderSizeOffset + 1] != shaderVertexArrOffset) {
         Log::error("Launcher", "Graphics patch error: unexpected byte");
         exit(1);
     }
@@ -28,8 +36,13 @@ void GLCorePatch::install(void* handle) {
     PatchUtils::patchCallInstruction(ptr, (void*) &reflectShaderUniformsHook, false);
 
     bindVertexArrayOriginal = (void (*)(void*, void*, void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
-    ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x83E - 0x7E0));
-    PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
+    if (MinecraftVersion::isAtLeast(1, 6)) {
+        ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x83E - 0x7E0));
+        PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
+    } else {
+        ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x72 - 0x10));
+        PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
+    }
 
     ptr = hybris_dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
     PatchUtils::patchCallInstruction(ptr, (void*) &supportsImmediateModeHook, true);
@@ -56,12 +69,12 @@ void GLCorePatch::reflectShaderUniformsHook(void* th) {
     unsigned int vertexArr;
     glGenVertexArrays(1, &vertexArr);
     glBindVertexArray(vertexArr);
-    *((unsigned int*) ((unsigned int) th + 0xAC)) = vertexArr;
+    *((unsigned int*) ((unsigned int) th + shaderVertexArrOffset)) = vertexArr;
     reflectShaderUniformsOriginal(th);
 }
 
 void GLCorePatch::bindVertexArrayHook(void* th, void* a, void* b) {
-    unsigned int vertexArr = *((unsigned int*) ((unsigned int) th + 0xAC));
+    unsigned int vertexArr = *((unsigned int*) ((unsigned int) th + shaderVertexArrOffset));
     if (bindVertexArrayOriginal == nullptr)
         abort();
     glBindVertexArray(vertexArr);
