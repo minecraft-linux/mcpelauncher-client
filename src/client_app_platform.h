@@ -12,6 +12,7 @@ private:
     static const char* TAG;
 
     std::shared_ptr<GameWindow> window;
+    bool currentTextMutliline = false;
     std::string currentText;
     size_t currentTextPosition = 0;
     size_t currentTextPositionUTF = 0;
@@ -39,6 +40,7 @@ public:
     void showKeyboard(mcpe::string const& text, int, bool, bool, bool, int, Vec2 const&);
     void updateTextBoxText(mcpe::string const& text);
     void hideKeyboard();
+    bool isKeyboardMultiline() const { return currentTextMutliline; }
 
     void update();
 

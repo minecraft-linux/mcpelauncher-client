@@ -101,7 +101,7 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
 
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
-    if ((c.size() == 1 && c[0] == '\n') || !appPlatform.isKeyboardVisible())
+    if ((!appPlatform.isKeyboardMultiline() && (c.size() == 1 && c[0] == '\n')) || !appPlatform.isKeyboardVisible())
         Keyboard::feedText(c, false, 0);
     else
         appPlatform.onKeyboardText(game, c);

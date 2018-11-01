@@ -105,8 +105,10 @@ void ClientAppPlatform::update() {
         Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
 }
 
-void ClientAppPlatform::showKeyboard(mcpe::string const &text, int i, bool b, bool b2, bool b3, int i2, Vec2 const &v) {
-    AppPlatform::showKeyboard(text, i, b, b2, b3, i2, v);
+void ClientAppPlatform::showKeyboard(mcpe::string const &text, int i, bool b, bool b2, bool multiline, int i2,
+        Vec2 const &v) {
+    AppPlatform::showKeyboard(text, i, b, b2, multiline, i2, v);
+    currentTextMutliline = multiline;
     updateTextBoxText(text);
 }
 
