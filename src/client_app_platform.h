@@ -38,6 +38,7 @@ public:
     void setFullscreenMode(int mode);
 
     void showKeyboard(mcpe::string const& text, int, bool, bool, bool, int, Vec2 const&);
+    void showKeyboardLegacy(mcpe::string const& text, int, bool, bool, bool, Vec2 const&);
     void updateTextBoxText(mcpe::string const& text);
     void hideKeyboard();
     bool isKeyboardMultiline() const { return currentTextMutliline; }

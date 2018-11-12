@@ -4,9 +4,12 @@
 #include <minecraft/ImagePickingCallback.h>
 #include <minecraft/FilePickerSettings.h>
 #include <minecraft/MinecraftGame.h>
+#include <minecraft/legacy/MinecraftGame.h>
+#include <minecraft/legacy/AppPlatform.h>
 #include <file_picker_factory.h>
 #include <hybris/dlfcn.h>
 #include <minecraft/Keyboard.h>
+#include <mcpelauncher/minecraft_version.h>
 #include "utf8_util.h"
 
 const char* ClientAppPlatform::TAG = "ClientAppPlatform";
@@ -31,6 +34,7 @@ void ClientAppPlatform::initVtable(void* lib) {
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickFile), &ClientAppPlatform::pickFile);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::setFullscreenMode), &ClientAppPlatform::setFullscreenMode);
     vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbiRK4Vec2", &ClientAppPlatform::showKeyboard);
+    vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbRK4Vec2", &ClientAppPlatform::showKeyboardLegacy);
     vtr.replace("_ZN11AppPlatform17updateTextBoxTextERKSs", &ClientAppPlatform::updateTextBoxText);
     vtr.replace("_ZN11AppPlatform12hideKeyboardEv", &ClientAppPlatform::hideKeyboard);
     vtr.replace("_ZNK11AppPlatform17supportsClipboardEv", &ClientAppPlatform::supportsClipboard);
@@ -112,6 +116,13 @@ void ClientAppPlatform::showKeyboard(mcpe::string const &text, int i, bool b, bo
     updateTextBoxText(text);
 }
 
+void ClientAppPlatform::showKeyboardLegacy(mcpe::string const &text, int i, bool b, bool b2, bool multiline,
+        Vec2 const &v) {
+    ((Legacy::Pre_1_2_10::AppPlatform*) (AppPlatform*) this)->showKeyboard(text, i, b, b2, multiline, v);
+    currentTextMutliline = multiline;
+    updateTextBoxText(text);
+}
+
 void ClientAppPlatform::updateTextBoxText(mcpe::string const &text) {
     currentText = text.std();
     currentTextPosition = currentText.size();
@@ -148,7 +159,10 @@ void ClientAppPlatform::onKeyboardText(MinecraftGame &game, std::string const &t
         currentTextPosition += text.size();
         currentTextPositionUTF += UTF8Util::getLength(text.c_str(), text.size());
     }
-    game.setTextboxText(currentText, 0);
+    if (MinecraftVersion::isAtLeast(1, 2, 10))
+        game.setTextboxText(currentText, 0);
+    else
+        ((Legacy::Pre_1_2_10::MinecraftGame*) &game)->setTextboxText(currentText);
     Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
 }
 
