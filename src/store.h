@@ -16,6 +16,11 @@ struct ExtraLicenseData {
 class LauncherStore {
 
 private:
+    void* vtable;
+
+    static void** myVtable;
+    static void initVtable(void* lib);
+
     static std::unique_ptr<LauncherStore> createStore(const mcpe::string& idk, StoreListener& listener) {
         //Log::trace("Launcher", "Creating store (%s)", idk.c_str());
         Log::trace("Launcher", "Creating store");
@@ -25,113 +30,119 @@ private:
 public:
     static void install(void* handle);
 
-    virtual ~LauncherStore() {
+    LauncherStore() {
+        vtable = myVtable;
+    }
+    ~LauncherStore() {
         Log::trace("Store", "Destroying LinuxStore");
     }
-    virtual bool isReadyToMakePurchases() {
+    bool isReadyToMakePurchases() {
         Log::trace("Store", "isReadyToMakePurchases: false");
         return true;
     }
-    virtual bool requiresRestorePurchasesButton() {
+    bool requiresRestorePurchasesButton() {
         Log::trace("Store", "requiresRestorePurchasesButton: false");
         return false;
     }
-    virtual bool allowsSubscriptions() {
+    bool allowsSubscriptions() {
         // Log::trace("Store", "allowsSubscriptions: true");
         return true;
     }
-    virtual mcpe::string getStoreId() {
+    mcpe::string getStoreId() {
         Log::trace("Store", "getStoreId: android.googleplay");
         return "android.googleplay";
     }
-    virtual mcpe::string getSubPlatformStoreId() {
+    mcpe::string getSubPlatformStoreId() {
         Log::trace("Store", "getSubPlatformStoreId: ");
         return "";
     }
-    virtual mcpe::string getProductSkuPrefix() {
+    mcpe::string getProductSkuPrefix() {
         // Log::trace("Store", "getProductSkuPrefix: ");
         return "";
     }
-    virtual mcpe::string getRealmsSkuPrefix() {
+    mcpe::string getRealmsSkuPrefix() {
         // Log::trace("Store", "getRealmsSkuPrefix: ");
         return "";
     }
-    virtual void queryProducts(std::vector<std::string> const& arr) {
+    void queryProducts(std::vector<std::string> const& arr) {
         Log::trace("Store", "queryProducts");
     }
-    virtual void purchase(std::string const& name) {
+    void purchase(std::string const& name) {
         Log::trace("Store", "purchase: %s", name.c_str());
     }
-    virtual void acknowledgePurchase(PurchaseInfo const& info, int type) {
+    void acknowledgePurchase(PurchaseInfo const& info, int type) {
         Log::trace("Store", "acknowledgePurchase: type=%i", type);
     }
-    virtual void queryPurchases() {
+    void queryPurchases() {
         Log::trace("Store", "queryPurchases");
     }
-    virtual void restorePurchases() {
+    void restorePurchases() {
         Log::trace("Store", "restorePurchases");
     }
-    virtual bool isTrial() {
+    bool isTrial() {
         // Log::trace("Store", "isTrial: false");
         return false;
     }
-    virtual void purchaseGame() {
+    void purchaseGame() {
         Log::trace("Store", "purchaseGame");
     }
-    virtual bool isGameLicensed() {
+    bool isGameLicensed() {
         Log::trace("Store", "isGameLicensed: true");
         return true;
     }
-    virtual bool receivedLicenseResponse() {
+    bool receivedLicenseResponse() {
         Log::trace("Store", "receivedLicenseResponse: true");
         return true;
     }
-    virtual ExtraLicenseData getExtraLicenseData() {
+    ExtraLicenseData getExtraLicenseData() {
         Log::warn("Store", "getExtraLicenseData - not implemented");
         return ExtraLicenseData();
     }
-    virtual mcpe::string getAppReceipt() {
+    mcpe::string getAppReceipt() {
         Log::trace("Store", "getAppReceipt");
         return mcpe::string();
     }
-    virtual void registerLicenseChangeCallback() {
+    void registerLicenseChangeCallback() {
         Log::trace("Store", "registerLicenseChangeCallback");
     }
-    virtual void handleLicenseChange() {
+    void handleLicenseChange() {
         Log::trace("Store", "handleLicenseChange");
     }
-    virtual void restoreFromCache() {
+    void restoreFromCache() {
         Log::trace("Store", "restoreFromCache");
     }
-    virtual void getUserAccessTokenAsync() {
+    void getUserAccessTokenAsync() {
         Log::trace("Store", "getUserAccessTokenAsync");
     }
-    virtual void getFullSKUWithMetadataFromProductSku() {
+    void getFullSKUWithMetadataFromProductSku() {
         Log::trace("Store", "getFullSKUWithMetadataFromProductSku");
     }
-    virtual std::string getFullGameProductSku() {
+    mcpe::string getFullGameProductSku() {
         Log::trace("Store", "getFullGameProductSku");
         return "idk";
     }
-    virtual std::string getLanguageCode() {
+    mcpe::string getLanguageCode() {
         Log::trace("Store", "getLanguageCode");
         return "idk";
     }
-    virtual std::string getRegionCode() {
+    mcpe::string getRegionCode() {
         Log::trace("Store", "getRegionCode");
         return "idk";
     }
-    virtual void refreshLicenses() {
+    void refreshLicenses() {
         Log::trace("Store", "refreshLicenses");
     }
-    virtual void updateXUID() {
+    void updateXUID() {
         Log::trace("Store", "updateXUID");
     }
-    virtual void onNewPrimaryUser() {
+    void onNewPrimaryUser() {
         Log::trace("Store", "onNewPrimaryUser");
     }
-    virtual void onPrimaryUserConnectedToPlatform() {
+    void onPrimaryUserConnectedToPlatform() {
         Log::trace("Store", "onPrimaryUserConnectedToPlatform");
+    }
+    void getPurchases() {
+        Log::trace("Store", "getPurchases");
     }
 
 };
