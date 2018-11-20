@@ -1,9 +1,11 @@
 set(CPACK_PACKAGE_NAME "mcpelauncher-client")
 set(CPACK_PACKAGE_VENDOR "mcpelauncher")
+set(CPACK_PACKAGE_VERSION "${CLIENT_GIT_COMMIT_HASH}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A launcher for Minecraft: Pocket Edition")
 set(CPACK_PACKAGE_CONTACT "https://github.com/minecraft-linux/mcpelauncher-manifest/issues")
 set(CPACK_GENERATOR "TGZ;DEB")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE i386)
+set(CPACK_DEBIAN_PACKAGE_VERSION "${BUILD_TIMESTAMP}-${CLIENT_GIT_COMMIT_HASH}")
 
 set(CPACK_INSTALL_CMAKE_PROJECTS
         "${CMAKE_BINARY_DIR};mcpelauncher-bin-libs;mcpelauncher-bin-libs;/"
