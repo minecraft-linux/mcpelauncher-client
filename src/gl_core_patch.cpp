@@ -36,7 +36,10 @@ void GLCorePatch::install(void* handle) {
     PatchUtils::patchCallInstruction(ptr, (void*) &reflectShaderUniformsHook, false);
 
     bindVertexArrayOriginal = (void (*)(void*, void*, void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
-    if (MinecraftVersion::isAtLeast(1, 6)) {
+    if (MinecraftVersion::isAtLeast(1, 9)) {
+        ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x605 - 0x590));
+        PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
+    } else if (MinecraftVersion::isAtLeast(1, 6)) {
         ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x83E - 0x7E0));
         PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
     } else {
