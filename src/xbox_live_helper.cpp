@@ -161,10 +161,10 @@ std::string XboxLiveHelper::getCllXToken(bool refresh) {
 
 std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
     auto local_conf = xbox::services::local_config::get_local_config_singleton();
-    if (MinecraftVersion::isAtLeast(1, 8))
-        return local_conf->get_value_from_local_storage(xuid).std();
+    if (MinecraftVersion::isAtLeast(1, 8) && !MinecraftVersion::isAtLeast(1, 9))
+        return ((Legacy::Beta_1_8::xbox::services::local_config&) *local_conf).get_value_from_local_storage(xuid).std();
     else
-        return ((Legacy::Pre_1_8::xbox::services::local_config&) *local_conf).get_value_from_local_storage(xuid).std();
+        return local_conf->get_value_from_local_storage(xuid).std();
 }
 
 void XboxLiveHelper::logCll(cll::Event const& event) {
