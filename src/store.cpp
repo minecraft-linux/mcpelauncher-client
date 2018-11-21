@@ -19,6 +19,8 @@ void LauncherStore::initVtable(void *lib) {
 
     myVtable = (void**) ::operator new((myVtableSize + 1) * sizeof(void*));
     myVtable[myVtableSize] = nullptr;
+    myVtable[0] = (void*) (void (*) (LauncherStore* p)) [](LauncherStore* p) { p->~LauncherStore(); };
+    myVtable[1] = (void*) (void (*) (LauncherStore* p)) [](LauncherStore* p) { delete p; };
 
     PatchUtils::VtableReplaceHelper vtr (lib, myVtable, vta);
     vtr.replace("_ZNK5Store22isReadyToMakePurchasesEv", &LauncherStore::isReadyToMakePurchases);
