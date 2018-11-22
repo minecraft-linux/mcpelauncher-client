@@ -79,6 +79,9 @@ int main(int argc, char *argv[]) {
         GLCorePatch::install(handle);
 
     Log::info("Launcher", "Creating window");
+    PathHelper::findAllDataFiles("gamecontrollerdb.txt", [&windowManager](std::string const& path) {
+        windowManager->addGamepadMappingFile(path);
+    });
     auto window = windowManager->createWindow("Minecraft", windowWidth, windowHeight, graphicsApi);
     window->setIcon(PathHelper::getIconPath());
     window->show();
