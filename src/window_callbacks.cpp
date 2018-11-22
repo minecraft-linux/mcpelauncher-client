@@ -155,8 +155,10 @@ void WindowCallbacks::loadGamepadMappings() {
     PathHelper::findAllDataFiles("gamecontrollerdb.txt", [&controllerDbPaths](std::string const &path) {
         controllerDbPaths.push_back(path);
     });
-    for (std::string const& path : controllerDbPaths)
+    for (std::string const& path : controllerDbPaths) {
+        Log::trace("Launcher", "Loading gamepad mappings: %s", path.c_str());
         windowManager->addGamepadMappingFile(path);
+    }
 }
 
 WindowCallbacks::GamepadData::GamepadData() {
