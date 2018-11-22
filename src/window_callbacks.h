@@ -27,6 +27,8 @@ public:
     WindowCallbacks(MinecraftGame& game, ClientAppPlatform& appPlatform, GameWindow& window) :
             game(game), appPlatform(appPlatform), window(window) { }
 
+    static void loadGamepadMappings();
+
     void setPixelScale(float pixelScale) {
         this->pixelScale = pixelScale;
     }

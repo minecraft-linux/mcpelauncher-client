@@ -9,6 +9,7 @@
 #include <minecraft/Options.h>
 #include <minecraft/GameControllerManager.h>
 #include <minecraft/legacy/App.h>
+#include <game_window_manager.h>
 
 void WindowCallbacks::registerCallbacks() {
     using namespace std::placeholders;
@@ -146,6 +147,16 @@ void WindowCallbacks::onGamepadAxis(int gamepad, GamepadAxisId ax, float value) 
     } else if (ax == GamepadAxisId::RIGHT_TRIGGER) {
         GameControllerManager::sGamePadManager->feedTrigger(gamepad, 1, value);
     }
+}
+
+void WindowCallbacks::loadGamepadMappings() {
+    auto windowManager = GameWindowManager::getManager();
+    std::vector<std::string> controllerDbPaths;
+    PathHelper::findAllDataFiles("gamecontrollerdb.txt", [&controllerDbPaths](std::string const &path) {
+        controllerDbPaths.push_back(path);
+    });
+    for (std::string const& path : controllerDbPaths)
+        windowManager->addGamepadMappingFile(path);
 }
 
 WindowCallbacks::GamepadData::GamepadData() {
