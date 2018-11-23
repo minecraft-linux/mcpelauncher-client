@@ -14,6 +14,7 @@ set(CPACK_INSTALL_CMAKE_PROJECTS
 set(CPACK_OUTPUT_CONFIG_FILE CPackConfig.cmake)
 if (DEB_XENIAL_DEPENDENCIES)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>=2.14), libstdc++6, libcurl3, libx11-6, zlib1g, libpng12-0, libevdev2, libudev1")
+    set(CPACK_DEBIAN_PACKAGE_VERSION "${CPACK_DEBIAN_PACKAGE_VERSION}~xenial")
 else()
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>=2.14), libstdc++6, libcurl4, libx11-6, zlib1g, libpng16-16, libevdev2, libudev1")
 endif()
