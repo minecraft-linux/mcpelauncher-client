@@ -9,5 +9,10 @@ add_executable(mcpelauncher-client src/main.cpp src/client_app_platform.cpp src/
 target_link_libraries(mcpelauncher-client logger mcpelauncher-core gamewindow filepicker msa-daemon-client cll-telemetry argparser)
 target_include_directories(mcpelauncher-client PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/build_info/)
 
+if (IS_ARMHF_BUILD)
+    target_sources(mcpelauncher-client PRIVATE src/armhf_support.cpp src/armhf_support.h)
+    target_compile_definitions(mcpelauncher-client PRIVATE USE_ARMHF_SUPPORT)
+endif()
+
 install(TARGETS mcpelauncher-client RUNTIME COMPONENT mcpelauncher-client DESTINATION bin)
 include(CPackSettings.cmake)

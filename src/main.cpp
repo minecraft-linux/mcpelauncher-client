@@ -20,6 +20,9 @@
 #include "xbox_live_helper.h"
 #include "xbox_sleep_shutdown_patch.h"
 #include "tts_patch.h"
+#ifdef USE_ARMHF_SUPPORT
+#include "armhf_support.h"
+#endif
 #include <build_info.h>
 
 static std::unique_ptr<ClientAppPlatform> appPlatform;
@@ -56,6 +59,9 @@ int main(int argc, char *argv[]) {
     MinecraftUtils::loadFMod();
     MinecraftUtils::setupHybris();
     hybris_hook("eglGetProcAddress", (void*) windowManager->getProcAddrFunc());
+#ifdef USE_ARMHF_SUPPORT
+    ArmhfSupport::install();
+#endif
 
     Log::trace("Launcher", "Loading Minecraft library");
     void* handle = MinecraftUtils::loadMinecraftLib();
