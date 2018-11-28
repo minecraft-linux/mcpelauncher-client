@@ -5,6 +5,7 @@
 #include <mcpelauncher/minecraft_version.h>
 #include <minecraft/MinecraftGame.h>
 #include <minecraft/Mouse.h>
+#include <minecraft/Multitouch.h>
 #include <minecraft/Keyboard.h>
 #include <minecraft/Options.h>
 #include <minecraft/GameControllerManager.h>
@@ -21,6 +22,9 @@ void WindowCallbacks::registerCallbacks() {
     window.setMousePositionCallback(std::bind(&WindowCallbacks::onMousePosition, this, _1, _2));
     window.setMouseRelativePositionCallback(std::bind(&WindowCallbacks::onMouseRelativePosition, this, _1, _2));
     window.setMouseScrollCallback(std::bind(&WindowCallbacks::onMouseScroll, this, _1, _2, _3, _4));
+    window.setTouchStartCallback(std::bind(&WindowCallbacks::onTouchStart, this, _1, _2, _3));
+    window.setTouchUpdateCallback(std::bind(&WindowCallbacks::onTouchUpdate, this, _1, _2, _3));
+    window.setTouchEndCallback(std::bind(&WindowCallbacks::onTouchEnd, this, _1, _2, _3));
     window.setKeyboardCallback(std::bind(&WindowCallbacks::onKeyboard, this, _1, _2));
     window.setKeyboardTextCallback(std::bind(&WindowCallbacks::onKeyboardText, this, _1));
     window.setPasteCallback(std::bind(&WindowCallbacks::onPaste, this, _1));
@@ -75,6 +79,15 @@ void WindowCallbacks::onMouseRelativePosition(double x, double y) {
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     char cdy = (char) std::max(std::min(dy * 127.0, 127.0), -127.0);
     Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
+}
+void WindowCallbacks::onTouchStart(int id, double x, double y) {
+    Multitouch::feed(1, 1, (short) x, (short) y, id);
+}
+void WindowCallbacks::onTouchUpdate(int id, double x, double y) {
+    Multitouch::feed(0, 0, (short) x, (short) y, id);
+}
+void WindowCallbacks::onTouchEnd(int id, double x, double y) {
+    Multitouch::feed(1, 0, (short) x, (short) y, id);
 }
 void WindowCallbacks::onKeyboard(int key, KeyAction action) {
     if (key == 17)

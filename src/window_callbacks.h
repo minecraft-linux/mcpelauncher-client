@@ -47,6 +47,9 @@ public:
     void onMousePosition(double x, double y);
     void onMouseRelativePosition(double x, double y);
     void onMouseScroll(double x, double y, double dx, double dy);
+    void onTouchStart(int id, double x, double y);
+    void onTouchUpdate(int id, double x, double y);
+    void onTouchEnd(int id, double x, double y);
     void onKeyboard(int key, KeyAction action);
     void onKeyboardText(std::string const& c);
     void onPaste(std::string const& str);
