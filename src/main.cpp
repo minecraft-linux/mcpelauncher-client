@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
     argparser::arg<float> pixelScale (p, "--scale", "-s", "Pixel Scale", 2.f);
     argparser::arg<bool> mallocZero (p, "--malloc-zero", "-mz", "Patch malloc to always zero initialize memory, this may help workaround MCPE bugs");
+    argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
     if (!p.parse(argc, (const char**) argv))
         return 1;
     if (!gameDir.get().empty())
@@ -56,7 +57,10 @@ int main(int argc, char *argv[]) {
     GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
 
     Log::trace("Launcher", "Loading hybris libraries");
-    MinecraftUtils::loadFMod();
+    if (!disableFmod)
+        MinecraftUtils::loadFMod();
+    else
+        MinecraftUtils::stubFMod();
     MinecraftUtils::setupHybris();
     hybris_hook("eglGetProcAddress", (void*) windowManager->getProcAddrFunc());
 #ifdef USE_ARMHF_SUPPORT
