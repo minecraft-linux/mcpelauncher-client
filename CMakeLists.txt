@@ -12,6 +12,8 @@ target_include_directories(mcpelauncher-client PRIVATE ${CMAKE_CURRENT_BINARY_DI
 if (IS_ARMHF_BUILD)
     target_sources(mcpelauncher-client PRIVATE src/armhf_support.cpp src/armhf_support.h)
     target_compile_definitions(mcpelauncher-client PRIVATE USE_ARMHF_SUPPORT)
+else()
+    target_sources(mcpelauncher-client PRIVATE src/cpuid.cpp src/cpuid.h)
 endif()
 
 install(TARGETS mcpelauncher-client RUNTIME COMPONENT mcpelauncher-client DESTINATION bin)

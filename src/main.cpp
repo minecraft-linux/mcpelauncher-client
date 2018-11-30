@@ -23,9 +23,14 @@
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
 #endif
+#ifdef __i386__
+#include "cpuid.h"
+#endif
 #include <build_info.h>
 
 static std::unique_ptr<ClientAppPlatform> appPlatform;
+
+void printVersionInfo();
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -33,6 +38,7 @@ int main(int argc, char *argv[]) {
     MinecraftUtils::workaroundLocaleBug();
 
     argparser::arg_parser p;
+    argparser::arg<bool> printVersion (p, "--version", "-v", "Prints version info");
     argparser::arg<std::string> gameDir (p, "--game-dir", "-dg", "Directory with the game and assets");
     argparser::arg<std::string> dataDir (p, "--data-dir", "-dd", "Directory to use for the data");
     argparser::arg<std::string> cacheDir (p, "--cache-dir", "-dc", "Directory to use for cache");
@@ -43,6 +49,10 @@ int main(int argc, char *argv[]) {
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
     if (!p.parse(argc, (const char**) argv))
         return 1;
+    if (printVersion) {
+        printVersionInfo();
+        return 0;
+    }
     if (!gameDir.get().empty())
         PathHelper::setGameDir(gameDir);
     if (!dataDir.get().empty())
@@ -53,6 +63,11 @@ int main(int argc, char *argv[]) {
         MinecraftUtils::setMallocZero();
 
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
+    {
+        CpuId cpuid;
+        Log::info("Launcher", "CPU supports SSSE3: %s",
+                cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
+    }
 
     GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
 
@@ -149,4 +164,13 @@ int main(int argc, char *argv[]) {
     appPlatform->teardown();
     appPlatform->setWindow(nullptr);
     return 0;
+}
+
+void printVersionInfo() {
+    printf("mcpelauncher-client %s / manifest %s\n", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
+#ifdef __i386__
+    CpuId cpuid;
+    printf("CPU: %s %s\n", cpuid.getManufacturer(), cpuid.getBrandString());
+    printf("SSSE3 support: %s\n", cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
+#endif
 }
