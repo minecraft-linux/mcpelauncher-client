@@ -1,5 +1,6 @@
 #include <log.h>
 #include <hybris/hook.h>
+#include <dlfcn.h>
 #include <game_window_manager.h>
 #include <argparser.h>
 #include <mcpelauncher/minecraft_utils.h>
@@ -173,4 +174,11 @@ void printVersionInfo() {
     printf("CPU: %s %s\n", cpuid.getManufacturer(), cpuid.getBrandString());
     printf("SSSE3 support: %s\n", cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
 #endif
+    auto windowManager = GameWindowManager::getManager();
+    GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
+    auto window = windowManager->createWindow("mcpelauncher", 32, 32, graphicsApi);
+    auto glGetString = (const char* (*)(int)) windowManager->getProcAddrFunc()("glGetString");
+    printf("GL Vendor: %s\n", glGetString(0x1F00 /* GL_VENDOR */));
+    printf("GL Renderer: %s\n", glGetString(0x1F01 /* GL_RENDERER */));
+    printf("GL Version: %s\n", glGetString(0x1F02 /* GL_VERSION */));
 }
