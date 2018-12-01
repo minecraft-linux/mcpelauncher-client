@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
     {
         CpuId cpuid;
+        Log::info("CPU: %s %s\n", cpuid.getManufacturer(), cpuid.getBrandString());
         Log::info("Launcher", "CPU supports SSSE3: %s",
                 cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
     }
