@@ -25,16 +25,31 @@ std::string XboxLiveHelper::findMsa() {
 }
 
 XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()) {
+}
+
+msa::client::ServiceClient* XboxLiveHelper::getMsaClientOrNull() {
+    if (triedToCreateClient)
+        return client.get();
+    triedToCreateClient = true;
     try {
         client = std::unique_ptr<msa::client::ServiceClient>(new msa::client::ServiceClient(launcher));
     } catch (std::exception& exception) {
         Log::error("XboxLiveHelper", "Failed to connect to the daemon: %s", exception.what());
     }
+    return client.get();
+}
+
+msa::client::ServiceClient& XboxLiveHelper::getMsaClient() {
+    auto client = getMsaClientOrNull();
+    if (!client)
+        throw std::runtime_error("Could not connect to the daemon");
+    return *client;
 }
 
 void XboxLiveHelper::invokeMsaAuthFlow(
         std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
         std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb) {
+    auto client = getMsaClientOrNull();
     if (!client) {
         error_cb(simpleipc::rpc_error_codes::connection_closed, "Could not connect to the daemon");
         return;
@@ -87,16 +102,14 @@ xbox::services::xbox_live_result<xbox::services::system::token_and_signature_res
 
 simpleipc::client::rpc_call<std::shared_ptr<msa::client::Token>> XboxLiveHelper::requestXblToken(std::string const& cid,
                                                                                                  bool silent) {
-    if (!client)
-        throw std::runtime_error("Could not connect to the daemon");
-    return client->requestToken(cid, {"user.auth.xboxlive.com", "mbi_ssl"}, MSA_CLIENT_ID, silent);
+    return getMsaClient().requestToken(cid, {"user.auth.xboxlive.com", "mbi_ssl"}, MSA_CLIENT_ID, silent);
 }
 
 void XboxLiveHelper::requestXblToken
         (std::string const& cid, bool silent,
          std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
          std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb) {
-    if (!client) {
+    if (!getMsaClientOrNull()) {
         error_cb(simpleipc::rpc_error_codes::connection_closed, "Could not connect to the daemon");
         return;
     }
@@ -133,6 +146,7 @@ void XboxLiveHelper::initCll(std::string const& cid) {
 }
 
 std::string XboxLiveHelper::getCllMsaToken(std::string const& cid) {
+    auto client = getMsaClientOrNull();
     if (!client)
         return std::string();
     auto token = client->requestToken(cid, {"vortex.data.microsoft.com", "mbi_ssl"}, MSA_CLIENT_ID, true).call();

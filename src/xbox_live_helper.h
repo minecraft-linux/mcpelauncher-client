@@ -15,11 +15,16 @@ private:
 
     msa::client::ServiceLauncher launcher;
     std::unique_ptr<msa::client::ServiceClient> client;
+    bool triedToCreateClient = false;
     std::mutex cllMutex;
     std::unique_ptr<cll::EventManager> cll;
     CllUploadAuthStep cllAuthStep;
 
     static std::string findMsa();
+
+    msa::client::ServiceClient* getMsaClientOrNull();
+
+    msa::client::ServiceClient& getMsaClient();
 
 public:
     static XboxLiveHelper& getInstance() {
