@@ -26,10 +26,11 @@ std::string XboxLiveHelper::findMsa() {
     return std::string();
 }
 
-XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()) {
+XboxLiveHelper::XboxLiveHelper() : launcher(findMsa()), triedToCreateClient(false) {
 }
 
 msa::client::ServiceClient* XboxLiveHelper::getMsaClientOrNull() {
+    std::lock_guard<std::mutex> lock (clientMutex);
     if (triedToCreateClient)
         return client.get();
     triedToCreateClient = true;

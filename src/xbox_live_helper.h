@@ -17,7 +17,8 @@ private:
 
     msa::client::ServiceLauncher launcher;
     std::unique_ptr<msa::client::ServiceClient> client;
-    bool triedToCreateClient = false;
+    std::atomic_bool triedToCreateClient;
+    std::mutex clientMutex;
     std::mutex cllMutex;
     std::unique_ptr<cll::EventManager> cll;
     CllUploadAuthStep cllAuthStep;
