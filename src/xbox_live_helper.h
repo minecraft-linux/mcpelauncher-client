@@ -13,6 +13,8 @@ private:
     static std::string const MSA_CLIENT_ID;
     static std::string const MSA_COBRAND_ID;
 
+    static XboxLiveHelper instance;
+
     msa::client::ServiceLauncher launcher;
     std::unique_ptr<msa::client::ServiceClient> client;
     bool triedToCreateClient = false;
@@ -28,7 +30,6 @@ private:
 
 public:
     static XboxLiveHelper& getInstance() {
-        static XboxLiveHelper instance;
         return instance;
     }
 

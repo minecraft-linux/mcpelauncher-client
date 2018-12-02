@@ -10,6 +10,8 @@
 
 using namespace simpleipc;
 
+XboxLiveHelper XboxLiveHelper::instance;
+
 std::string const XboxLiveHelper::MSA_CLIENT_ID = "android-app://com.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y";
 std::string const XboxLiveHelper::MSA_COBRAND_ID = "90023";
 
