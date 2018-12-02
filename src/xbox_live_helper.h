@@ -23,8 +23,6 @@ private:
     std::unique_ptr<cll::EventManager> cll;
     CllUploadAuthStep cllAuthStep;
 
-    static std::string findMsa();
-
     msa::client::ServiceClient* getMsaClientOrNull();
 
     msa::client::ServiceClient& getMsaClient();
@@ -33,6 +31,8 @@ public:
     static XboxLiveHelper& getInstance() {
         return instance;
     }
+
+    static std::string findMsa();
 
     XboxLiveHelper();
 
