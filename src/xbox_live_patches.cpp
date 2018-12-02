@@ -115,6 +115,9 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
                         if (err == -100) { // No such account
                             ticket.error_code = 1;
                             ticket.error_text = "Must show UI to acquire an account.";
+                        } else if (err == -102) { // Must show UI
+                            ticket.error_code = 1;
+                            ticket.error_text = "Must show UI to update account information.";
                         } else {
                             ticket.error_code = 0x800704CF;
                             ticket.error_text = msg.c_str();
