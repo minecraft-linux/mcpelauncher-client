@@ -26,6 +26,8 @@
 #endif
 #ifdef __i386__
 #include "cpuid.h"
+#include "hbui_patch.h"
+
 #endif
 #include <build_info.h>
 
@@ -101,6 +103,7 @@ int main(int argc, char *argv[]) {
     XboxLivePatches::install(handle);
     XboxSleepShutdownPatch::install(handle);
     LinuxHttpRequestHelper::install(handle);
+    HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
     if (graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
