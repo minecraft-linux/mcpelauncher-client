@@ -4,5 +4,6 @@
 
 void HbuiPatch::install(void *handle) {
     void* ptr = hybris_dlsym(handle, "_ZN6cohtml17VerifiyLicenseKeyEPKc");
-    PatchUtils::patchCallInstruction(ptr, (void*) returnTrue, true);
+    if (ptr)
+        PatchUtils::patchCallInstruction(ptr, (void*) returnTrue, true);
 }
