@@ -3,14 +3,20 @@
 #include <cll/event_batch.h>
 
 void CllUploadAuthStep::setAccount(std::string const& cid) {
-    std::lock_guard<std::recursive_mutex> lock (mutex);
+    std::lock_guard<std::recursive_mutex> lock (cidMutex);
     this->cid = cid;
-    msaToken = std::string();
-    xToken = std::string();
 }
 
 void CllUploadAuthStep::refreshTokens(bool force) {
     std::lock_guard<std::recursive_mutex> lock (mutex);
+    {
+        std::lock_guard<std::recursive_mutex> lock2 (cidMutex);
+        if (cid != tokensCid) {
+            tokensCid = cid;
+            msaToken.clear();
+            xToken.clear();
+        }
+    }
     if (msaToken.empty() || force)
         msaToken = XboxLiveHelper::getInstance().getCllMsaToken(cid);
     if (xToken.empty() || force)

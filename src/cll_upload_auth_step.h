@@ -7,7 +7,9 @@ class CllUploadAuthStep : public cll::EventUploadStep {
 
 private:
     std::recursive_mutex mutex;
+    std::recursive_mutex cidMutex;
     std::string cid;
+    std::string tokensCid;
     std::string msaToken;
     std::string xToken;
 
