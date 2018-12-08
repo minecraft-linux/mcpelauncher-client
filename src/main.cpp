@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
     XboxLivePatches::workaroundShutdownFreeze(handle);
     XboxSleepShutdownPatch::notifyShutdown();
 
-    XboxLiveHelper::getInstance().shutdownCll();
+    XboxLiveHelper::getInstance().shutdown();
     appPlatform->teardown();
     appPlatform->setWindow(nullptr);
     return 0;

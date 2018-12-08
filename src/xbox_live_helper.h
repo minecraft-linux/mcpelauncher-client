@@ -36,12 +36,9 @@ public:
 
     XboxLiveHelper();
 
-    ~XboxLiveHelper() {
+    void shutdown() {
         cll.reset();
-    }
-
-    void shutdownCll() {
-        cll.reset();
+        client.reset();
     }
 
 
