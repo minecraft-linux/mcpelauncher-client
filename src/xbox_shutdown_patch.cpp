@@ -50,12 +50,11 @@ void XboxShutdownPatch::notifyShutdown() {
         shuttingDown = true;
         cv.notify_all();
     }
-    Log::trace("XboxLive", "Waiting for tasks");
     {
         std::unique_lock<std::mutex> l(runningTasksMutex);
         while (XboxShutdownPatch::runningTasks > 0) {
-            cv.wait_for(l, std::chrono::seconds(1));
             Log::trace("XboxLive", "Waiting for %i tasks", (int) XboxShutdownPatch::runningTasks);
+            cv.wait_for(l, std::chrono::seconds(1));
         }
     }
     Log::trace("XboxLive", "Finished waiting for tasks");
