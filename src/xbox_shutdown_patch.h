@@ -4,7 +4,7 @@
 #include <condition_variable>
 #include <atomic>
 
-class XboxSleepShutdownPatch {
+class XboxShutdownPatch {
 
 private:
     static std::condition_variable cv;

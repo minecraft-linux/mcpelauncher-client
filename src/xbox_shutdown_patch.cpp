@@ -1,4 +1,4 @@
-#include "xbox_sleep_shutdown_patch.h"
+#include "xbox_shutdown_patch.h"
 
 #include <hybris/dlfcn.h>
 #include <mcpelauncher/patch_utils.h>
@@ -8,20 +8,20 @@
 extern "C" void xbox_shutdown_patch_run_one_hook_1() asm("xbox_shutdown_patch_run_one_hook_1");
 extern "C" void xbox_shutdown_patch_run_one_hook_2() asm("xbox_shutdown_patch_run_one_hook_2");
 
-std::condition_variable XboxSleepShutdownPatch::cv;
-std::mutex XboxSleepShutdownPatch::mutex;
-bool XboxSleepShutdownPatch::shuttingDown = false;
+std::condition_variable XboxShutdownPatch::cv;
+std::mutex XboxShutdownPatch::mutex;
+bool XboxShutdownPatch::shuttingDown = false;
 
-std::atomic_int XboxSleepShutdownPatch::runningTasks;
-std::condition_variable XboxSleepShutdownPatch::runningTasksCv;
-std::mutex XboxSleepShutdownPatch::runningTasksMutex;
+std::atomic_int XboxShutdownPatch::runningTasks;
+std::condition_variable XboxShutdownPatch::runningTasksCv;
+std::mutex XboxShutdownPatch::runningTasksMutex;
 
-void XboxSleepShutdownPatch::sleepHook(unsigned int ms) {
+void XboxShutdownPatch::sleepHook(unsigned int ms) {
     std::unique_lock<std::mutex> l (mutex);
     cv.wait_for(l, std::chrono::milliseconds(ms), []() { return shuttingDown; });
 }
 
-void XboxSleepShutdownPatch::install(void* handle) {
+void XboxShutdownPatch::install(void* handle) {
     void* ptr = hybris_dlsym(handle, "_ZN4xbox8services5utils5sleepEj");
     PatchUtils::patchCallInstruction(ptr, (void*) &sleepHook, true);
 
@@ -32,7 +32,7 @@ void XboxSleepShutdownPatch::install(void* handle) {
     PatchUtils::patchCallInstruction((void*) ((size_t) ptr + 5), (void*) &xbox_shutdown_patch_run_one_hook_2, false);
 }
 
-void XboxSleepShutdownPatch::notifyShutdown() {
+void XboxShutdownPatch::notifyShutdown() {
     {
         std::unique_lock<std::mutex> l(mutex);
         shuttingDown = true;
@@ -41,9 +41,9 @@ void XboxSleepShutdownPatch::notifyShutdown() {
     Log::trace("XboxLive", "Waiting for tasks");
     {
         std::unique_lock<std::mutex> l(runningTasksMutex);
-        while (XboxSleepShutdownPatch::runningTasks > 0) {
+        while (XboxShutdownPatch::runningTasks > 0) {
             cv.wait_for(l, std::chrono::seconds(1));
-            Log::trace("XboxLive", "Waiting for %i tasks", (int) XboxSleepShutdownPatch::runningTasks);
+            Log::trace("XboxLive", "Waiting for %i tasks", (int) XboxShutdownPatch::runningTasks);
         }
     }
     Log::trace("XboxLive", "Finished waiting for tasks");
@@ -51,11 +51,11 @@ void XboxSleepShutdownPatch::notifyShutdown() {
 
 extern "C" void xbox_shutdown_patch_run_one_enter() asm("xbox_shutdown_patch_run_one_enter");
 extern "C" void xbox_shutdown_patch_run_one_enter() {
-    ++XboxSleepShutdownPatch::runningTasks;
+    ++XboxShutdownPatch::runningTasks;
 }
 extern "C" void xbox_shutdown_patch_run_one_exit() asm("xbox_shutdown_patch_run_one_exit");
 extern "C" void xbox_shutdown_patch_run_one_exit() {
-    if (XboxSleepShutdownPatch::runningTasks.fetch_sub(1) <= 1) {
-        XboxSleepShutdownPatch::runningTasksCv.notify_all();
+    if (XboxShutdownPatch::runningTasks.fetch_sub(1) <= 1) {
+        XboxShutdownPatch::runningTasksCv.notify_all();
     }
 }

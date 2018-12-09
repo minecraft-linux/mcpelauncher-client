@@ -19,7 +19,7 @@
 #include "splitscreen_patch.h"
 #include "gl_core_patch.h"
 #include "xbox_live_helper.h"
-#include "xbox_sleep_shutdown_patch.h"
+#include "xbox_shutdown_patch.h"
 #include "tts_patch.h"
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     LauncherStore::install(handle);
     TTSPatch::install(handle);
     XboxLivePatches::install(handle);
-    XboxSleepShutdownPatch::install(handle);
+    XboxShutdownPatch::install(handle);
     LinuxHttpRequestHelper::install(handle);
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
 
     MinecraftUtils::workaroundShutdownCrash(handle);
     XboxLivePatches::workaroundShutdownFreeze(handle);
-    XboxSleepShutdownPatch::notifyShutdown();
+    XboxShutdownPatch::notifyShutdown();
 
     XboxLiveHelper::getInstance().shutdown();
     appPlatform->teardown();
