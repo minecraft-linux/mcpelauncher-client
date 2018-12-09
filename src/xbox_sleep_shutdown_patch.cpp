@@ -5,8 +5,8 @@
 #include <cstring>
 #include <log.h>
 
-extern "C" void xbox_shutdown_patch_run_one_hook_1();
-extern "C" void xbox_shutdown_patch_run_one_hook_2();
+extern "C" void xbox_shutdown_patch_run_one_hook_1() asm("xbox_shutdown_patch_run_one_hook_1");
+extern "C" void xbox_shutdown_patch_run_one_hook_2() asm("xbox_shutdown_patch_run_one_hook_2");
 
 std::condition_variable XboxSleepShutdownPatch::cv;
 std::mutex XboxSleepShutdownPatch::mutex;
@@ -49,9 +49,11 @@ void XboxSleepShutdownPatch::notifyShutdown() {
     Log::trace("XboxLive", "Finished waiting for tasks");
 }
 
+extern "C" void xbox_shutdown_patch_run_one_enter() asm("xbox_shutdown_patch_run_one_enter");
 extern "C" void xbox_shutdown_patch_run_one_enter() {
     ++XboxSleepShutdownPatch::runningTasks;
 }
+extern "C" void xbox_shutdown_patch_run_one_exit() asm("xbox_shutdown_patch_run_one_exit");
 extern "C" void xbox_shutdown_patch_run_one_exit() {
     if (XboxSleepShutdownPatch::runningTasks.fetch_sub(1) <= 1) {
         XboxSleepShutdownPatch::runningTasksCv.notify_all();
