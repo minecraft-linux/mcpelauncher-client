@@ -213,7 +213,6 @@ void XboxLivePatches::destroyXsapiSingleton(void* handle) {
         unsigned int ebx = off + 0xa;
         ebx += *((unsigned int*) (off + 0xb + 2));
         unsigned int ptr = ebx + *((unsigned int*) (off + 0x11 + 2));
-        printf("%x\n", ptr);
         ((mcpe::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
     } else {
         unsigned int ebx = off + 0xb;
