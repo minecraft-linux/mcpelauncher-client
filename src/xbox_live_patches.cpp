@@ -96,7 +96,8 @@ xbox::services::xbox_live_result<void> XboxLivePatches::initSignInActivity(
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
 
     auto local_conf = xbox::services::local_config::get_local_config_singleton();
-    if (MinecraftVersion::isAtLeast(1, 8) && !MinecraftVersion::isExactly(1, 9, 0, 2))
+    if (MinecraftVersion::isAtLeast(1, 8) && !MinecraftVersion::isExactly(1, 9, 0, 0) &&
+        !MinecraftVersion::isExactly(1, 9, 0, 2))
         th->cid = local_conf->get_value_from_local_storage("cid");
     else
         th->cid = ((Legacy::Pre_1_8::xbox::services::local_config&) *local_conf).get_value_from_local_storage("cid");
