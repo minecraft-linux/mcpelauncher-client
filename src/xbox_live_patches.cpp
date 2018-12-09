@@ -209,8 +209,16 @@ void XboxLivePatches::workaroundShutdownFreeze(void* handle) {
 
 void XboxLivePatches::destroyXsapiSingleton(void* handle) {
     unsigned int off = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services19get_xsapi_singletonEb");
-    unsigned int ebx = off + 0xb;
-    ebx += *((unsigned int*) (off + 0xc + 2));
-    unsigned int ptr = ebx + *((unsigned int*) (off + (0x661 - 0x4F0) + 2));
-    ((mcpe::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
+    if (MinecraftVersion::isAtLeast(1, 9)) {
+        unsigned int ebx = off + 0xa;
+        ebx += *((unsigned int*) (off + 0xb + 2));
+        unsigned int ptr = ebx + *((unsigned int*) (off + 0x11 + 2));
+        printf("%x\n", ptr);
+        ((mcpe::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
+    } else {
+        unsigned int ebx = off + 0xb;
+        ebx += *((unsigned int*) (off + 0xc + 2));
+        unsigned int ptr = ebx + *((unsigned int*) (off + (0x661 - 0x4F0) + 2));
+        ((mcpe::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
+    }
 }
