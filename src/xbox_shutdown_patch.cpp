@@ -4,9 +4,12 @@
 #include <mcpelauncher/patch_utils.h>
 #include <cstring>
 #include <log.h>
+#include <mcpelauncher/minecraft_version.h>
 
 extern "C" void xbox_shutdown_patch_run_one_hook_1() asm("xbox_shutdown_patch_run_one_hook_1");
 extern "C" void xbox_shutdown_patch_run_one_hook_2() asm("xbox_shutdown_patch_run_one_hook_2");
+extern "C" void xbox_shutdown_patch_run_one_hook_1_1_9() asm("xbox_shutdown_patch_run_one_hook_1_1_9");
+extern "C" void xbox_shutdown_patch_run_one_hook_2_1_9() asm("xbox_shutdown_patch_run_one_hook_2_1_9");
 
 std::condition_variable XboxShutdownPatch::cv;
 std::mutex XboxShutdownPatch::mutex;
@@ -26,10 +29,19 @@ void XboxShutdownPatch::install(void* handle) {
     PatchUtils::patchCallInstruction(ptr, (void*) &sleepHook, true);
 
     ptr = hybris_dlsym(handle, "_ZN5boost4asio6detail15task_io_service10do_run_oneERNS1_11scoped_lockINS1_11posix_mutexEEERNS1_27task_io_service_thread_infoERKNS_6system10error_codeE");
-    ptr = (void*) ((size_t) ptr + (0x30C2942 - 0x30C2620));
-    PatchUtils::patchCallInstruction((void*) ((size_t) ptr - 7), (void*) &xbox_shutdown_patch_run_one_hook_1, false);
-    memset((void*) ((size_t) ptr - 2), 0x90, 2);
-    PatchUtils::patchCallInstruction((void*) ((size_t) ptr + 5), (void*) &xbox_shutdown_patch_run_one_hook_2, false);
+    if (MinecraftVersion::isAtLeast(1, 9)) {
+        ptr = (void *) ((size_t) ptr + (0x39C8938 - 0x39C86D0));
+        PatchUtils::patchCallInstruction((void*) ((size_t) ptr - 7), (void*) &xbox_shutdown_patch_run_one_hook_1_1_9, false);
+        memset((void*) ((size_t) ptr - 2), 0x90, 2);
+        memset((void*) ((size_t) ptr + 2), 0x90, 2);
+        PatchUtils::patchCallInstruction((void*) ((size_t) ptr + 4), (void*) &xbox_shutdown_patch_run_one_hook_2_1_9, false);
+    } else {
+        ptr = (void *) ((size_t) ptr + (0x30C2942 - 0x30C2620));
+        PatchUtils::patchCallInstruction((void*) ((size_t) ptr - 7), (void*) &xbox_shutdown_patch_run_one_hook_1, false);
+        memset((void*) ((size_t) ptr - 2), 0x90, 2);
+        memset((void*) ((size_t) ptr + 2), 0x90, 1);
+        PatchUtils::patchCallInstruction((void*) ((size_t) ptr + 3), (void*) &xbox_shutdown_patch_run_one_hook_2, false);
+    }
 }
 
 void XboxShutdownPatch::notifyShutdown() {
