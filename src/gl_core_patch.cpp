@@ -60,6 +60,14 @@ void GLCorePatch::install(void* handle) {
     patchData[0] = 0xB9;
     *((size_t*) (patchData + 1)) = (size_t) versionStr;
     patchData[5] = 0x90;
+
+    ptr = hybris_dlsym(handle, "_ZN3mce9BufferOGL12updateBufferERNS_13RenderContextEjPKvjNS_7MapTypeE");
+    ((unsigned char*) ptr)[0x31] = 0x90;
+    ((unsigned char*) ptr)[0x32] = 0x90;
+
+    ptr = hybris_dlsym(handle, "_ZN3mce9BufferOGL14recreateBufferERNS_13RenderContextEjPKvj");
+    ((unsigned char*) ptr)[0x31] = 0xEB;
+
 }
 
 void GLCorePatch::onGLContextCreated() {
