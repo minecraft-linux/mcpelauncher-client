@@ -21,6 +21,7 @@
 #include "xbox_live_helper.h"
 #include "xbox_shutdown_patch.h"
 #include "tts_patch.h"
+#include "shader_error_patch.h"
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
 #endif
@@ -105,6 +106,7 @@ int main(int argc, char *argv[]) {
     LinuxHttpRequestHelper::install(handle);
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
+    ShaderErrorPatch::install(handle);
     if (graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
 
@@ -116,6 +118,7 @@ int main(int argc, char *argv[]) {
 
     SplitscreenPatch::onGLContextCreated();
     GLCorePatch::onGLContextCreated();
+    ShaderErrorPatch::onGLContextCreated();
 
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");
     ClientAppPlatform::initVtable(handle);
