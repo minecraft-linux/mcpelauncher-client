@@ -33,6 +33,7 @@ void ClientAppPlatform::initVtable(void* lib) {
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickImageOld), &ClientAppPlatform::pickImageOld);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickFile), &ClientAppPlatform::pickFile);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::setFullscreenMode), &ClientAppPlatform::setFullscreenMode);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::swapBuffers), &ClientAppPlatform::swapBuffers);
     vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbiRK4Vec2", &ClientAppPlatform::showKeyboard);
     vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbRK4Vec2", &ClientAppPlatform::showKeyboardLegacy);
     vtr.replace("_ZN11AppPlatform17updateTextBoxTextERKSs", &ClientAppPlatform::updateTextBoxText);
@@ -102,6 +103,10 @@ void ClientAppPlatform::pickFile(FilePickerSettings &settings) {
 void ClientAppPlatform::setFullscreenMode(int mode) {
     Log::trace(TAG, "Changing fullscreen mode: %i", mode);
     window->setFullscreen(mode != 0);
+}
+
+void ClientAppPlatform::swapBuffers() {
+    window->swapBuffers();
 }
 
 void ClientAppPlatform::update() {

@@ -37,6 +37,8 @@ public:
 
     void setFullscreenMode(int mode);
 
+    void swapBuffers();
+
     void showKeyboard(mcpe::string const& text, int, bool, bool, bool, int, Vec2 const&);
     void showKeyboardLegacy(mcpe::string const& text, int, bool, bool, bool, Vec2 const&);
     void updateTextBoxText(mcpe::string const& text);
