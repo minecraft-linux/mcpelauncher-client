@@ -3,9 +3,9 @@
 #include <memory>
 #include <iostream>
 #include <minecraft/std/string.h>
+#include <minecraft/Store.h>
 #include <log.h>
 
-struct StoreListener;
 struct PurchaseInfo;
 struct ExtraLicenseData {
     long long validationTime = 0L;
@@ -17,6 +17,7 @@ class LauncherStore {
 
 private:
     void* vtable;
+    StoreListener& listener;
 
     static void** myVtable;
     static void initVtable(void* lib);
@@ -24,14 +25,15 @@ private:
     static std::unique_ptr<LauncherStore> createStore(const mcpe::string& idk, StoreListener& listener) {
         //Log::trace("Launcher", "Creating store (%s)", idk.c_str());
         Log::trace("Launcher", "Creating store");
-        return std::unique_ptr<LauncherStore>(new LauncherStore());
+        return std::unique_ptr<LauncherStore>(new LauncherStore(listener));
     }
 
 public:
     static void install(void* handle);
 
-    LauncherStore() {
+    LauncherStore(StoreListener& listener) : listener(listener) {
         vtable = myVtable;
+        listener.onStoreInitialized(true);
     }
     ~LauncherStore() {
         Log::trace("Store", "Destroying LinuxStore");
@@ -64,8 +66,15 @@ public:
         // Log::trace("Store", "getRealmsSkuPrefix: ");
         return "";
     }
-    void queryProducts(std::vector<std::string> const& arr) {
+    void queryProducts(std::vector<mcpe::string> const& arr) {
         Log::trace("Store", "queryProducts");
+        std::vector<ProductInfo> products;
+        for (auto const& i : arr) {
+            ProductInfo prod;
+            prod.id = i;
+            products.push_back(prod);
+        }
+        listener.onQueryProductsSuccess(products);
     }
     void purchase(std::string const& name) {
         Log::trace("Store", "purchase: %s", name.c_str());
