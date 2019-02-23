@@ -27,6 +27,7 @@ void LauncherStore::initVtable(void *lib) {
     vtr.replace("_ZNK12AndroidStore30requiresRestorePurchasesButtonEv", &LauncherStore::requiresRestorePurchasesButton);
     vtr.replace("_ZNK12AndroidStore19allowsSubscriptionsEv", &LauncherStore::allowsSubscriptions);
     vtr.replace("_ZNK12AndroidStore10getStoreIdEv", &LauncherStore::getStoreId);
+    vtr.replace("_ZNK5Store20getCatalogPlatformIdEv", &LauncherStore::getStoreId);
     vtr.replace("_ZNK5Store21getSubPlatformStoreIdEv", &LauncherStore::getSubPlatformStoreId);
     vtr.replace("_ZNK12AndroidStore19getProductSkuPrefixEv", &LauncherStore::getProductSkuPrefix);
     vtr.replace("_ZNK12AndroidStore18getRealmsSkuPrefixEv", &LauncherStore::getRealmsSkuPrefix);
