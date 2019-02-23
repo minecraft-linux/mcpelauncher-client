@@ -44,6 +44,8 @@ void ClientAppPlatform::initVtable(void* lib) {
 
 ClientAppPlatform::ClientAppPlatform() {
     vtable = myVtable;
+
+    getHardwareInformation().deviceModel = "Linux";
 }
 
 void ClientAppPlatform::hideMousePointer() {
