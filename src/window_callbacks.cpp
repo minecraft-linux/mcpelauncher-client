@@ -108,10 +108,14 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
     }
     if (key == 112 + 10 && action == KeyAction::PRESS)
         game.getPrimaryUserOptions()->setFullscreen(!game.getPrimaryUserOptions()->getFullscreen());
-    if (action == KeyAction::PRESS)
-        Keyboard::feed((unsigned char) key, 1);
-    else if (action == KeyAction::RELEASE)
-        Keyboard::feed((unsigned char) key, 0);
+    if (action == KeyAction::PRESS || action == KeyAction::RELEASE) {
+        Keyboard::InputEvent evData;
+        evData.key = (unsigned int) key;
+        evData.event = (action == KeyAction::PRESS ? 1 : 0);
+        evData.controllerId = *Keyboard::_gameControllerId;
+        Keyboard::_inputs->push_back(evData);
+        Keyboard::_states[key] = evData.event;
+    }
 
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
