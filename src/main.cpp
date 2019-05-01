@@ -103,7 +103,9 @@ int main(int argc, char *argv[]) {
     LauncherStore::install(handle);
     TTSPatch::install(handle);
     XboxLivePatches::install(handle);
+#ifdef __i386__
     XboxShutdownPatch::install(handle);
+#endif
     LinuxHttpRequestHelper::install(handle);
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
