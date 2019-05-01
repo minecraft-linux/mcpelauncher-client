@@ -22,13 +22,12 @@
 #include "xbox_shutdown_patch.h"
 #include "tts_patch.h"
 #include "shader_error_patch.h"
+#include "hbui_patch.h"
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
 #endif
 #ifdef __i386__
 #include "cpuid.h"
-#include "hbui_patch.h"
-
 #endif
 #include <build_info.h>
 
