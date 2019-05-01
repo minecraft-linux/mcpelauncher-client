@@ -67,12 +67,14 @@ int main(int argc, char *argv[]) {
         MinecraftUtils::setMallocZero();
 
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
+#ifdef __i386__
     {
         CpuId cpuid;
         Log::info("Launcher", "CPU: %s %s", cpuid.getManufacturer(), cpuid.getBrandString());
         Log::info("Launcher", "CPU supports SSSE3: %s",
                 cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
     }
+#endif
 
     GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
 
