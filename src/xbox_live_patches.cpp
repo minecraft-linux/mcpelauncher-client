@@ -47,7 +47,8 @@ void XboxLivePatches::install(void *handle) {
 
 
     ptr = hybris_dlsym(handle, "_ZNK13MinecraftGame26useMinecraftVersionOfXBLUIEv");
-    PatchUtils::patchCallInstruction(ptr, (void*) &useMinecraftVersionOfXBLUI, true);
+    if (ptr)
+        PatchUtils::patchCallInstruction(ptr, (void*) &useMinecraftVersionOfXBLUI, true);
 
     // Set global variables
 
@@ -57,8 +58,10 @@ void XboxLivePatches::install(void *handle) {
     std::shared_ptr<xbox::services::java_interop> javaInterop = xbox::services::java_interop::get_java_interop_singleton();
     javaInterop->activity = (void*) 1; // this just needs not to be null
 
-    xbox::services::system::xbox_live_services_settings::get_singleton_instance(true)->set_diagnostics_trace_level(0);
-    xbox::services::system::xbox_live_services_settings::get_singleton_instance(true)->set_diagnostics_trace_level(5);
+    if (MinecraftVersion::isAtLeast(1, 2, 3)) {
+        xbox::services::system::xbox_live_services_settings::get_singleton_instance(true)->set_diagnostics_trace_level(0);
+        xbox::services::system::xbox_live_services_settings::get_singleton_instance(true)->set_diagnostics_trace_level(5);
+    }
 }
 
 bool XboxLivePatches::verifyCertChain() {
