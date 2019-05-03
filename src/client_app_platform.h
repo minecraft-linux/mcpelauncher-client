@@ -30,9 +30,10 @@ public:
     void hideMousePointer();
     void showMousePointer();
 
-    void pickImage(std::shared_ptr<ImagePickingCallback>);
+    void pickImage(mcpe::shared_ptr<ImagePickingCallback>);
     void pickImageOld(ImagePickingCallback& callback);
-    void pickFile(FilePickerSettings& callback);
+    void pickFile(mcpe::shared_ptr<FilePickerSettings> callback);
+    void pickFileOld(Legacy::Pre_1_8::FilePickerSettings& callback);
     bool supportsFilePicking() { return true; }
 
     void setFullscreenMode(int mode);

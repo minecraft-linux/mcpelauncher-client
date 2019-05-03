@@ -32,8 +32,10 @@ void ClientAppPlatform::initVtable(void* lib) {
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickImage), &ClientAppPlatform::pickImage);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickImageOld), &ClientAppPlatform::pickImageOld);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickFile), &ClientAppPlatform::pickFile);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::pickFileOld), &ClientAppPlatform::pickFileOld);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::setFullscreenMode), &ClientAppPlatform::setFullscreenMode);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::swapBuffers), &ClientAppPlatform::swapBuffers);
+    vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::supportsFilePicking), &ClientAppPlatform::supportsFilePicking);
     vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbiRK4Vec2", &ClientAppPlatform::showKeyboard);
     vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbRK4Vec2", &ClientAppPlatform::showKeyboardLegacy);
     vtr.replace("_ZN11AppPlatform17updateTextBoxTextERKSs", &ClientAppPlatform::updateTextBoxText);
@@ -57,7 +59,7 @@ void ClientAppPlatform::showMousePointer() {
         window->setCursorDisabled(false);
 }
 
-void ClientAppPlatform::pickImage(std::shared_ptr<ImagePickingCallback> callback) {
+void ClientAppPlatform::pickImage(mcpe::shared_ptr<ImagePickingCallback> callback) {
     Log::trace(TAG, "pickImage");
     auto picker = FilePickerFactory::createFilePicker();
     picker->setTitle("Select image");
@@ -79,18 +81,42 @@ void ClientAppPlatform::pickImageOld(ImagePickingCallback &callback) {
         callback.onImagePickingCanceled();
 }
 
-void ClientAppPlatform::pickFile(FilePickerSettings &settings) {
+void ClientAppPlatform::pickFile(mcpe::shared_ptr<FilePickerSettings> settings) {
+    std::cout << "pickFile\n";
+    std::cout << "- title: " << settings->pickerTitle << "\n";
+    std::cout << "- type: " << (int) settings->type << "\n";
+    std::cout << "- file descriptions:\n";
+    for (FilePickerSettings::FileDescription &d : settings->fileDescriptions) {
+        std::cout << " - " << d.ext << " " << d.desc << "\n";
+    }
+
+    auto picker = FilePickerFactory::createFilePicker();
+    picker->setTitle(settings->pickerTitle.std());
+    if (settings->type == FilePickerSettings::PickerType::SAVE)
+        picker->setMode(FilePicker::Mode::SAVE);
+    std::vector<std::string> filters;
+    for (auto const& filter : settings->fileDescriptions)
+        filters.push_back(std::string("*.") + filter.ext.std());
+    picker->setFileNameFilters(filters);
+    if (picker->show())
+        settings->pickedCallback(settings, picker->getPickedFile());
+    else
+        settings->cancelCallback(settings);
+}
+
+void ClientAppPlatform::pickFileOld(Legacy::Pre_1_8::FilePickerSettings &settings) {
     std::cout << "pickFile\n";
     std::cout << "- title: " << settings.pickerTitle << "\n";
     std::cout << "- type: " << (int) settings.type << "\n";
     std::cout << "- file descriptions:\n";
-    for (FilePickerSettings::FileDescription &d : settings.fileDescriptions) {
+    for (Legacy::Pre_1_8::
+    FilePickerSettings::FileDescription &d : settings.fileDescriptions) {
         std::cout << " - " << d.ext << " " << d.desc << "\n";
     }
 
     auto picker = FilePickerFactory::createFilePicker();
     picker->setTitle(settings.pickerTitle.std());
-    if (settings.type == FilePickerSettings::PickerType::SAVE)
+    if (settings.type == Legacy::Pre_1_8::FilePickerSettings::PickerType::SAVE)
         picker->setMode(FilePicker::Mode::SAVE);
     std::vector<std::string> filters;
     for (auto const& filter : settings.fileDescriptions)
