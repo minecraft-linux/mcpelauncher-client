@@ -1,11 +1,10 @@
 #include "xbox_live_game_interface.h"
 #include "xbox_live_helper.h"
-#include <log.h>
 #include <mcpelauncher/minecraft_version.h>
 #include <minecraft/legacy/Xbox.h>
-#include "xbox_live_game_interface_legacy.h"
+#include "xbox_live_game_interface_legacy_1_2_3.h"
 
-#define TAG "XboxLiveGameInterface"
+const char* const XboxLiveDefaultGameInterface::TAG = "XboxLiveGameInterface";
 
 XboxLiveGameInterface& XboxLiveGameInterface::getInstance() {
     if (!MinecraftVersion::isAtLeast(1, 2, 3)) {
@@ -14,43 +13,6 @@ XboxLiveGameInterface& XboxLiveGameInterface::getInstance() {
     }
     static XboxLiveDefaultGameInterface instance;
     return instance;
-}
-
-xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result>
-XboxLiveDefaultGameInterface::invokeXblLogin(std::string const &cid, std::string const &binaryToken) {
-    using namespace xbox::services::system;
-    auto auth_mgr = auth_manager::get_auth_manager_instance();
-    auth_mgr->set_rps_ticket(binaryToken);
-    auto initTask = auth_mgr->initialize_default_nsal();
-    auto initRet = initTask.get();
-    if (initRet.code != 0)
-        throw std::runtime_error("Failed to initialize default nsal");
-    std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
-                                              (token_identity_type) 2};
-    auto config = auth_mgr->get_auth_config();
-    config->set_xtoken_composition(types);
-    std::string const& endpoint = config->xbox_live_endpoint().std();
-    Log::trace(TAG, "Xbox Live Endpoint: %s", endpoint.c_str());
-    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string());
-    Log::trace(TAG, "Get token and signature task started!");
-    auto ret = task.get();
-    Log::debug(TAG, "User info received! Status: %i", ret.code);
-    Log::debug(TAG, "Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
-    return ret;
-}
-
-xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result>
-XboxLiveDefaultGameInterface::invokeEventInit() {
-    using namespace xbox::services::system;
-    auto auth_mgr = auth_manager::get_auth_manager_instance();
-    std::string endpoint = "https://vortex-events.xboxlive.com";
-    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string());
-    auto ret = task.get();
-
-    auto tid = xbox::services::xbox_live_app_config::get_app_config_singleton()->title_id();
-    auth_mgr->initialize_title_nsal(std::to_string(tid)).get();
-
-    return ret;
 }
 
 void XboxLiveDefaultGameInterface::onInvokeAndroidAuthFlow(void*) {
@@ -116,10 +78,10 @@ XboxLiveDefaultGameInterface::onInitSignInActivity(void*, int requestCode) {
 void XboxLiveDefaultGameInterface::completeAndroidAuthFlow(std::string const &cid, std::string const &token) {
     Log::trace(TAG, "Got account CID and token");
     Log::trace(TAG, "Invoking XBL login");
-    auto ret = invokeXblLogin(cid, token);
+    auto ret = invokeXblLogin<xbox::services::system::auth_manager>(cid, token);
     Log::trace(TAG, "Invoking XBL event init");
     XboxLiveHelper::getInstance().initCll(cid);
-    auto retEv = invokeEventInit();
+    auto retEv = invokeEventInit<xbox::services::system::auth_manager>();
     Log::trace(TAG, "Xbox Live login completed");
 
     auto auth = xbox::services::system::user_auth_android::get_instance();
@@ -143,21 +105,7 @@ void XboxLiveDefaultGameInterface::completeAndroidAuthFlowWithError() {
 }
 
 std::string XboxLiveDefaultGameInterface::getCllXToken(bool refresh) {
-    using namespace xbox::services::system;
-    auto auth_mgr = auth_manager::get_auth_manager_instance();
-    if (refresh) {
-        auto initRet = auth_mgr->initialize_default_nsal().get();
-        if (initRet.code != 0)
-            throw std::runtime_error("Failed to initialize default nsal");
-    }
-    std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
-                                              (token_identity_type) 2};
-    auto config = auth_mgr->get_auth_config();
-    config->set_xtoken_composition(types);
-    std::string endpoint = "https://test.vortex.data.microsoft.com";
-    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, refresh, std::string());
-    auto ret = task.get();
-    return ret.data.token.std();
+    return getCllXTokenImpl<xbox::services::system::auth_manager>(refresh);
 }
 
 std::string XboxLiveDefaultGameInterface::getCllXTicket(std::string const &xuid) {
