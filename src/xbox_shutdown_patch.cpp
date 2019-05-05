@@ -26,6 +26,10 @@ void XboxShutdownPatch::sleepHook(unsigned int ms) {
 
 void XboxShutdownPatch::install(void* handle) {
     void* ptr = hybris_dlsym(handle, "_ZN4xbox8services5utils5sleepEj");
+    if (ptr == nullptr) {
+        Log::warn("XboxShutdownPatch", "sleep() symbol not found");
+        return;
+    }
     PatchUtils::patchCallInstruction(ptr, (void*) &sleepHook, true);
 
     ptr = hybris_dlsym(handle, "_ZN5boost4asio6detail15task_io_service10do_run_oneERNS1_11scoped_lockINS1_11posix_mutexEEERNS1_27task_io_service_thread_infoERKNS_6system10error_codeE");

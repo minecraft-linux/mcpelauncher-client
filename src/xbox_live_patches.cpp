@@ -32,9 +32,13 @@ void XboxLivePatches::install(void *handle) {
     PatchUtils::patchCallInstruction(ptr, (void*) &getLocalStoragePath, true);
 
     ptr = hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android21init_sign_in_activityEi");
+    if (ptr == nullptr) // <1.2
+        ptr = hybris_dlsym(handle, "_ZN4xbox8services6system17user_impl_android21init_sign_in_activityEi");
     PatchUtils::patchCallInstruction(ptr, (void*) &initSignInActivity, true);
 
     ptr = hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android16invoke_auth_flowEv");
+    if (ptr == nullptr) // <1.2
+        ptr = hybris_dlsym(handle, "_ZN4xbox8services6system17user_impl_android16invoke_auth_flowEv");
     PatchUtils::patchCallInstruction(ptr, (void*) &invokeAuthFlow, true);
 
     ptr = hybris_dlsym(handle, "_ZN4xbox8services5utils15get_locale_listEv");

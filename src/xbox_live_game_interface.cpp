@@ -2,12 +2,17 @@
 #include "xbox_live_helper.h"
 #include <mcpelauncher/minecraft_version.h>
 #include <minecraft/legacy/Xbox.h>
+#include "xbox_live_game_interface_legacy_1_2.h"
 #include "xbox_live_game_interface_legacy_1_2_3.h"
 #include "xbox_live_game_interface_legacy_1_4.h"
 
 const char* const XboxLiveDefaultGameInterface::TAG = "XboxLiveGameInterface";
 
 XboxLiveGameInterface& XboxLiveGameInterface::getInstance() {
+    if (!MinecraftVersion::isAtLeast(1, 2)) {
+        static XboxLiveGameInterface_Pre_1_2 instance;
+        return instance;
+    }
     if (!MinecraftVersion::isAtLeast(1, 2, 3)) {
         static XboxLiveGameInterface_Pre_1_2_3 instance;
         return instance;
@@ -41,15 +46,15 @@ XboxLiveDefaultGameInterface::onInitSignInActivity(void*, int requestCode) {
     if (requestCode == 1) { // silent signin
         if (!cid.empty()) {
             XboxLiveHelper::getInstance().requestXblToken(cid, true,
-                    [](std::string const& cid, std::string const& token) {
+                    [this](std::string const& cid, std::string const& token) {
                         XboxLiveHelper::getInstance().initCll(cid);
 
                         xbox::services::system::java_rps_ticket ticket;
                         ticket.token = token;
                         ticket.error_code = 0;
                         ticket.error_text = "Got ticket";
-                        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
-                    }, [](simpleipc::rpc_error_code err, std::string const& msg) {
+                        setRpsTicketCompletionEventValue(ticket);
+                    }, [this](simpleipc::rpc_error_code err, std::string const& msg) {
                         xbox::services::system::java_rps_ticket ticket;
                         Log::error(TAG, "Xbox Live sign in failed: %s", msg.c_str());
                         if (err == -100) { // No such account
@@ -62,22 +67,31 @@ XboxLiveDefaultGameInterface::onInitSignInActivity(void*, int requestCode) {
                             ticket.error_code = 0x800704CF;
                             ticket.error_text = msg.c_str();
                         }
-                        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+                        setRpsTicketCompletionEventValue(ticket);
                     });
         } else {
             xbox::services::system::java_rps_ticket ticket;
             ticket.error_code = 1;
             ticket.error_text = "Must show UI to acquire an account.";
-            xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+            setRpsTicketCompletionEventValue(ticket);
         }
     } else if (requestCode == 6) { // sign out
         xbox::services::xbox_live_result<void> arg;
         arg.code = 0;
         arg.error_code_category = xbox::services::xbox_services_error_code_category();
-        xbox::services::system::user_auth_android::s_signOutCompleteEvent->set(arg);
+        setSignOutCompleteEventValue(arg);
     }
 
     return ret;
+}
+
+void XboxLiveDefaultGameInterface::setRpsTicketCompletionEventValue(
+        xbox::services::system::java_rps_ticket const &ticket) {
+    xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+}
+
+void XboxLiveDefaultGameInterface::setSignOutCompleteEventValue(xbox::services::xbox_live_result<void> const &value) {
+    xbox::services::system::user_auth_android::s_signOutCompleteEvent->set(value);
 }
 
 void XboxLiveDefaultGameInterface::completeAndroidAuthFlow(std::string const &cid, std::string const &token) {

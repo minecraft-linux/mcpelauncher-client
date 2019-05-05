@@ -97,4 +97,8 @@ public:
 
     virtual std::string getLocalStorageValue(std::string const& key);
 
+    virtual void setRpsTicketCompletionEventValue(xbox::services::system::java_rps_ticket const& ticket);
+
+    virtual void setSignOutCompleteEventValue(xbox::services::xbox_live_result<void> const& value);
+
 };
