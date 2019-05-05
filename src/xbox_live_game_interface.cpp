@@ -3,10 +3,15 @@
 #include <log.h>
 #include <mcpelauncher/minecraft_version.h>
 #include <minecraft/legacy/Xbox.h>
+#include "xbox_live_game_interface_legacy.h"
 
 #define TAG "XboxLiveGameInterface"
 
 XboxLiveGameInterface& XboxLiveGameInterface::getInstance() {
+    if (!MinecraftVersion::isAtLeast(1, 2, 3)) {
+        static XboxLiveGameInterface_Pre_1_2_3 instance;
+        return instance;
+    }
     static XboxLiveDefaultGameInterface instance;
     return instance;
 }
@@ -170,6 +175,6 @@ std::string XboxLiveDefaultGameInterface::getLocalStorageValue(std::string const
 
 void XboxLiveDefaultGameInterface::setAndroidUserAuthCid(std::string const &cid) {
     using namespace xbox::services::system;
-    auto auth = xbox::services::system::user_auth_android::get_instance();
+    auto auth = user_auth_android::get_instance();
     auth->cid = cid;
 }
