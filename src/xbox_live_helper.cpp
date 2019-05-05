@@ -7,6 +7,7 @@
 #include <minecraft/Xbox.h>
 #include <minecraft/legacy/Xbox.h>
 #include "xbox_live_helper.h"
+#include "xbox_live_game_interface.h"
 
 using namespace simpleipc;
 
@@ -67,42 +68,6 @@ void XboxLiveHelper::invokeMsaAuthFlow(
     });
 }
 
-xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> XboxLiveHelper::invokeXblLogin(
-        std::string const& cid, std::string const& binaryToken) {
-    using namespace xbox::services::system;
-    auto auth_mgr = auth_manager::get_auth_manager_instance();
-    auth_mgr->set_rps_ticket(binaryToken);
-    auto initTask = auth_mgr->initialize_default_nsal();
-    auto initRet = initTask.get();
-    if (initRet.code != 0)
-        throw std::runtime_error("Failed to initialize default nsal");
-    std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
-                                              (token_identity_type) 2};
-    auto config = auth_mgr->get_auth_config();
-    config->set_xtoken_composition(types);
-    std::string const& endpoint = config->xbox_live_endpoint().std();
-    Log::trace("XboxLiveHelper", "Xbox Live Endpoint: %s", endpoint.c_str());
-    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string());
-    Log::trace("XboxLiveHelper", "Get token and signature task started!");
-    auto ret = task.get();
-    Log::debug("XboxLiveHelper", "User info received! Status: %i", ret.code);
-    Log::debug("XboxLiveHelper", "Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
-    return ret;
-}
-
-xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> XboxLiveHelper::invokeEventInit() {
-    using namespace xbox::services::system;
-    auto auth_mgr = auth_manager::get_auth_manager_instance();
-    std::string endpoint = "https://vortex-events.xboxlive.com";
-    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string());
-    auto ret = task.get();
-
-    auto tid = xbox::services::xbox_live_app_config::get_app_config_singleton()->title_id();
-    auth_mgr->initialize_title_nsal(std::to_string(tid)).get();
-
-    return ret;
-}
-
 simpleipc::client::rpc_call<std::shared_ptr<msa::client::Token>> XboxLiveHelper::requestXblToken(std::string const& cid,
                                                                                                  bool silent) {
     return getMsaClient().requestToken(cid, {"user.auth.xboxlive.com", "mbi_ssl"}, MSA_CLIENT_ID, silent);
@@ -159,30 +124,11 @@ std::string XboxLiveHelper::getCllMsaToken(std::string const& cid) {
 }
 
 std::string XboxLiveHelper::getCllXToken(bool refresh) {
-    using namespace xbox::services::system;
-    auto auth_mgr = auth_manager::get_auth_manager_instance();
-    if (refresh) {
-        auto initRet = auth_mgr->initialize_default_nsal().get();
-        if (initRet.code != 0)
-            throw std::runtime_error("Failed to initialize default nsal");
-    }
-    std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
-                                              (token_identity_type) 2};
-    auto config = auth_mgr->get_auth_config();
-    config->set_xtoken_composition(types);
-    std::string endpoint = "https://test.vortex.data.microsoft.com";
-    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, refresh, std::string());
-    auto ret = task.get();
-    return ret.data.token.std();
+    return XboxLiveGameInterface::getInstance().getCllXToken(refresh);
 }
 
 std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
-    auto local_conf = xbox::services::local_config::get_local_config_singleton();
-    if (MinecraftVersion::isAtLeast(1, 8) && !MinecraftVersion::isExactly(1, 9, 0, 0) &&
-        !MinecraftVersion::isExactly(1, 9, 0, 2))
-        return local_conf->get_value_from_local_storage(xuid).std();
-    else
-        return ((Legacy::Pre_1_8::xbox::services::local_config&) *local_conf).get_value_from_local_storage(xuid).std();
+    return XboxLiveGameInterface::getInstance().getCllXTicket(xuid);
 }
 
 void XboxLiveHelper::logCll(cll::Event const& event) {
