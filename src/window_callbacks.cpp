@@ -10,6 +10,8 @@
 #include <minecraft/Options.h>
 #include <minecraft/GameControllerManager.h>
 #include <minecraft/legacy/App.h>
+#include <minecraft/legacy/MinecraftGame.h>
+#include <minecraft/legacy/Keyboard.h>
 #include <game_window_manager.h>
 
 void WindowCallbacks::registerCallbacks() {
@@ -38,8 +40,13 @@ void WindowCallbacks::handleInitialWindowSize() {
     window.getWindowSize(windowWidth, windowHeight);
     onWindowSizeCallback(windowWidth, windowHeight);
 
-    if (game.getPrimaryUserOptions()->getFullscreen())
-        window.setFullscreen(true);
+    if (MinecraftVersion::isAtLeast(1, 2)) {
+        if (game.getPrimaryUserOptions()->getFullscreen())
+            window.setFullscreen(true);
+    } else {
+        if (((Legacy::Pre_1_2::MinecraftGame&) game).getOptions()->getFullscreen())
+            window.setFullscreen(true);
+    }
 }
 
 void WindowCallbacks::onWindowSizeCallback(int w, int h) {
@@ -112,8 +119,12 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
         Keyboard::InputEvent evData;
         evData.key = (unsigned int) key;
         evData.event = (action == KeyAction::PRESS ? 1 : 0);
-        evData.controllerId = *Keyboard::_gameControllerId;
-        Keyboard::_inputs->push_back(evData);
+        if (MinecraftVersion::isAtLeast(1, 2)) {
+            evData.controllerId = *Keyboard::_gameControllerId;
+            Keyboard::_inputs->push_back(evData);
+        } else {
+            Legacy::Pre_1_2::Keyboard::_inputs->push_back(evData);
+        }
         Keyboard::_states[key] = evData.event;
     }
 
