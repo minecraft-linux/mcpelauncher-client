@@ -5,6 +5,8 @@
 #include "legacy/minecraft_game_wrapper_legacy.h"
 
 MinecraftGameWrapper* MinecraftGameWrapper::create(int argc, char **argv) {
+    if (!MinecraftVersion::isAtLeast(1, 1))
+        return new MinecraftGameAppWrapper_Pre_1_1(argc, argv);
     if (!MinecraftVersion::isAtLeast(1, 2))
         return new MinecraftGameAppWrapper_Pre_1_2(argc, argv);
     if (!MinecraftVersion::isAtLeast(1, 2, 10))

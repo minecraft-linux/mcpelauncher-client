@@ -36,3 +36,33 @@ public:
     }
 
 };
+
+class MinecraftGameAppWrapper_Pre_1_1 : public MinecraftGameDefaultAppWrapper {
+
+private:
+    using MinecraftClient = Legacy::Pre_1_1::MinecraftClient;
+
+    MinecraftClient* const game;
+
+    static MinecraftClient* createInstance(int argc, char** argv) {
+        return new MinecraftClient(argc, argv);
+    }
+
+public:
+    explicit MinecraftGameAppWrapper_Pre_1_1(MinecraftClient* game) : MinecraftGameDefaultAppWrapper(game), game(game) {}
+    MinecraftGameAppWrapper_Pre_1_1(int argc, char** argv) : MinecraftGameAppWrapper_Pre_1_1(createInstance(argc, argv)) {}
+
+    ~MinecraftGameAppWrapper_Pre_1_1() { delete game; }
+
+    MinecraftGame* getWrapped() override { return (MinecraftGame*) game; }
+
+    OptionsRef getPrimaryUserOptions() override {
+        return game->getOptions();
+    }
+    void setTextboxText(mcpe::string const& text, int u) override {
+        game->setTextboxText(text);
+    }
+
+    void leaveGame() override {}
+
+};
