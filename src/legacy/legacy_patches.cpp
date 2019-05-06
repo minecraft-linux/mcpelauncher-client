@@ -9,5 +9,9 @@ void LegacyPatches::install(void *handle) {
         void *ptr = hybris_dlsym(handle, "_ZN15PatchNotesModel17preloadPatchNotesEv");
         if (ptr != nullptr)
             PatchUtils::patchCallInstruction(ptr, (void *) +[]() {}, true);
+
+        ptr = hybris_dlsym(handle, "_ZN14SkinRepository25_generatePremiumSkinPacksEv");
+        if (ptr != nullptr)
+            PatchUtils::patchCallInstruction(ptr, (void *) +[]() {}, true);
     }
 }
