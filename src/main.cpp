@@ -28,6 +28,8 @@
 #endif
 #ifdef __i386__
 #include "cpuid.h"
+#include "legacy/legacy_patches.h"
+
 #endif
 #include <build_info.h>
 
@@ -112,6 +114,7 @@ int main(int argc, char *argv[]) {
     ShaderErrorPatch::install(handle);
     if (graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
+    LegacyPatches::install(handle);
 
     Log::info("Launcher", "Creating window");
     WindowCallbacks::loadGamepadMappings();
