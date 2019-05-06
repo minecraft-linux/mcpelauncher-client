@@ -1,5 +1,5 @@
 #include "xbox_live_game_interface_legacy_1_2_3.h"
-#include "xbox_live_helper.h"
+#include "../xbox_live_helper.h"
 #include <minecraft/legacy/Xbox.h>
 
 #define TAG "XboxLiveGameInterface/1.2.3"

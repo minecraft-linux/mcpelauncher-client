@@ -2,9 +2,9 @@
 #include "xbox_live_helper.h"
 #include <mcpelauncher/minecraft_version.h>
 #include <minecraft/legacy/Xbox.h>
-#include "xbox_live_game_interface_legacy_1_2.h"
-#include "xbox_live_game_interface_legacy_1_2_3.h"
-#include "xbox_live_game_interface_legacy_1_4.h"
+#include "legacy/xbox_live_game_interface_legacy_1_2.h"
+#include "legacy/xbox_live_game_interface_legacy_1_2_3.h"
+#include "legacy/xbox_live_game_interface_legacy_1_4.h"
 
 const char* const XboxLiveDefaultGameInterface::TAG = "XboxLiveGameInterface";
 

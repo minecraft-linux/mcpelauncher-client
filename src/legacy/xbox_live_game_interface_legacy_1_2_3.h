@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xbox_live_game_interface.h"
+#include "../xbox_live_game_interface.h"
 #include <minecraft/legacy/Xbox.h>
 
 class XboxLiveGameInterface_Pre_1_2_3 : public XboxLiveDefaultGameInterface {
