@@ -4,13 +4,13 @@
 #include <minecraft/ImagePickingCallback.h>
 #include <minecraft/FilePickerSettings.h>
 #include <minecraft/MinecraftGame.h>
-#include <minecraft/legacy/MinecraftGame.h>
 #include <minecraft/legacy/AppPlatform.h>
 #include <file_picker_factory.h>
 #include <hybris/dlfcn.h>
 #include <minecraft/Keyboard.h>
 #include <mcpelauncher/minecraft_version.h>
 #include "utf8_util.h"
+#include "minecraft_game_wrapper.h"
 
 const char* ClientAppPlatform::TAG = "ClientAppPlatform";
 
@@ -170,7 +170,7 @@ void ClientAppPlatform::hideKeyboard() {
     currentTextPositionUTF = 0;
 }
 
-void ClientAppPlatform::onKeyboardText(MinecraftGame &game, std::string const &text) {
+void ClientAppPlatform::onKeyboardText(MinecraftGameWrapper &game, std::string const &text) {
     if (text.size() == 1 && text[0] == 8) { // backspace
         if (currentTextPositionUTF <= 0)
             return;
@@ -192,10 +192,7 @@ void ClientAppPlatform::onKeyboardText(MinecraftGame &game, std::string const &t
         currentTextPosition += text.size();
         currentTextPositionUTF += UTF8Util::getLength(text.c_str(), text.size());
     }
-    if (MinecraftVersion::isAtLeast(1, 2, 10))
-        game.setTextboxText(currentText, 0);
-    else
-        ((Legacy::Pre_1_2_10::MinecraftGame*) &game)->setTextboxText(currentText);
+    game.setTextboxText(currentText, 0);
     Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
 }
 

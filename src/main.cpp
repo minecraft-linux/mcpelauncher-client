@@ -29,6 +29,7 @@
 #ifdef __i386__
 #include "cpuid.h"
 #include "legacy/legacy_patches.h"
+#include "minecraft_game_wrapper.h"
 
 #endif
 #include <build_info.h>
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) {
               gl::getOpenGLVersion().c_str(), gl::getOpenGLRenderer().c_str(), gl::getOpenGLVendor().c_str());
 
     Log::trace("Launcher", "Initializing MinecraftGame (create instance)");
-    std::unique_ptr<MinecraftGame> game (new MinecraftGame(argc, argv));
+    std::unique_ptr<MinecraftGameWrapper> game (MinecraftGameWrapper::create(argc, argv));
     Log::trace("Launcher", "Initializing MinecraftGame (init call)");
     AppContext ctx;
     ctx.platform = appPlatform.get();
@@ -147,13 +148,13 @@ int main(int argc, char *argv[]) {
     game->init(ctx);
     Log::info("Launcher", "Game initialized");
 
-    modLoader.onGameInitialized(game.get());
+    modLoader.onGameInitialized((MinecraftGame*) game->getWrapped());
 
     WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
     windowCallbacks.setPixelScale(pixelScale);
     windowCallbacks.registerCallbacks();
     if (MinecraftVersion::isAtLeast(1, 8)) {
-        game->doPrimaryClientReadyWork([&windowCallbacks]() {
+        game->getWrapped()->doPrimaryClientReadyWork([&windowCallbacks]() {
             windowCallbacks.handleInitialWindowSize();
         });
     } else {
@@ -161,13 +162,7 @@ int main(int argc, char *argv[]) {
     }
     window->runLoop();
 
-    if (game->isInGame()) {
-        game->requestLeaveGame(true, false);
-        game->continueLeaveGame();
-        game->startLeaveGame();
-        game->getPrimaryClientInstance()->_startLeaveGame();
-        game->getPrimaryClientInstance()->_syncDestroyGame();
-    }
+    game->leaveGame();
     game.reset();
 
     MinecraftUtils::workaroundShutdownCrash(handle);

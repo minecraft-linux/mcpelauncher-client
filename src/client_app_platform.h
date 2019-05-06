@@ -4,7 +4,7 @@
 #include <game_window.h>
 
 class Vec2;
-class MinecraftGame;
+class MinecraftGameWrapper;
 
 class ClientAppPlatform : public LauncherAppPlatform {
 
@@ -52,7 +52,7 @@ public:
         LeftKey, RightKey, HomeKey, EndKey
     };
 
-    void onKeyboardText(MinecraftGame& game, std::string const& text);
+    void onKeyboardText(MinecraftGameWrapper& game, std::string const& text);
     void onKeyboardDirectionKey(DirectionKey key);
 
     void copyCurrentText();

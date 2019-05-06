@@ -1,9 +1,9 @@
 #include "window_callbacks.h"
 #include "minecraft_gamepad_mapping.h"
 #include "client_app_platform.h"
+#include "minecraft_game_wrapper.h"
 
 #include <mcpelauncher/minecraft_version.h>
-#include <minecraft/MinecraftGame.h>
 #include <minecraft/Mouse.h>
 #include <minecraft/Multitouch.h>
 #include <minecraft/Keyboard.h>
@@ -40,13 +40,8 @@ void WindowCallbacks::handleInitialWindowSize() {
     window.getWindowSize(windowWidth, windowHeight);
     onWindowSizeCallback(windowWidth, windowHeight);
 
-    if (MinecraftVersion::isAtLeast(1, 2)) {
-        if (game.getPrimaryUserOptions()->getFullscreen())
-            window.setFullscreen(true);
-    } else {
-        if (((Legacy::Pre_1_2::MinecraftGame&) game).getOptions()->getFullscreen())
-            window.setFullscreen(true);
-    }
+    if (game.getPrimaryUserOptions()->getFullscreen())
+        window.setFullscreen(true);
 }
 
 void WindowCallbacks::onWindowSizeCallback(int w, int h) {
@@ -66,10 +61,7 @@ void WindowCallbacks::onDraw() {
 }
 
 void WindowCallbacks::onClose() {
-    if (MinecraftVersion::isAtLeast(1, 8))
-        game.quit("linux launcher", "window close");
-    else
-        ((Legacy::Pre_1_8::App&) game).quit();
+    game.quit("linux launcher", "window close");
 }
 
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {

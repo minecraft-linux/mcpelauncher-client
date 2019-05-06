@@ -3,7 +3,7 @@
 #include <game_window.h>
 #include <unordered_map>
 
-class MinecraftGame;
+class MinecraftGameWrapper;
 class ClientAppPlatform;
 
 class WindowCallbacks {
@@ -16,7 +16,7 @@ private:
         GamepadData();
     };
 
-    MinecraftGame& game;
+    MinecraftGameWrapper& game;
     ClientAppPlatform& appPlatform;
     GameWindow& window;
     float pixelScale = 2.f;
@@ -24,7 +24,7 @@ private:
     bool modCTRL = false;
 
 public:
-    WindowCallbacks(MinecraftGame& game, ClientAppPlatform& appPlatform, GameWindow& window) :
+    WindowCallbacks(MinecraftGameWrapper& game, ClientAppPlatform& appPlatform, GameWindow& window) :
             game(game), appPlatform(appPlatform), window(window) { }
 
     static void loadGamepadMappings();
