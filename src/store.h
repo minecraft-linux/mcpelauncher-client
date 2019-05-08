@@ -165,5 +165,10 @@ public:
         ((Legacy::Pre_1_2::StoreListener&) listener).onQueryProductsSuccess(
                 queryProductsImpl<::Legacy::Pre_1_2::ProductInfo>(arr));
     }
+    void queryProducts_pre_0_17(std::vector<mcpe::string> const& arr) {
+        Log::trace("Store", "queryProducts");
+        ((Legacy::Pre_0_17::StoreListener&) listener).onQueryProductsSuccess(
+                queryProductsImpl<::Legacy::Pre_0_17::Product>(arr));
+    }
 
 };

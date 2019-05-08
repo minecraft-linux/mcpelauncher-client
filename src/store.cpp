@@ -66,4 +66,7 @@ void LauncherStore::initVtable(void *lib) {
 
     // <0.17.2 legacy
     vtr.replace("_ZN12AndroidStore10getStoreIdEv", &LauncherStore::getStoreId);
+
+    // <0.17 legacy
+    vtr.replace("_ZN12AndroidStore13queryProductsERKSt6vectorI9ProductIdSaIS1_EE", &LauncherStore::queryProducts_pre_0_17);
 }
