@@ -30,7 +30,7 @@
 #include "cpuid.h"
 #include "legacy/legacy_patches.h"
 #include "minecraft_game_wrapper.h"
-
+#include "texel_aa_patch.h"
 #endif
 #include <build_info.h>
 
@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
     XboxLivePatches::install(handle);
 #ifdef __i386__
     XboxShutdownPatch::install(handle);
+    TexelAAPatch::install(handle);
 #endif
     LinuxHttpRequestHelper::install(handle);
     HbuiPatch::install(handle);
