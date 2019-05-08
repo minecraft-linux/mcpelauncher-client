@@ -171,4 +171,8 @@ public:
                 queryProductsImpl<::Legacy::Pre_0_17::Product>(arr));
     }
 
+    bool allowsQueryPurchasesOnStartup_pre_0_16() {
+        return true;
+    };
+
 };
