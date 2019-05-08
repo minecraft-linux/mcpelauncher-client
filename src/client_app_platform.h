@@ -61,4 +61,6 @@ public:
 
     void setClipboard(mcpe::string const& text);
 
+    bool supportsMSAA() const { return true; }
+
 };

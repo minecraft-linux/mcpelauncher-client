@@ -42,6 +42,7 @@ void ClientAppPlatform::initVtable(void* lib) {
     vtr.replace("_ZN11AppPlatform12hideKeyboardEv", &ClientAppPlatform::hideKeyboard);
     vtr.replace("_ZNK11AppPlatform17supportsClipboardEv", &ClientAppPlatform::supportsClipboard);
     vtr.replace("_ZNK11AppPlatform12setClipboardERKSs", &ClientAppPlatform::setClipboard);
+    vtr.replace("_ZNK11AppPlatform12supportsMSAAEv", &ClientAppPlatform::supportsMSAA);
 }
 
 ClientAppPlatform::ClientAppPlatform() {
