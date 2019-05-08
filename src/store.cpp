@@ -35,7 +35,6 @@ void LauncherStore::initVtable(void *lib) {
     vtr.replace("_ZN12AndroidStore8purchaseERK10ProductSku11ProductTypeRKSs", &LauncherStore::purchase);
     vtr.replace("_ZN12AndroidStore19acknowledgePurchaseERK12PurchaseInfo11ProductType", &LauncherStore::acknowledgePurchase);
     vtr.replace("_ZN12AndroidStore14queryPurchasesEb", &LauncherStore::queryPurchases);
-    vtr.replace("_ZN12AndroidStore14queryPurchasesEv", &LauncherStore::queryPurchases); // legacy
     vtr.replace("_ZN12AndroidStore16restorePurchasesEv", &LauncherStore::restorePurchases);
     vtr.replace("_ZNK12AndroidStore7isTrialEv", &LauncherStore::isTrial);
     vtr.replace("_ZN12AndroidStore12purchaseGameEv", &LauncherStore::purchaseGame);
@@ -56,4 +55,10 @@ void LauncherStore::initVtable(void *lib) {
     vtr.replace("_ZN5Store16onNewPrimaryUserERKN6Social4UserE", &LauncherStore::onNewPrimaryUser);
     vtr.replace("_ZN5Store32onPrimaryUserConnectedToPlatformERKN6Social4UserE", &LauncherStore::onPrimaryUserConnectedToPlatform);
     vtr.replace("_ZN5Store12getPurchasesEv", &LauncherStore::getPurchases);
+
+    // <1.2.3 legacy
+    vtr.replace("_ZN12AndroidStore14queryPurchasesEv", &LauncherStore::queryPurchases);
+
+    // <0.17.2 legacy
+    vtr.replace("_ZN12AndroidStore10getStoreIdEv", &LauncherStore::getStoreId);
 }

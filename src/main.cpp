@@ -134,7 +134,8 @@ int main(int argc, char *argv[]) {
     appPlatform = std::unique_ptr<ClientAppPlatform>(new ClientAppPlatform());
     appPlatform->setWindow(window);
     Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
-    appPlatform->initialize();
+    if (MinecraftVersion::isAtLeast(0, 17, 2))
+        appPlatform->initialize();
     mce::Platform::OGL::InitBindings();
 
     Log::info("Launcher", "OpenGL: version: %s, renderer: %s, vendor: %s",
