@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
         MinecraftUtils::stubFMod();
     MinecraftUtils::setupHybris();
     hybris_hook("eglGetProcAddress", (void*) windowManager->getProcAddrFunc());
+    MinecraftUtils::setupGLES2Symbols((void* (*)(const char*)) windowManager->getProcAddrFunc());
 #ifdef USE_ARMHF_SUPPORT
     ArmhfSupport::install();
 #endif
@@ -136,7 +137,8 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
     if (MinecraftVersion::isAtLeast(0, 17, 2))
         appPlatform->initialize();
-    mce::Platform::OGL::InitBindings();
+    if (MinecraftVersion::isAtLeast(0, 16))
+        mce::Platform::OGL::InitBindings();
 
     Log::info("Launcher", "OpenGL: version: %s, renderer: %s, vendor: %s",
               gl::getOpenGLVersion().c_str(), gl::getOpenGLRenderer().c_str(), gl::getOpenGLVendor().c_str());
