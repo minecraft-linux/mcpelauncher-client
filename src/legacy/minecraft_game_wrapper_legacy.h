@@ -54,6 +54,10 @@ public:
 
     ~MinecraftGameAppWrapper_Pre_1_1() { delete game; }
 
+    void quit(mcpe::string const &cat, mcpe::string const &name) override {
+        ((Legacy::Pre_1_8::App*) getWrapped())->quit();
+    }
+
     MinecraftGame* getWrapped() override { return (MinecraftGame*) game; }
 
     OptionsRef getPrimaryUserOptions() override {
