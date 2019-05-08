@@ -122,10 +122,14 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
 
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
-    if ((!appPlatform.isKeyboardMultiline() && (c.size() == 1 && c[0] == '\n')) || !appPlatform.isKeyboardVisible())
-        Keyboard::feedText(c, false, 0);
-    else
+    if ((!appPlatform.isKeyboardMultiline() && (c.size() == 1 && c[0] == '\n')) || !appPlatform.isKeyboardVisible()) {
+        if (MinecraftVersion::isAtLeast(0, 17))
+            Keyboard::feedText(c, false, 0);
+        else
+            Legacy::Pre_0_17::Keyboard::feedText(c, false);
+    } else {
         appPlatform.onKeyboardText(game, c);
+    }
 }
 void WindowCallbacks::onPaste(std::string const& str) {
     appPlatform.onKeyboardText(game, str);
