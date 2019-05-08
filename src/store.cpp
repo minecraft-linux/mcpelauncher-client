@@ -2,6 +2,7 @@
 
 #include <hybris/dlfcn.h>
 #include <mcpelauncher/patch_utils.h>
+#include <mcpelauncher/minecraft_version.h>
 
 void** LauncherStore::myVtable;
 
@@ -58,6 +59,10 @@ void LauncherStore::initVtable(void *lib) {
 
     // <1.2.3 legacy
     vtr.replace("_ZN12AndroidStore14queryPurchasesEv", &LauncherStore::queryPurchases);
+
+    // <1.2 legacy
+    if (!MinecraftVersion::isAtLeast(1, 2))
+        vtr.replace("_ZN12AndroidStore13queryProductsERKSt6vectorI10ProductSkuSaIS1_EE", &LauncherStore::queryProducts_pre_1_2);
 
     // <0.17.2 legacy
     vtr.replace("_ZN12AndroidStore10getStoreIdEv", &LauncherStore::getStoreId);

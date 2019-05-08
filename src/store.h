@@ -4,6 +4,7 @@
 #include <iostream>
 #include <minecraft/std/string.h>
 #include <minecraft/Store.h>
+#include <minecraft/legacy/Store.h>
 #include <log.h>
 
 struct PurchaseInfo;
@@ -66,15 +67,20 @@ public:
         // Log::trace("Store", "getRealmsSkuPrefix: ");
         return "";
     }
-    void queryProducts(std::vector<mcpe::string> const& arr) {
+    template <typename ProductInfoT>
+    std::vector<ProductInfoT> queryProductsImpl(std::vector<mcpe::string> const& arr) {
         Log::trace("Store", "queryProducts");
-        std::vector<ProductInfo> products;
+        std::vector<ProductInfoT> products;
         for (auto const& i : arr) {
-            ProductInfo prod;
+            ProductInfoT prod;
             prod.id = i;
             products.push_back(prod);
         }
-        listener.onQueryProductsSuccess(products);
+        return products;
+    }
+    void queryProducts(std::vector<mcpe::string> const& arr) {
+        Log::trace("Store", "queryProducts");
+        listener.onQueryProductsSuccess(queryProductsImpl<ProductInfo>(arr));
     }
     void purchase(std::string const& name) {
         Log::trace("Store", "purchase: %s", name.c_str());
@@ -152,6 +158,12 @@ public:
     }
     void getPurchases() {
         Log::trace("Store", "getPurchases");
+    }
+
+    void queryProducts_pre_1_2(std::vector<mcpe::string> const& arr) {
+        Log::trace("Store", "queryProducts");
+        ((Legacy::Pre_1_2::StoreListener&) listener).onQueryProductsSuccess(
+                queryProductsImpl<::Legacy::Pre_1_2::ProductInfo>(arr));
     }
 
 };
