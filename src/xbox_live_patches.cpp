@@ -26,7 +26,8 @@ void XboxLivePatches::install(void *handle) {
     PatchUtils::patchCallInstruction(ptr, (void*) &readXboxConfigFile, true);
 
     ptr = hybris_dlsym(handle, "_ZN4xbox8services12java_interop20log_telemetry_signinEbRKSs");
-    PatchUtils::patchCallInstruction(ptr, (void*) &xboxLogTelemetrySignin, true);
+    if (ptr != nullptr) // <0.15.90.8
+        PatchUtils::patchCallInstruction(ptr, (void*) &xboxLogTelemetrySignin, true);
 
     ptr = hybris_dlsym(handle, "_ZN4xbox8services12java_interop22get_local_storage_pathEv");
     PatchUtils::patchCallInstruction(ptr, (void*) &getLocalStoragePath, true);
