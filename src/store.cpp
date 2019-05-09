@@ -72,4 +72,8 @@ void LauncherStore::initVtable(void *lib) {
 
     // <0.16 legacy
     vtr.replace("_ZNK12AndroidStore29allowsQueryPurchasesOnStartupEv", &LauncherStore::allowsQueryPurchasesOnStartup_pre_0_16);
+
+    // <0.15 legacy
+    vtr.replace("_ZN12AndroidStore13queryProductsERKSt6vectorISsSaISsEE", &LauncherStore::queryProducts_pre_0_17);
+    vtr.replace("_ZN12AndroidStore15isGamePurchasedEv", &LauncherStore::isGameLicensed);
 }

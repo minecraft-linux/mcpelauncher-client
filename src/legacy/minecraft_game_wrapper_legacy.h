@@ -70,3 +70,16 @@ public:
     void leaveGame() override {}
 
 };
+
+class MinecraftGameAppWrapper_Pre_0_14_2 : public MinecraftGameAppWrapper_Pre_1_1 {
+
+public:
+    using MinecraftGameAppWrapper_Pre_1_1::MinecraftGameAppWrapper_Pre_1_1;
+
+    void setRenderingSize(int w, int h) override {
+    }
+
+    void setUISizeAndScale(int w, int h, float s) override {
+        ((Legacy::Pre_0_15::App*) getWrapped())->setSize(w, h, s);
+    }
+};

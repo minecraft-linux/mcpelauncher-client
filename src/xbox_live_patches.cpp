@@ -17,8 +17,10 @@
 const char* XboxLivePatches::TAG = "XboxLive";
 
 void XboxLivePatches::install(void *handle) {
-    // Function patches
+    if (!MinecraftVersion::isAtLeast(0, 14, 99))
+        return;
 
+    // Function patches
     void* ptr = hybris_dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
     PatchUtils::patchCallInstruction(ptr, (void*) verifyCertChain, true);
 
