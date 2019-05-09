@@ -40,7 +40,7 @@ void WindowCallbacks::handleInitialWindowSize() {
     window.getWindowSize(windowWidth, windowHeight);
     onWindowSizeCallback(windowWidth, windowHeight);
 
-    if (game.getPrimaryUserOptions()->getFullscreen())
+    if (MinecraftVersion::isAtLeast(0, 13) && game.getPrimaryUserOptions()->getFullscreen())
         window.setFullscreen(true);
 }
 
@@ -105,7 +105,7 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
         else if (key == 35)
             appPlatform.onKeyboardDirectionKey(ClientAppPlatform::DirectionKey::EndKey);
     }
-    if (key == 112 + 10 && action == KeyAction::PRESS)
+    if (key == 112 + 10 && action == KeyAction::PRESS && MinecraftVersion::isAtLeast(0, 13))
         game.getPrimaryUserOptions()->setFullscreen(!game.getPrimaryUserOptions()->getFullscreen());
     if (action == KeyAction::PRESS || action == KeyAction::RELEASE) {
         Keyboard::InputEvent evData;
