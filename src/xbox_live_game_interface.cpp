@@ -2,13 +2,18 @@
 #include "xbox_live_helper.h"
 #include <mcpelauncher/minecraft_version.h>
 #include <minecraft/legacy/Xbox.h>
-#include "legacy/xbox_live_game_interface_legacy_1_2.h"
+#include "legacy/xbox_live_game_interface_legacy_0_15_2.h"
+#include "legacy/xbox_live_game_interface_legacy_1_4.h"
 #include "legacy/xbox_live_game_interface_legacy_1_2_3.h"
 #include "legacy/xbox_live_game_interface_legacy_1_4.h"
 
 const char* const XboxLiveDefaultGameInterface::TAG = "XboxLiveGameInterface";
 
 XboxLiveGameInterface& XboxLiveGameInterface::getInstance() {
+    if (!MinecraftVersion::isAtLeast(0, 15, 2)) {
+        static XboxLiveGameInterface_Pre_0_15_2 instance;
+        return instance;
+    }
     if (!MinecraftVersion::isAtLeast(1, 2)) {
         static XboxLiveGameInterface_Pre_1_2 instance;
         return instance;
