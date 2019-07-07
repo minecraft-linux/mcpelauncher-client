@@ -16,7 +16,7 @@ size_t GLCorePatch::shaderVertexArrOffset;
 
 void GLCorePatch::install(void* handle) {
     void* ptr = hybris_dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsRKN4Core4PathES6_S6_");
-    size_t shaderSizeOffset = 0xF58 - 0xD60;
+    size_t shaderSizeOffset = 0x21B;
     shaderVertexArrOffset = 0xAC;
     if (!MinecraftVersion::isAtLeast(1, 6)) {
         ptr = hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
@@ -27,6 +27,8 @@ void GLCorePatch::install(void* handle) {
     } else if (!MinecraftVersion::isAtLeast(1, 12)) {
         ptr = hybris_dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsS2_S2_S2_");
         shaderSizeOffset = 0xD8F - 0xB30;
+    } else if (!MinecraftVersion::isAtLeast(1, 13)) {
+        shaderSizeOffset = 0xF58 - 0xD60;
     }
     if (((unsigned char*) ptr)[shaderSizeOffset + 1] != shaderVertexArrOffset) {
         Log::error("Launcher", "Graphics patch error: unexpected byte");
