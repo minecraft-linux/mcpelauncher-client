@@ -3,6 +3,7 @@
 #include <memory>
 #include <iostream>
 #include <minecraft/std/string.h>
+#include <minecraft/std/function.h>
 #include <minecraft/Store.h>
 #include <minecraft/legacy/Store.h>
 #include <log.h>
@@ -173,6 +174,15 @@ public:
 
     bool allowsQueryPurchasesOnStartup_pre_0_16() {
         return true;
-    };
+    }
+
+    bool shouldRefreshProductsOnDemandOnly() {
+        return false;
+    }
+    void showPlatformStoreIcon(bool b) {
+    }
+    void showPlatformEmptyStoreDialog(mcpe::function<void ()>&& cb) {
+        cb();
+    }
 
 };

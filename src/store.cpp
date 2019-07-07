@@ -56,6 +56,9 @@ void LauncherStore::initVtable(void *lib) {
     vtr.replace("_ZN5Store16onNewPrimaryUserERKN6Social4UserE", &LauncherStore::onNewPrimaryUser);
     vtr.replace("_ZN5Store32onPrimaryUserConnectedToPlatformERKN6Social4UserE", &LauncherStore::onPrimaryUserConnectedToPlatform);
     vtr.replace("_ZN5Store12getPurchasesEv", &LauncherStore::getPurchases);
+    vtr.replace("_ZNK5Store33shouldRefreshProductsOnDemandOnlyEv", &LauncherStore::shouldRefreshProductsOnDemandOnly);
+    vtr.replace("_ZN5Store21showPlatformStoreIconEb", &LauncherStore::showPlatformStoreIcon);
+    vtr.replace("_ZN5Store28showPlatformEmptyStoreDialogEOSt8functionIFvvEE", &LauncherStore::showPlatformEmptyStoreDialog);
 
     // <1.2.3 legacy
     vtr.replace("_ZN12AndroidStore14queryPurchasesEv", &LauncherStore::queryPurchases);

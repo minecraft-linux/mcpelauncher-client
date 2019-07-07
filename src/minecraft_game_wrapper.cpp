@@ -15,6 +15,8 @@ MinecraftGameWrapper* MinecraftGameWrapper::create(int argc, char **argv) {
         return new MinecraftGameAppWrapper_Pre_1_2_10(argc, argv);
     if (!MinecraftVersion::isAtLeast(1, 8))
         return new MinecraftGameAppWrapper_Pre_1_8(argc, argv);
+    if (!MinecraftVersion::isAtLeast(1, 13))
+        return new MinecraftGameAppWrapper_Pre_1_13(argc, argv);
     return new MinecraftGameDefaultWrapper(argc, argv);
 }
 
@@ -22,7 +24,7 @@ MinecraftGame* MinecraftGameDefaultWrapper::createInstance(int argc, char **argv
     return new MinecraftGame(argc, argv);
 }
 
-void MinecraftGameDefaultWrapper::leaveGame() {
+void MinecraftGameDefaultWrapper::doLeaveGame(MinecraftGame *game) {
     if (game->isInGame()) {
         game->requestLeaveGame(true, false);
         game->continueLeaveGame();

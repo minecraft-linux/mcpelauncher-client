@@ -49,7 +49,7 @@ ClientAppPlatform::ClientAppPlatform() {
     vtable = myVtable;
 
     // both 0.15.90.7 and 0.15.90.8 are 0.15.90.1 internally; can't target one of them sadly
-    if (MinecraftVersion::isAtLeast(0, 15, 90, /*8*/2))
+    if (MinecraftVersion::isAtLeast(0, 15, 90, /*8*/2) && !MinecraftVersion::isAtLeast(1, 13))
         getHardwareInformation().deviceModel = "Linux";
 }
 

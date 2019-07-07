@@ -4,10 +4,39 @@
 #include <minecraft/legacy/MinecraftGame.h>
 #include <minecraft/legacy/App.h>
 
-class MinecraftGameAppWrapper_Pre_1_8 : public MinecraftGameDefaultWrapper {
+class MinecraftGameAppWrapper_Pre_1_13 : public MinecraftGameDefaultAppWrapper {
+
+private:
+    Legacy::Pre_1_13::MinecraftGame* const game;
+
+    static Legacy::Pre_1_13::MinecraftGame* createInstance(int argc, char** argv) {
+        return (Legacy::Pre_1_13::MinecraftGame*) new MinecraftGame(argc, argv);
+    }
 
 public:
-    using MinecraftGameDefaultWrapper::MinecraftGameDefaultWrapper;
+    explicit MinecraftGameAppWrapper_Pre_1_13(Legacy::Pre_1_13::MinecraftGame* game) : MinecraftGameDefaultAppWrapper(game), game(game) {}
+    MinecraftGameAppWrapper_Pre_1_13(int argc, char** argv) : MinecraftGameAppWrapper_Pre_1_13(createInstance(argc, argv)) {}
+
+    ~MinecraftGameAppWrapper_Pre_1_13() { delete game; }
+
+    MinecraftGame* getWrapped() override { return (MinecraftGame*) game; }
+
+    OptionsRef getPrimaryUserOptions() override {
+        return ((MinecraftGame*) game)->getPrimaryUserOptions();
+    }
+    void setTextboxText(mcpe::string const& text, int u) override {
+        ((MinecraftGame*) game)->setTextboxText(text, u);
+    }
+    void leaveGame() override {
+        MinecraftGameDefaultWrapper::doLeaveGame((MinecraftGame*) game);
+    }
+
+};
+
+class MinecraftGameAppWrapper_Pre_1_8 : public MinecraftGameAppWrapper_Pre_1_13 {
+
+public:
+    using MinecraftGameAppWrapper_Pre_1_13::MinecraftGameAppWrapper_Pre_1_13;
 
     void quit(mcpe::string const &cat, mcpe::string const &name) override {
         ((Legacy::Pre_1_8::App*) getWrapped())->quit();

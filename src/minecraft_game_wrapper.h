@@ -86,6 +86,10 @@ public:
         game->setTextboxText(text, u);
     }
 
-    void leaveGame() override;
+    void leaveGame() override {
+        doLeaveGame(game);
+    }
+
+    static void doLeaveGame(MinecraftGame* game);
 
 };
