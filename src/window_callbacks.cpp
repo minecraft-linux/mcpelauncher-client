@@ -107,7 +107,7 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
     }
     if (key == 112 + 10 && action == KeyAction::PRESS && MinecraftVersion::isAtLeast(0, 13))
         game.getPrimaryUserOptions()->setFullscreen(!game.getPrimaryUserOptions()->getFullscreen());
-    if (action == KeyAction::PRESS || action == KeyAction::RELEASE) {
+    if ((action == KeyAction::PRESS || action == KeyAction::RELEASE) && key < 256) {
         Keyboard::InputEvent evData;
         evData.key = (unsigned int) key;
         evData.event = (action == KeyAction::PRESS ? 1 : 0);
