@@ -43,6 +43,7 @@ public:
     void swapBuffers();
 
     void showKeyboard(mcpe::string const& text, int, bool, bool, bool, int, Vec2 const&);
+    void showKeyboardLegacy_pre_1_13(mcpe::string const& text, int, bool, bool, bool, int, Vec2 const&);
     void showKeyboardLegacy(mcpe::string const& text, int, bool, bool, bool, Vec2 const&);
     void updateTextBoxText(mcpe::string const& text);
     void hideKeyboard();

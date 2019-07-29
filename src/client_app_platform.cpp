@@ -36,7 +36,8 @@ void ClientAppPlatform::initVtable(void* lib) {
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::setFullscreenMode), &ClientAppPlatform::setFullscreenMode);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::swapBuffers), &ClientAppPlatform::swapBuffers);
     vtr.replace(PatchUtils::memberFuncCast(&LauncherAppPlatform::supportsFilePicking), &ClientAppPlatform::supportsFilePicking);
-    vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbiRK4Vec2", &ClientAppPlatform::showKeyboard);
+    vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbiRKN3glm5tvec2IfLNS2_9precisionE0EEE", &ClientAppPlatform::showKeyboard);
+    vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbiRK4Vec2", &ClientAppPlatform::showKeyboardLegacy_pre_1_13);
     vtr.replace("_ZN11AppPlatform12showKeyboardERKSsibbbRK4Vec2", &ClientAppPlatform::showKeyboardLegacy);
     vtr.replace("_ZN11AppPlatform17updateTextBoxTextERKSs", &ClientAppPlatform::updateTextBoxText);
     vtr.replace("_ZN11AppPlatform12hideKeyboardEv", &ClientAppPlatform::hideKeyboard);
@@ -145,9 +146,16 @@ void ClientAppPlatform::update() {
         Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
 }
 
-void ClientAppPlatform::showKeyboard(mcpe::string const &text, int i, bool b, bool b2, bool multiline, int i2,
-        Vec2 const &v) {
+void ClientAppPlatform::showKeyboard(mcpe::string const &text, int i, bool b, bool b2, bool multiline,
+        int i2, Vec2 const &v) {
     AppPlatform::showKeyboard(text, i, b, b2, multiline, i2, v);
+    currentTextMutliline = multiline;
+    updateTextBoxText(text);
+}
+
+void ClientAppPlatform::showKeyboardLegacy_pre_1_13(mcpe::string const &text, int i, bool b, bool b2, bool multiline,
+        int i2, Vec2 const &v) {
+    ((Legacy::Pre_1_2_13::AppPlatform*) (AppPlatform*) this)->showKeyboard(text, i, b, b2, multiline, i2, v);
     currentTextMutliline = multiline;
     updateTextBoxText(text);
 }
