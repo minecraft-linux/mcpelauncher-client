@@ -89,7 +89,11 @@ void WindowCallbacks::onTouchEnd(int id, double x, double y) {
     Multitouch::feed(1, 0, (short) x, (short) y, id);
 }
 void WindowCallbacks::onKeyboard(int key, KeyAction action) {
+#ifdef __APPLE__
+    if (key == 1) /* cmd */
+#else
     if (key == 17)
+#endif
         modCTRL = (action != KeyAction::RELEASE);
     if (modCTRL && key == 'C') {
         appPlatform.copyCurrentText();
