@@ -16,6 +16,8 @@ private:
     std::string currentText;
     size_t currentTextPosition = 0;
     size_t currentTextPositionUTF = 0;
+    size_t currentTextCopyPosition = 0;
+    bool isShiftPressed = false;
 
 public:
     static void** myVtable;
@@ -54,6 +56,7 @@ public:
 
     void onKeyboardText(MinecraftGameWrapper& game, std::string const& text);
     void onKeyboardDirectionKey(DirectionKey key);
+    void onKeyboardShiftKey(bool shiftPressed);
 
     void copyCurrentText();
 

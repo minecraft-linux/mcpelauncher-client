@@ -163,6 +163,7 @@ void ClientAppPlatform::updateTextBoxText(mcpe::string const &text) {
     currentText = text.std();
     currentTextPosition = currentText.size();
     currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
+    currentTextCopyPosition = currentTextPosition;
     Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
 }
 
@@ -171,6 +172,7 @@ void ClientAppPlatform::hideKeyboard() {
     currentText.clear();
     currentTextPosition = 0;
     currentTextPositionUTF = 0;
+    currentTextCopyPosition = 0;
 }
 
 void ClientAppPlatform::onKeyboardText(MinecraftGameWrapper &game, std::string const &text) {
@@ -197,6 +199,7 @@ void ClientAppPlatform::onKeyboardText(MinecraftGameWrapper &game, std::string c
     }
     game.setTextboxText(currentText, 0);
     Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
+    currentTextCopyPosition = currentTextPosition;
 }
 
 void ClientAppPlatform::onKeyboardDirectionKey(DirectionKey key) {
@@ -223,10 +226,22 @@ void ClientAppPlatform::onKeyboardDirectionKey(DirectionKey key) {
         currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
     }
     Keyboard::_inputCaretLocation->push_back(currentTextPositionUTF);
+    if (!isShiftPressed)
+        currentTextCopyPosition = currentTextPosition;
+}
+
+void ClientAppPlatform::onKeyboardShiftKey(bool shiftPressed) {
+    isShiftPressed = shiftPressed;
 }
 
 void ClientAppPlatform::copyCurrentText() {
-    window->setClipboardText(currentText);
+    if (currentTextCopyPosition != currentTextPosition) {
+        size_t start = std::min(currentTextPosition, currentTextCopyPosition);
+        size_t end = std::max(currentTextPosition, currentTextCopyPosition);
+        window->setClipboardText(currentText.substr(start, end - start));
+    } else {
+        window->setClipboardText(currentText);
+    }
 }
 
 void ClientAppPlatform::setClipboard(mcpe::string const &text) {

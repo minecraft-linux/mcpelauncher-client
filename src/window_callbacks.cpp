@@ -95,6 +95,8 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
     if (key == 17)
 #endif
         modCTRL = (action != KeyAction::RELEASE);
+    if (key == 16)
+        appPlatform.onKeyboardShiftKey(action != KeyAction::RELEASE);
     if (modCTRL && key == 'C') {
         appPlatform.copyCurrentText();
         return;
