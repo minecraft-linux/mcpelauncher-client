@@ -1,6 +1,7 @@
 #include "cll_upload_auth_step.h"
 #include "xbox_live_helper.h"
 #include <cll/event_batch.h>
+#include <sstream>
 
 void CllUploadAuthStep::setAccount(std::string const& cid) {
     std::lock_guard<std::recursive_mutex> lock (cidMutex);
