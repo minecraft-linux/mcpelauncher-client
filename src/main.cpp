@@ -19,7 +19,6 @@
 #include "splitscreen_patch.h"
 #include "gl_core_patch.h"
 #include "xbox_live_helper.h"
-#include "xbox_shutdown_patch.h"
 #include "tts_patch.h"
 #include "shader_error_patch.h"
 #include "hbui_patch.h"
@@ -28,10 +27,11 @@
 #endif
 #ifdef __i386__
 #include "cpuid.h"
+#include "texel_aa_patch.h"
+#include "xbox_shutdown_patch.h"
+#endif
 #include "legacy/legacy_patches.h"
 #include "minecraft_game_wrapper.h"
-#include "texel_aa_patch.h"
-#endif
 #include <build_info.h>
 
 static std::unique_ptr<ClientAppPlatform> appPlatform;
@@ -171,7 +171,9 @@ int main(int argc, char *argv[]) {
 
     MinecraftUtils::workaroundShutdownCrash(handle);
     XboxLivePatches::workaroundShutdownFreeze(handle);
+#ifdef __i386__
     XboxShutdownPatch::notifyShutdown();
+#endif
 
     XboxLiveHelper::getInstance().shutdown();
     appPlatform->teardown();
