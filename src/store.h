@@ -22,7 +22,6 @@ private:
     StoreListener& listener;
 
     static void** myVtable;
-    static void initVtable(void* lib);
 
     static std::unique_ptr<LauncherStore> createStore(const mcpe::string& idk, StoreListener& listener) {
         //Log::trace("Launcher", "Creating store (%s)", idk.c_str());
@@ -32,6 +31,7 @@ private:
 
 public:
     static void install(void* handle);
+    static void initVtable(void* lib);
 
     LauncherStore(StoreListener& listener) : listener(listener) {
         vtable = myVtable;

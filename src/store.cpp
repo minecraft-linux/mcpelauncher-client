@@ -7,8 +7,6 @@
 void** LauncherStore::myVtable;
 
 void LauncherStore::install(void* handle) {
-    initVtable(handle);
-
     void* ptr = hybris_dlsym(handle, "_ZN12AndroidStore21createGooglePlayStoreERKSsR13StoreListener");
     PatchUtils::patchCallInstruction(ptr, (void*) &LauncherStore::createStore, true);
 }

@@ -97,10 +97,14 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%x", MinecraftUtils::getLibraryBase(handle));
 
+    Log::trace("Launcher", "Initializing vtables");
+    MinecraftUtils::initSymbolBindings(handle);
+    ClientAppPlatform::initVtable(handle);
+    LauncherStore::initVtable(handle);
+
     ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
 
-    MinecraftUtils::initSymbolBindings(handle);
     Log::info("Launcher", "Game version: %s", Common::getGameVersionStringNet().c_str());
 
     Log::info("Launcher", "Applying patches");
@@ -129,8 +133,6 @@ int main(int argc, char *argv[]) {
     GLCorePatch::onGLContextCreated();
     ShaderErrorPatch::onGLContextCreated();
 
-    Log::trace("Launcher", "Initializing AppPlatform (vtable)");
-    ClientAppPlatform::initVtable(handle);
     Log::trace("Launcher", "Initializing AppPlatform (create instance)");
     appPlatform = std::unique_ptr<ClientAppPlatform>(new ClientAppPlatform());
     appPlatform->setWindow(window);
