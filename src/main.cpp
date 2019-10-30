@@ -36,6 +36,8 @@
 
 static std::unique_ptr<ClientAppPlatform> appPlatform;
 
+static size_t base;
+
 void printVersionInfo();
 
 int main(int argc, char *argv[]) {
@@ -96,6 +98,7 @@ int main(int argc, char *argv[]) {
     void* handle = MinecraftUtils::loadMinecraftLib();
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%x", MinecraftUtils::getLibraryBase(handle));
+    base = MinecraftUtils::getLibraryBase(handle);
 
     Log::trace("Launcher", "Initializing vtables");
     MinecraftUtils::initSymbolBindings(handle);

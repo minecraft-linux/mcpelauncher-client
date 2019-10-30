@@ -2,11 +2,12 @@
 
 #include <mcpelauncher/patch_utils.h>
 #include <mcpelauncher/minecraft_version.h>
+#include <hybris/dlfcn.h>
 
 void TTSPatch::install(void* handle) {
     if (!MinecraftVersion::isAtLeast(1, 8))
         return;
-    void* sym = minecraft_dlsym(handle, "_ZN18TextToSpeechSystem15createTTSClientEb");
+    void* sym = hybris_dlsym(handle, "_ZN26TextToSpeechSystem_android16_createTTSClientEv");
     PatchUtils::patchCallInstruction(sym, (void*) &TTSPatch::createTTSClient, true);
 }
 
