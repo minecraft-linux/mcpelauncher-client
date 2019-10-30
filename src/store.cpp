@@ -17,6 +17,7 @@ void LauncherStore::initVtable(void *lib) {
     Log::trace("Store", "Vtable size = %u", myVtableSize);
 
     myVtable = (void**) ::operator new((myVtableSize + 1) * sizeof(void*));
+    memcpy(myVtable, vta, myVtableSize * sizeof(void*));
     myVtable[myVtableSize] = nullptr;
     myVtable[0] = (void*) (void (*) (LauncherStore* p)) [](LauncherStore* p) { p->~LauncherStore(); };
     myVtable[1] = (void*) (void (*) (LauncherStore* p)) [](LauncherStore* p) { delete p; };

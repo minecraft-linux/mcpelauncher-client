@@ -142,8 +142,9 @@ int main(int argc, char *argv[]) {
     if (MinecraftVersion::isAtLeast(0, 16))
         mce::Platform::OGL::InitBindings();
 
-    Log::info("Launcher", "OpenGL: version: %s, renderer: %s, vendor: %s",
-              gl::getOpenGLVersion().c_str(), gl::getOpenGLRenderer().c_str(), gl::getOpenGLVendor().c_str());
+    if (!MinecraftVersion::isAtLeast(1, 13, 0, 9))
+        Log::info("Launcher", "OpenGL: version: %s, renderer: %s, vendor: %s",
+                  gl::getOpenGLVersion().c_str(), gl::getOpenGLRenderer().c_str(), gl::getOpenGLVendor().c_str());
 
     Log::trace("Launcher", "Initializing MinecraftGame (create instance)");
     std::unique_ptr<MinecraftGameWrapper> game (MinecraftGameWrapper::create(argc, argv));

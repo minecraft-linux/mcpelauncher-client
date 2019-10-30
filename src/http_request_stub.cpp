@@ -3,8 +3,12 @@
 #include <mcpelauncher/patch_utils.h>
 #include <hybris/dlfcn.h>
 #include <log.h>
+#include <mcpelauncher/minecraft_version.h>
 
 void LinuxHttpRequestHelper::install(void* handle) {
+    if (MinecraftVersion::isAtLeast(1, 13, 0, 9))
+        return;
+
     void* ptr = hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroidC2ER11HTTPRequest");
     PatchUtils::patchCallInstruction(ptr, (void *) (void (*)(LinuxHttpRequestInternal*, HTTPRequest*)) [](
             LinuxHttpRequestInternal* th, HTTPRequest* request) {
