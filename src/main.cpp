@@ -55,6 +55,9 @@ int main(int argc, char *argv[]) {
     argparser::arg<float> pixelScale (p, "--scale", "-s", "Pixel Scale", 2.f);
     argparser::arg<bool> mallocZero (p, "--malloc-zero", "-mz", "Patch malloc to always zero initialize memory, this may help workaround MCPE bugs");
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
+#ifdef __APPLE__
+    argparser::arg<bool> forceAngle (p, "--force-angle", "-fa", "Forces the usage of the angle graphics library");
+#endif
     if (!p.parse(argc, (const char**) argv))
         return 1;
     if (printVersion) {
@@ -80,7 +83,7 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
+    GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
 
     Log::trace("Launcher", "Loading hybris libraries");
     if (!disableFmod)
@@ -102,6 +105,13 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Initializing vtables");
     MinecraftUtils::initSymbolBindings(handle);
+
+#ifdef __APPLE__
+    if (!forceAngle && !MinecraftVersion::isAtLeast(1, 13, 9)) {
+        graphicsApi = GraphicsApi::OPENGL;
+    }
+#endif
+
     ClientAppPlatform::initVtable(handle);
     LauncherStore::initVtable(handle);
 
