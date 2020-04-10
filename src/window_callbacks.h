@@ -3,9 +3,6 @@
 #include <game_window.h>
 #include <unordered_map>
 
-class MinecraftGameWrapper;
-class ClientAppPlatform;
-
 class WindowCallbacks {
 
 private:
@@ -16,16 +13,13 @@ private:
         GamepadData();
     };
 
-    MinecraftGameWrapper& game;
-    ClientAppPlatform& appPlatform;
     GameWindow& window;
     float pixelScale = 2.f;
     std::unordered_map<int, GamepadData> gamepads;
     bool modCTRL = false;
 
 public:
-    WindowCallbacks(MinecraftGameWrapper& game, ClientAppPlatform& appPlatform, GameWindow& window) :
-            game(game), appPlatform(appPlatform), window(window) { }
+    WindowCallbacks(GameWindow& window) : window(window) { }
 
     static void loadGamepadMappings();
 
@@ -34,8 +28,6 @@ public:
     }
 
     void registerCallbacks();
-
-    void handleInitialWindowSize();
 
     void onWindowSizeCallback(int w, int h);
 

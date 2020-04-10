@@ -7,19 +7,11 @@
 #include <mcpelauncher/minecraft_version.h>
 #include <mcpelauncher/crash_handler.h>
 #include <mcpelauncher/path_helper.h>
-#include <minecraft/Common.h>
-#include <minecraft/MinecraftGame.h>
-#include <minecraft/ClientInstance.h>
 #include <mcpelauncher/mod_loader.h>
-#include "client_app_platform.h"
-#include "xbox_live_patches.h"
-#include "store.h"
 #include "window_callbacks.h"
-#include "http_request_stub.h"
 #include "splitscreen_patch.h"
 #include "gl_core_patch.h"
 #include "xbox_live_helper.h"
-#include "tts_patch.h"
 #include "shader_error_patch.h"
 #include "hbui_patch.h"
 #ifdef USE_ARMHF_SUPPORT
@@ -30,11 +22,7 @@
 #include "texel_aa_patch.h"
 #include "xbox_shutdown_patch.h"
 #endif
-#include "legacy/legacy_patches.h"
-#include "minecraft_game_wrapper.h"
 #include <build_info.h>
-
-static std::unique_ptr<ClientAppPlatform> appPlatform;
 
 static size_t base;
 
@@ -100,31 +88,21 @@ int main(int argc, char *argv[]) {
     Log::debug("Launcher", "Minecraft is at offset 0x%x", MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
 
-    Log::trace("Launcher", "Initializing vtables");
-    MinecraftUtils::initSymbolBindings(handle);
-    ClientAppPlatform::initVtable(handle);
-    LauncherStore::initVtable(handle);
-
     ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
 
-    Log::info("Launcher", "Game version: %s", Common::getGameVersionStringNet().c_str());
+    Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
 
     Log::info("Launcher", "Applying patches");
-    LauncherStore::install(handle);
-    TTSPatch::install(handle);
-    XboxLivePatches::install(handle);
 #ifdef __i386__
     XboxShutdownPatch::install(handle);
     TexelAAPatch::install(handle);
 #endif
-    LinuxHttpRequestHelper::install(handle);
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
     if (graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
-    LegacyPatches::install(handle);
 
     Log::info("Launcher", "Creating window");
     WindowCallbacks::loadGamepadMappings();
@@ -136,54 +114,18 @@ int main(int argc, char *argv[]) {
     GLCorePatch::onGLContextCreated();
     ShaderErrorPatch::onGLContextCreated();
 
-    Log::trace("Launcher", "Initializing AppPlatform (create instance)");
-    appPlatform = std::unique_ptr<ClientAppPlatform>(new ClientAppPlatform());
-    appPlatform->setWindow(window);
-    Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
-    if (MinecraftVersion::isAtLeast(0, 17, 2))
-        appPlatform->initialize();
-    if (MinecraftVersion::isAtLeast(0, 16))
-        mce::Platform::OGL::InitBindings();
-
-    if (!MinecraftVersion::isAtLeast(1, 13, 0, 9))
-        Log::info("Launcher", "OpenGL: version: %s, renderer: %s, vendor: %s",
-                  gl::getOpenGLVersion().c_str(), gl::getOpenGLRenderer().c_str(), gl::getOpenGLVendor().c_str());
-
-    Log::trace("Launcher", "Initializing MinecraftGame (create instance)");
-    std::unique_ptr<MinecraftGameWrapper> game (MinecraftGameWrapper::create(argc, argv));
-    Log::trace("Launcher", "Initializing MinecraftGame (init call)");
-    AppContext ctx;
-    ctx.platform = appPlatform.get();
-    ctx.doRender = true;
-    game->init(ctx);
-    Log::info("Launcher", "Game initialized");
-
-    modLoader.onGameInitialized((MinecraftGame*) game->getWrapped());
-
-    WindowCallbacks windowCallbacks (*game, *appPlatform, *window);
+    WindowCallbacks windowCallbacks (*window);
     windowCallbacks.setPixelScale(pixelScale);
     windowCallbacks.registerCallbacks();
-    if (MinecraftVersion::isAtLeast(1, 8)) {
-        game->getWrapped()->doPrimaryClientReadyWork([&windowCallbacks]() {
-            windowCallbacks.handleInitialWindowSize();
-        });
-    } else {
-        windowCallbacks.handleInitialWindowSize();
-    }
     window->runLoop();
 
-    game->leaveGame();
-    game.reset();
-
     MinecraftUtils::workaroundShutdownCrash(handle);
-    XboxLivePatches::workaroundShutdownFreeze(handle);
+//    XboxLivePatches::workaroundShutdownFreeze(handle);
 #ifdef __i386__
     XboxShutdownPatch::notifyShutdown();
 #endif
 
     XboxLiveHelper::getInstance().shutdown();
-    appPlatform->teardown();
-    appPlatform->setWindow(nullptr);
     return 0;
 }
 

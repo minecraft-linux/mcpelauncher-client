@@ -3,11 +3,7 @@
 #include <FileUtil.h>
 #include <mcpelauncher/path_helper.h>
 #include <mcpelauncher/minecraft_version.h>
-#include <minecraft/Common.h>
-#include <minecraft/Xbox.h>
-#include <minecraft/legacy/Xbox.h>
 #include "xbox_live_helper.h"
-#include "xbox_live_game_interface.h"
 
 using namespace simpleipc;
 
@@ -101,15 +97,14 @@ void XboxLiveHelper::initCll(std::string const& cid) {
         cllAuthStep.setAccount(cid);
     if (cll)
         return;
-    auto tid = xbox::services::xbox_live_app_config::get_app_config_singleton()->title_id();
-    std::string iKey = "P-XBL-T" + std::to_string(tid);
+    std::string iKey = "P-XBL-T" + std::to_string(0); // TODO: Get tid properly
     auto cllEvents = PathHelper::getPrimaryDataDirectory() + "cll_events";
     auto cacheDir = PathHelper::getCacheDirectory() + "cll";
     FileUtil::mkdirRecursive(cllEvents);
     FileUtil::mkdirRecursive(cacheDir);
     cll = std::unique_ptr<cll::EventManager>(new cll::EventManager(iKey, cllEvents, cacheDir));
     cll->addUploadStep(cllAuthStep);
-    cll->setApp("A:com.mojang.minecraftpe", Common::getGameVersionStringNet().std());
+    cll->setApp("A:com.mojang.minecraftpe", MinecraftVersion::getString());
     cll->start();
 }
 
@@ -124,11 +119,11 @@ std::string XboxLiveHelper::getCllMsaToken(std::string const& cid) {
 }
 
 std::string XboxLiveHelper::getCllXToken(bool refresh) {
-    return XboxLiveGameInterface::getInstance().getCllXToken(refresh);
+    return std::string(); // TODO:
 }
 
 std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
-    return XboxLiveGameInterface::getInstance().getCllXTicket(xuid);
+    return std::string(); // TODO:
 }
 
 void XboxLiveHelper::logCll(cll::Event const& event) {
