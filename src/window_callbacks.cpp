@@ -7,7 +7,8 @@
 #include <mcpelauncher/path_helper.h>
 #include <hybris/dlfcn.h>
 
-WindowCallbacks::WindowCallbacks(GameWindow &window, JniSupport &jniSupport) : window(window), jniSupport(jniSupport) {
+WindowCallbacks::WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue) :
+    window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
     void *lib = hybris_dlopen("libminecraftpe.so", 0);
     (void *&) Mouse_feed = hybris_dlsym(lib, "_ZN5Mouse4feedEccssss");
     hybris_dlclose(lib);
@@ -72,9 +73,10 @@ void WindowCallbacks::onKeyboard(int key, KeyAction action) {
     if (key == 17)
 #endif
         modCTRL = (action != KeyAction::RELEASE);
-    if ((action == KeyAction::PRESS || action == KeyAction::RELEASE) && key < 256) {
-        // TODO:
-    }
+    if (action == KeyAction::PRESS)
+        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, key));
+    else if (action == KeyAction::RELEASE)
+        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, key));
 
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {

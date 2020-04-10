@@ -23,7 +23,8 @@ private:
     std::shared_ptr<MainActivity> activity;
     jobject activityRef;
     std::unique_ptr<FakeAssetManager> assetManager;
-    std::shared_ptr<GameWindow> window;
+    ANativeWindow *window;
+    AInputQueue *inputQueue;
     std::condition_variable gameExitCond;
     std::mutex gameExitMutex;
     bool gameExitVal = false;
@@ -42,7 +43,7 @@ public:
 
     void waitForGameExit();
 
-    void onWindowCreated(std::shared_ptr<GameWindow> gameWindow);
+    void onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue);
 
     void onWindowResized(int newWidth, int newHeight);
 

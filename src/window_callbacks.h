@@ -3,6 +3,7 @@
 #include <game_window.h>
 #include <unordered_map>
 #include "jni/jni_support.h"
+#include "fake_inputqueue.h"
 
 class WindowCallbacks {
 
@@ -16,12 +17,13 @@ private:
 
     GameWindow &window;
     JniSupport &jniSupport;
+    FakeInputQueue &inputQueue;
     std::unordered_map<int, GamepadData> gamepads;
     void (*Mouse_feed)(char, char, short, short, short, short);
     bool modCTRL = false;
 
 public:
-    WindowCallbacks(GameWindow &window, JniSupport &jniSupport);
+    WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue);
 
     static void loadGamepadMappings();
 

@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
         MinecraftUtils::stubFMod();
     MinecraftUtils::setupHybris();
     FakeAssetManager::initHybrisHooks();
+    FakeInputQueue::initHybrisHooks();
     FakeLooper::initHybrisHooks();
     FakeEGL::initHybrisHooks();
     hybris_hook("eglGetProcAddress", (void*) windowManager->getProcAddrFunc());

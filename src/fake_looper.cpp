@@ -26,14 +26,17 @@ void FakeLooper::initHybrisHooks() {
     hybris_hook("ALooper_pollAll", (void *) +[](int timeoutMillis, int *outFd, int *outEvents, void **outData) {
         return currentLooper->pollAll(timeoutMillis, outFd, outEvents, outData);
     });
-
+    hybris_hook("AInputQueue_attachLooper", (void *) +[](AInputQueue *queue, ALooper *looper, int ident, ALooper_callbackFunc callback, void *data) {
+        ((FakeLooper *) (void *) looper)->attachInputQueue(ident, callback, data);
+    });
 }
 
 void FakeLooper::prepare() {
     associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
             options.windowWidth, options.windowHeight, options.graphicsApi);
-    jniSupport->onWindowCreated(associatedWindow);
-    associatedWindowCallbacks = std::make_shared<WindowCallbacks>(*associatedWindow, *jniSupport);
+    jniSupport->onWindowCreated((ANativeWindow *) (void *) associatedWindow.get(),
+            (AInputQueue *) (void *) &fakeInputQueue);
+    associatedWindowCallbacks = std::make_shared<WindowCallbacks>(*associatedWindow, *jniSupport, fakeInputQueue);
     associatedWindowCallbacks->registerCallbacks();
 
     associatedWindow->show();
@@ -43,29 +46,39 @@ void FakeLooper::prepare() {
 }
 
 int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
-    if (androidEventSet)
+    if (androidEvent)
         return -1;
-    androidEventSet = true;
-    androidEvent = {fd, ident, events, data};
+    if (callback != nullptr)
+        throw std::runtime_error("callback is not supported");
+    androidEvent = EventEntry(fd, ident, events, data);
     return 1;
 }
 
+void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void *data) {
+    if (inputEntry)
+        throw std::runtime_error("attachInputQueue already called on this looper");
+    if (callback != nullptr)
+        throw std::runtime_error("callback is not supported");
+    inputEntry = EventEntry(-1, ident, 0, data);
+}
+
 int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData) {
-    if (androidEventSet != 0) {
+    if (androidEvent) {
         pollfd f;
         f.fd = androidEvent.fd;
         f.events = androidEvent.events;
         if (poll(&f, 1, 0) > 0) {
-            if (outFd)
-                *outFd = androidEvent.fd;
+            androidEvent.fill(outFd, outData);
             if (outEvents)
-                *outEvents = androidEvent.events;
-            if (outData)
-                *outData = androidEvent.data;
+                *outEvents = f.revents;
             return androidEvent.ident;
         }
     }
 
     associatedWindow->pollEvents();
+    if (inputEntry && fakeInputQueue.hasEvents()) {
+        inputEntry.fill(outFd, outData);
+        return inputEntry.ident;
+    }
     return ALOOPER_POLL_TIMEOUT;
 }

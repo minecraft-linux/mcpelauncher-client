@@ -84,8 +84,8 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     activityOnCreate(&nativeActivity, nullptr, 0);
 
     Log::trace("JniSupport", "Invoking start activity callbacks\n");
-    nativeActivityCallbacks.onInputQueueCreated(&nativeActivity, (AInputQueue*) nullptr);
-    nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, (ANativeWindow*) (void *) window.get());
+    nativeActivityCallbacks.onInputQueueCreated(&nativeActivity, inputQueue);
+    nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, window);
     nativeActivityCallbacks.onStart(&nativeActivity);
     nativeActivityCallbacks.onResume(&nativeActivity);
 }
@@ -95,10 +95,11 @@ void JniSupport::waitForGameExit() {
     gameExitCond.wait(lock, [this]{ return gameExitVal; });
 }
 
-void JniSupport::onWindowCreated(std::shared_ptr<GameWindow> gameWindow) {
+void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue) {
     // Note on thread safety: This code is fine thread-wise because ANativeActivity_onCreate locks until the thread is
     // initialized; the thread initialization code runs ALooper_prepare before signaling it's ready.
-    window = std::move(gameWindow);
+    this->window = window;
+    this->inputQueue = inputQueue;
 }
 
 void JniSupport::onWindowResized(int newWidth, int newHeight) {
