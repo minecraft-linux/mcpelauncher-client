@@ -17,10 +17,11 @@ private:
     GameWindow &window;
     JniSupport &jniSupport;
     std::unordered_map<int, GamepadData> gamepads;
+    void (*Mouse_feed)(char, char, short, short, short, short);
     bool modCTRL = false;
 
 public:
-    WindowCallbacks(GameWindow &window, JniSupport &jniSupport) : window(window), jniSupport(jniSupport) { }
+    WindowCallbacks(GameWindow &window, JniSupport &jniSupport);
 
     static void loadGamepadMappings();
 

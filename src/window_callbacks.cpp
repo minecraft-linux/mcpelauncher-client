@@ -5,6 +5,13 @@
 #include <game_window_manager.h>
 #include <log.h>
 #include <mcpelauncher/path_helper.h>
+#include <hybris/dlfcn.h>
+
+WindowCallbacks::WindowCallbacks(GameWindow &window, JniSupport &jniSupport) : window(window), jniSupport(jniSupport) {
+    void *lib = hybris_dlopen("libminecraftpe.so", 0);
+    (void *&) Mouse_feed = hybris_dlsym(lib, "_ZN5Mouse4feedEccssss");
+    hybris_dlclose(lib);
+}
 
 void WindowCallbacks::registerCallbacks() {
     using namespace std::placeholders;
@@ -37,17 +44,17 @@ void WindowCallbacks::onClose() {
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
     if (btn < 1 || btn > 3)
         return;
-//    Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
+    Mouse_feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
-//    Mouse::feed(0, 0, (short) x, (short) y, 0, 0);
+    Mouse_feed(0, 0, (short) x, (short) y, 0, 0);
 }
 void WindowCallbacks::onMouseRelativePosition(double x, double y) {
-//    Mouse::feed(0, 0, 0, 0, (short) x, (short) y);
+    Mouse_feed(0, 0, 0, 0, (short) x, (short) y);
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     char cdy = (char) std::max(std::min(dy * 127.0, 127.0), -127.0);
-//    Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
+    Mouse_feed(4, cdy, 0, 0, (short) x, (short) y);
 }
 void WindowCallbacks::onTouchStart(int id, double x, double y) {
 //    Multitouch::feed(1, 1, (short) x, (short) y, id);
