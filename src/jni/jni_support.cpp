@@ -21,7 +21,8 @@ void JniSupport::registerJniClasses() {
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(), {
-            {"nativeRegisterThis", "()V"}
+            {"nativeRegisterThis", "()V"},
+            {"nativeResize", "(II)V"}
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
             {"onStoreInitialized", "(JZ)V"}
@@ -98,4 +99,11 @@ void JniSupport::onWindowCreated(std::shared_ptr<GameWindow> gameWindow) {
     // Note on thread safety: This code is fine thread-wise because ANativeActivity_onCreate locks until the thread is
     // initialized; the thread initialization code runs ALooper_prepare before signaling it's ready.
     window = std::move(gameWindow);
+}
+
+void JniSupport::onWindowResized(int newWidth, int newHeight) {
+    FakeJni::LocalFrame frame (vm);
+    auto resize = activity->getClass().getMethod("(II)V", "nativeResize");
+    if (resize)
+        resize->invoke(frame.getJniEnv(), activity.get(), newWidth, newHeight);
 }

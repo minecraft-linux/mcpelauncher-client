@@ -33,6 +33,8 @@ void FakeLooper::prepare() {
     associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
             options.windowWidth, options.windowHeight, options.graphicsApi);
     jniSupport->onWindowCreated(associatedWindow);
+    associatedWindowCallbacks = std::make_shared<WindowCallbacks>(*associatedWindow, *jniSupport);
+    associatedWindowCallbacks->registerCallbacks();
 
     associatedWindow->show();
     SplitscreenPatch::onGLContextCreated();

@@ -9,7 +9,6 @@
 void WindowCallbacks::registerCallbacks() {
     using namespace std::placeholders;
     window.setWindowSizeCallback(std::bind(&WindowCallbacks::onWindowSizeCallback, this, _1, _2));
-    window.setDrawCallback(std::bind(&WindowCallbacks::onDraw, this));
     window.setCloseCallback(std::bind(&WindowCallbacks::onClose, this));
 
     window.setMouseButtonCallback(std::bind(&WindowCallbacks::onMouseButton, this, _1, _2, _3, _4));
@@ -28,11 +27,7 @@ void WindowCallbacks::registerCallbacks() {
 }
 
 void WindowCallbacks::onWindowSizeCallback(int w, int h) {
-    // TODO:
-}
-
-void WindowCallbacks::onDraw() {
-    // TODO:
+    jniSupport.onWindowResized(w, h);
 }
 
 void WindowCallbacks::onClose() {

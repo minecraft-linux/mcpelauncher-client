@@ -4,6 +4,7 @@
 #include <memory>
 #include <game_window.h>
 #include "jni/jni_support.h"
+#include "window_callbacks.h"
 
 class FakeLooper {
 
@@ -19,6 +20,7 @@ private:
     bool androidEventSet = false;
 
     std::shared_ptr<GameWindow> associatedWindow;
+    std::shared_ptr<WindowCallbacks> associatedWindowCallbacks;
 
 public:
     static void setJniSupport(JniSupport *support) {

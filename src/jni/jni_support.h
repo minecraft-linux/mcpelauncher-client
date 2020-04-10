@@ -44,4 +44,6 @@ public:
 
     void onWindowCreated(std::shared_ptr<GameWindow> gameWindow);
 
+    void onWindowResized(int newWidth, int newHeight);
+
 };

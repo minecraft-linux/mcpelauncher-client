@@ -2,6 +2,7 @@
 
 #include <game_window.h>
 #include <unordered_map>
+#include "jni/jni_support.h"
 
 class WindowCallbacks {
 
@@ -13,20 +14,19 @@ private:
         GamepadData();
     };
 
-    GameWindow& window;
+    GameWindow &window;
+    JniSupport &jniSupport;
     std::unordered_map<int, GamepadData> gamepads;
     bool modCTRL = false;
 
 public:
-    WindowCallbacks(GameWindow& window) : window(window) { }
+    WindowCallbacks(GameWindow &window, JniSupport &jniSupport) : window(window), jniSupport(jniSupport) { }
 
     static void loadGamepadMappings();
 
     void registerCallbacks();
 
     void onWindowSizeCallback(int w, int h);
-
-    void onDraw();
 
     void onClose();
 
