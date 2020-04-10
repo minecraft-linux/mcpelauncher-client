@@ -14,6 +14,7 @@
 #include "xbox_live_helper.h"
 #include "shader_error_patch.h"
 #include "hbui_patch.h"
+#include "jni/jni_support.h"
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
 #endif
@@ -23,8 +24,14 @@
 #include "xbox_shutdown_patch.h"
 #endif
 #include <build_info.h>
+#include <hybris/dlfcn.h>
+#include "main.h"
+#include "fake_looper.h"
+#include "fake_assetmanager.h"
+#include "fake_egl.h"
 
 static size_t base;
+LauncherOptions options;
 
 void printVersionInfo();
 
@@ -40,7 +47,6 @@ int main(int argc, char *argv[]) {
     argparser::arg<std::string> cacheDir (p, "--cache-dir", "-dc", "Directory to use for cache");
     argparser::arg<int> windowWidth (p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
-    argparser::arg<float> pixelScale (p, "--scale", "-s", "Pixel Scale", 2.f);
     argparser::arg<bool> mallocZero (p, "--malloc-zero", "-mz", "Patch malloc to always zero initialize memory, this may help workaround MCPE bugs");
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
     if (!p.parse(argc, (const char**) argv))
@@ -49,6 +55,10 @@ int main(int argc, char *argv[]) {
         printVersionInfo();
         return 0;
     }
+    options.windowWidth = windowWidth;
+    options.windowHeight = windowHeight;
+    options.graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
+
     if (!gameDir.get().empty())
         PathHelper::setGameDir(gameDir);
     if (!dataDir.get().empty())
@@ -68,22 +78,24 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
-
     Log::trace("Launcher", "Loading hybris libraries");
     if (!disableFmod)
         MinecraftUtils::loadFMod();
     else
         MinecraftUtils::stubFMod();
     MinecraftUtils::setupHybris();
+    FakeAssetManager::initHybrisHooks();
+    FakeLooper::initHybrisHooks();
+    FakeEGL::initHybrisHooks();
     hybris_hook("eglGetProcAddress", (void*) windowManager->getProcAddrFunc());
     MinecraftUtils::setupGLES2Symbols((void* (*)(const char*)) windowManager->getProcAddrFunc());
+    hybris_hook("glInvalidateFramebuffer", (void*) +[]{});
 #ifdef USE_ARMHF_SUPPORT
     ArmhfSupport::install();
 #endif
 
     Log::trace("Launcher", "Loading Minecraft library");
-    void* handle = MinecraftUtils::loadMinecraftLib();
+    static void* handle = MinecraftUtils::loadMinecraftLib();
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%x", MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
@@ -95,29 +107,23 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Applying patches");
 #ifdef __i386__
-    XboxShutdownPatch::install(handle);
+//    XboxShutdownPatch::install(handle);
     TexelAAPatch::install(handle);
 #endif
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
-    if (graphicsApi == GraphicsApi::OPENGL)
+    if (options.graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
 
-    Log::info("Launcher", "Creating window");
-    WindowCallbacks::loadGamepadMappings();
-    auto window = windowManager->createWindow("Minecraft", windowWidth, windowHeight, graphicsApi);
-    window->setIcon(PathHelper::getIconPath());
-    window->show();
-
-    SplitscreenPatch::onGLContextCreated();
-    GLCorePatch::onGLContextCreated();
-    ShaderErrorPatch::onGLContextCreated();
-
-    WindowCallbacks windowCallbacks (*window);
-    windowCallbacks.setPixelScale(pixelScale);
-    windowCallbacks.registerCallbacks();
-    window->runLoop();
+    Log::info("Launcher", "Initializing JNI");
+    JniSupport support;
+    FakeLooper::setJniSupport(&support);
+    support.registerMinecraftNatives(+[](const char *sym) {
+        return hybris_dlsym(handle, sym);
+    });
+    support.startGame((ANativeActivity_createFunc *) hybris_dlsym(handle, "ANativeActivity_onCreate"));
+    support.waitForGameExit();
 
     MinecraftUtils::workaroundShutdownCrash(handle);
 //    XboxLivePatches::workaroundShutdownFreeze(handle);

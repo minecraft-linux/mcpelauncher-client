@@ -14,7 +14,6 @@ private:
     };
 
     GameWindow& window;
-    float pixelScale = 2.f;
     std::unordered_map<int, GamepadData> gamepads;
     bool modCTRL = false;
 
@@ -22,10 +21,6 @@ public:
     WindowCallbacks(GameWindow& window) : window(window) { }
 
     static void loadGamepadMappings();
-
-    void setPixelScale(float pixelScale) {
-        this->pixelScale = pixelScale;
-    }
 
     void registerCallbacks();
 
