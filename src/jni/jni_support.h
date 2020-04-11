@@ -28,7 +28,7 @@ private:
     AInputQueue *inputQueue;
     std::condition_variable gameExitCond;
     std::mutex gameExitMutex;
-    bool gameExitVal = false;
+    bool gameExitVal = false, looperRunning = false;
     TextInputHandler textInput;
 
     void registerJniClasses();
@@ -48,6 +48,8 @@ public:
     void waitForGameExit();
 
     void requestExitGame();
+
+    void setLooperRunning(bool running);
 
     void onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue);
 

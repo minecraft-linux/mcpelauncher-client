@@ -110,6 +110,10 @@ void JniSupport::stopGame() {
     nativeActivityCallbacks.onPause(&nativeActivity);
     nativeActivityCallbacks.onStop(&nativeActivity);
     nativeActivityCallbacks.onDestroy(&nativeActivity);
+
+    Log::trace("JniSupport", "Waiting for looper clean up\n");
+    std::unique_lock<std::mutex> lock (gameExitMutex);
+    gameExitCond.wait(lock, [this]{ return !looperRunning; });
 }
 
 void JniSupport::waitForGameExit() {
@@ -121,6 +125,13 @@ void JniSupport::requestExitGame() {
     std::unique_lock<std::mutex> lock (gameExitMutex);
     gameExitVal = true;
     gameExitCond.notify_all();
+}
+
+void JniSupport::setLooperRunning(bool running) {
+    std::unique_lock<std::mutex> lock (gameExitMutex);
+    looperRunning = running;
+    if (!running)
+        gameExitCond.notify_all();
 }
 
 void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue) {

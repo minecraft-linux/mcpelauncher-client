@@ -39,6 +39,8 @@ void FakeLooper::initHybrisHooks() {
 }
 
 void FakeLooper::prepare() {
+    jniSupport->setLooperRunning(true);
+
     Log::info("Launcher", "Loading gamepad mappings");
     WindowCallbacks::loadGamepadMappings();
 
@@ -59,6 +61,7 @@ void FakeLooper::prepare() {
 FakeLooper::~FakeLooper() {
     associatedWindow.reset();
     associatedWindowCallbacks.reset();
+    jniSupport->setLooperRunning(false);
 }
 
 int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
