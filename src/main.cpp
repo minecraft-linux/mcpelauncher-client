@@ -129,7 +129,6 @@ int main(int argc, char *argv[]) {
     support.waitForGameExit();
     support.stopGame();
 
-    MinecraftUtils::workaroundShutdownCrash(handle);
 //    XboxLivePatches::workaroundShutdownFreeze(handle);
 #ifdef __i386__
     XboxShutdownPatch::notifyShutdown();
