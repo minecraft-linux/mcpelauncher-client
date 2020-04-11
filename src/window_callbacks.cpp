@@ -9,6 +9,7 @@
 
 WindowCallbacks::WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue) :
     window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
+    useDirectMouseInput = true;
     useDirectKeyboardInput = (Keyboard::_states && Keyboard::_inputs && Keyboard::_gameControllerId);
 }
 
@@ -43,26 +44,38 @@ void WindowCallbacks::onClose() {
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
     if (btn < 1 || btn > 3)
         return;
-    Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
+    if (useDirectMouseInput)
+        Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
+    else if (action == MouseButtonAction::PRESS)
+        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, 0, x, y));
+    else if (action == MouseButtonAction::RELEASE)
+        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, 0, x, y));
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
-    Mouse::feed(0, 0, (short) x, (short) y, 0, 0);
+    if (useDirectMouseInput)
+        Mouse::feed(0, 0, (short) x, (short) y, 0, 0);
+    else
+        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
 }
 void WindowCallbacks::onMouseRelativePosition(double x, double y) {
-    Mouse::feed(0, 0, 0, 0, (short) x, (short) y);
+    if (useDirectMouseInput)
+        Mouse::feed(0, 0, 0, 0, (short) x, (short) y);
+    else
+        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     char cdy = (char) std::max(std::min(dy * 127.0, 127.0), -127.0);
-    Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
+    if (useDirectMouseInput)
+        Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
 }
 void WindowCallbacks::onTouchStart(int id, double x, double y) {
-//    Multitouch::feed(1, 1, (short) x, (short) y, id);
+    inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, id, x, y));
 }
 void WindowCallbacks::onTouchUpdate(int id, double x, double y) {
-//    Multitouch::feed(0, 0, (short) x, (short) y, id);
+    inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, id, x, y));
 }
 void WindowCallbacks::onTouchEnd(int id, double x, double y) {
-//    Multitouch::feed(1, 0, (short) x, (short) y, id);
+    inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, id, x, y));
 }
 void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
 #ifdef __APPLE__

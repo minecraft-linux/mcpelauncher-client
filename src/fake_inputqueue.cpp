@@ -25,22 +25,58 @@ void FakeInputQueue::initHybrisHooks() {
     hybris_hook("AKeyEvent_getKeyCode", (void *) +[](const AInputEvent *event) {
         return ((const FakeKeyEvent *) (const void *) event)->keyCode;
     });
+    hybris_hook("AMotionEvent_getAction", (void *) +[](const AInputEvent *event) {
+        return ((const FakeMotionEvent *) (const void *) event)->action;
+    });
+    hybris_hook("AMotionEvent_getPointerCount", (void *) +[](const AInputEvent *event) {
+        return 1;
+    });
+    hybris_hook("AMotionEvent_getPointerId", (void *) +[](const AInputEvent *event) {
+        return ((const FakeMotionEvent *) (const void *) event)->pointerId;
+    });
+    hybris_hook("AMotionEvent_getX", (void *) +[](const AInputEvent *event) {
+        return ((const FakeMotionEvent *) (const void *) event)->x;
+    });
+    hybris_hook("AMotionEvent_getY", (void *) +[](const AInputEvent *event) {
+        return ((const FakeMotionEvent *) (const void *) event)->y;
+    });
+    hybris_hook("AMotionEvent_getRawX", (void *) +[](const AInputEvent *event) {
+        return ((const FakeMotionEvent *) (const void *) event)->x;
+    });
+    hybris_hook("AMotionEvent_getRawY", (void *) +[](const AInputEvent *event) {
+        return ((const FakeMotionEvent *) (const void *) event)->y;
+    });
 }
 
 
 int FakeInputQueue::getEvent(FakeInputEvent **event) {
-    if (keyEvents.empty())
-        return -1;
-    *event = &keyEvents.front();
-    return 0;
+    if (!keyEvents.empty()) {
+        *event = &keyEvents.front();
+        return 0;
+    }
+    if (!motionEvents.empty()) {
+        *event = &motionEvents.front();
+        return 0;
+    }
+    return -1;
 }
 
 void FakeInputQueue::finishEvent(FakeInputEvent *event) {
-    if (&keyEvents.front() != event)
-        throw std::runtime_error("finishEvent: the event is not the event on the front of queue");
-    keyEvents.pop_front();
+    if (&keyEvents.front() == event) {
+        keyEvents.pop_front();
+        return;
+    }
+    if (&motionEvents.front() == event) {
+        motionEvents.pop_front();
+        return;
+    }
+    throw std::runtime_error("finishEvent: the event is not the event on the front of queue");
 }
 
 void FakeInputQueue::addEvent(FakeKeyEvent event) {
     keyEvents.push_back(event);
+}
+
+void FakeInputQueue::addEvent(FakeMotionEvent event) {
+    motionEvents.push_back(event);
 }
