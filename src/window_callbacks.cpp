@@ -66,17 +66,17 @@ void WindowCallbacks::onTouchUpdate(int id, double x, double y) {
 void WindowCallbacks::onTouchEnd(int id, double x, double y) {
 //    Multitouch::feed(1, 0, (short) x, (short) y, id);
 }
-void WindowCallbacks::onKeyboard(int key, KeyAction action) {
+void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
 #ifdef __APPLE__
-    if (key == 1) /* cmd */
+    if (key == KeyCode::LEFT_SUPER || key == KeyCode::RIGHT_SUPER)
 #else
-    if (key == 17)
+    if (key == KeyCode::LEFT_CTRL || key == KeyCode::RIGHT_CTRL)
 #endif
         modCTRL = (action != KeyAction::RELEASE);
     if (action == KeyAction::PRESS)
-        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, key));
+        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(key)));
     else if (action == KeyAction::RELEASE)
-        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, key));
+        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, mapMinecraftToAndroidKey(key)));
 
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
@@ -143,4 +143,56 @@ void WindowCallbacks::loadGamepadMappings() {
 WindowCallbacks::GamepadData::GamepadData() {
     stickLeft[0] = stickLeft[1] = 0.f;
     stickRight[0] = stickRight[1] = 0.f;
+}
+
+int WindowCallbacks::mapMinecraftToAndroidKey(KeyCode code) {
+    if (code >= KeyCode::NUM_0 && code <= KeyCode::NUM_9)
+        return (int) code - (int) KeyCode::NUM_0 + AKEYCODE_0;
+    if (code >= KeyCode::A && code <= KeyCode::Z)
+        return (int) code - (int) KeyCode::A + AKEYCODE_A;
+    if (code >= KeyCode::FN1 && code <= KeyCode::FN12)
+        return (int) code - (int) KeyCode::FN1 + AKEYCODE_F1;
+    switch (code) {
+        case KeyCode::BACK: return AKEYCODE_BACK;
+        case KeyCode::BACKSPACE: return AKEYCODE_DEL;
+        case KeyCode::TAB: return AKEYCODE_TAB;
+        case KeyCode::ENTER: return AKEYCODE_ENTER;
+        case KeyCode::LEFT_SHIFT: return AKEYCODE_SHIFT_LEFT;
+        case KeyCode::RIGHT_SHIFT: return AKEYCODE_SHIFT_RIGHT;
+        case KeyCode::LEFT_CTRL: return AKEYCODE_CTRL_LEFT;
+        case KeyCode::RIGHT_CTRL: return AKEYCODE_CTRL_RIGHT;
+        case KeyCode::PAUSE: return AKEYCODE_BREAK;
+        case KeyCode::CAPS_LOCK: return AKEYCODE_CAPS_LOCK;
+        case KeyCode::ESCAPE: return AKEYCODE_ESCAPE;
+        case KeyCode::SPACE: return AKEYCODE_SPACE;
+        case KeyCode::PAGE_UP: return AKEYCODE_PAGE_UP;
+        case KeyCode::PAGE_DOWN: return AKEYCODE_PAGE_DOWN;
+        case KeyCode::END: return AKEYCODE_MOVE_END;
+        case KeyCode::HOME: return AKEYCODE_MOVE_HOME;
+        case KeyCode::LEFT: return AKEYCODE_DPAD_LEFT;
+        case KeyCode::UP: return AKEYCODE_DPAD_UP;
+        case KeyCode::RIGHT: return AKEYCODE_DPAD_RIGHT;
+        case KeyCode::DOWN: return AKEYCODE_DPAD_DOWN;
+        case KeyCode::INSERT: return AKEYCODE_INSERT;
+        case KeyCode::DELETE: return AKEYCODE_FORWARD_DEL;
+        case KeyCode::NUM_LOCK: return AKEYCODE_NUM_LOCK;
+        case KeyCode::SCROLL_LOCK: return AKEYCODE_SCROLL_LOCK;
+        case KeyCode::SEMICOLON: return AKEYCODE_SEMICOLON;
+        case KeyCode::EQUAL: return AKEYCODE_EQUALS;
+        case KeyCode::COMMA: return AKEYCODE_COMMA;
+        case KeyCode::MINUS: return AKEYCODE_MINUS;
+        case KeyCode::PERIOD: return AKEYCODE_PERIOD;
+        case KeyCode::SLASH: return AKEYCODE_SLASH;
+        case KeyCode::GRAVE: return AKEYCODE_GRAVE;
+        case KeyCode::LEFT_BRACKET: return AKEYCODE_LEFT_BRACKET;
+        case KeyCode::BACKSLASH: return AKEYCODE_BACKSLASH;
+        case KeyCode::RIGHT_BRACKET: return AKEYCODE_RIGHT_BRACKET;
+        case KeyCode::APOSTROPHE: return AKEYCODE_APOSTROPHE;
+        case KeyCode::MENU: return AKEYCODE_MENU;
+        case KeyCode::LEFT_SUPER: return AKEYCODE_META_LEFT;
+        case KeyCode::RIGHT_SUPER: return AKEYCODE_META_RIGHT;
+        case KeyCode::LEFT_ALT: return AKEYCODE_ALT_LEFT;
+        case KeyCode::RIGHT_ALT: return AKEYCODE_ALT_RIGHT;
+        default: return AKEYCODE_UNKNOWN;
+    }
 }
