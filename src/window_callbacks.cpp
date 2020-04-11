@@ -84,6 +84,12 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
 #endif
         modCTRL = (action != KeyAction::RELEASE);
 
+    if (modCTRL && key == KeyCode::C) {
+        window.setClipboardText(jniSupport.getTextInputHandler().getCopyText());
+    } else {
+        jniSupport.getTextInputHandler().onKeyPressed(key, action);
+    }
+
     if (useDirectKeyboardInput) {
         Keyboard::InputEvent evData {};
         evData.key = (unsigned int) key;
@@ -101,10 +107,13 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
 
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
-    // TODO:
+    if (c == "\n" && !jniSupport.getTextInputHandler().isMultiline())
+        jniSupport.onReturnKeyPressed();
+    else
+        jniSupport.getTextInputHandler().onTextInput(c);
 }
 void WindowCallbacks::onPaste(std::string const& str) {
-    // TODO:
+    jniSupport.getTextInputHandler().onTextInput(str);
 }
 void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
     Log::trace("WindowCallbacks", "Gamepad %s #%i", connected ? "connected" : "disconnected", gamepad);

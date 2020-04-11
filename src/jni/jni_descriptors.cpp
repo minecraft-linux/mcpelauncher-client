@@ -46,6 +46,10 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getFileDataBytes> {}, "getFileDataBytes"},
 {Function<&MainActivity::getIPAddresses> {}, "getIPAddresses"},
 {Function<&MainActivity::getBroadcastAddresses> {}, "getBroadcastAddresses"},
+{Function<&MainActivity::showKeyboard> {}, "showKeyboard"},
+{Function<&MainActivity::hideKeyboard> {}, "hideKeyboard"},
+{Function<&MainActivity::updateTextboxText> {}, "updateTextboxText"},
+{Function<&MainActivity::getCursorPosition> {}, "getCursorPosition"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)

@@ -2,6 +2,7 @@
 
 #include <fake-jni/fake-jni.h>
 #include "java_types.h"
+#include "../text_input_handler.h"
 
 class BuildVersion : public FakeJni::JObject {
 
@@ -62,6 +63,7 @@ public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", NativeActivity)
 
     std::string storageDirectory;
+    TextInputHandler *textInput = nullptr;
 
     int getAndroidVersion() {
         return 27;
@@ -107,6 +109,28 @@ public:
 
     std::shared_ptr<FakeJni::JArray<FakeJni::JString>> getBroadcastAddresses() {
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
+    }
+
+    void showKeyboard(std::shared_ptr<FakeJni::JString> text, FakeJni::JInt maxLen, FakeJni::JBoolean ignored,
+            FakeJni::JBoolean ignored2, FakeJni::JBoolean multiline) {
+        if (textInput)
+            textInput->enable(text->asStdString(), multiline);
+    }
+
+    void hideKeyboard() {
+        if (textInput)
+            textInput->disable();
+    }
+
+    void updateTextboxText(std::shared_ptr<FakeJni::JString> newText) {
+        if (textInput)
+            textInput->update(newText->asStdString());
+    }
+
+    int getCursorPosition() {
+        if (textInput)
+            return textInput->getCursorPosition();
+        return 0;
     }
 
 };

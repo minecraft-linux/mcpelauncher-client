@@ -8,6 +8,7 @@
 #include <game_window.h>
 #include <condition_variable>
 #include <mutex>
+#include "../text_input_handler.h"
 
 struct JniSupport {
 
@@ -28,6 +29,7 @@ private:
     std::condition_variable gameExitCond;
     std::mutex gameExitMutex;
     bool gameExitVal = false;
+    TextInputHandler textInput;
 
     void registerJniClasses();
 
@@ -47,6 +49,12 @@ public:
 
     void onWindowResized(int newWidth, int newHeight);
 
+    void onSetTextboxText(std::string const &text);
+
+    void onReturnKeyPressed();
+
     void setGameControllerConnected(int devId, bool connected);
+
+    TextInputHandler &getTextInputHandler() { return textInput; }
 
 };

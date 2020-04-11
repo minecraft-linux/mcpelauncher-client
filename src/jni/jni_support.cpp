@@ -24,7 +24,9 @@ void JniSupport::registerJniClasses() {
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(), {
             {"nativeRegisterThis", "()V"},
-            {"nativeResize", "(II)V"}
+            {"nativeResize", "(II)V"},
+            {"nativeSetTextboxText", "(Ljava/lang/String;)V"},
+            {"nativeReturnKeyPressed", "()V"}
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
             {"onStoreInitialized", "(JZ)V"}
@@ -35,7 +37,7 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     }, symResolver);
 }
 
-JniSupport::JniSupport() {
+JniSupport::JniSupport() : textInput([this](std::string const &str) { return onSetTextboxText(str); }) {
     registerJniClasses();
 }
 
@@ -71,6 +73,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     activity = std::make_shared<MainActivity>();
     activityRef = vm.createGlobalReference(activity);
 
+    activity->textInput = &textInput;
     activity->storageDirectory = PathHelper::getPrimaryDataDirectory();
     assetManager = std::make_unique<FakeAssetManager>(PathHelper::getGameDir() + "/assets");
 
@@ -113,6 +116,22 @@ void JniSupport::onWindowResized(int newWidth, int newHeight) {
     auto resize = activity->getClass().getMethod("(II)V", "nativeResize");
     if (resize)
         resize->invoke(frame.getJniEnv(), activity.get(), newWidth, newHeight);
+}
+
+void JniSupport::onSetTextboxText(std::string const &text) {
+    FakeJni::LocalFrame frame (vm);
+    auto setText = activity->getClass().getMethod("(Ljava/lang/String;)V", "nativeSetTextboxText");
+    if (setText) {
+        auto str = std::make_shared<FakeJni::JString>(text);
+        setText->invoke(frame.getJniEnv(), activity.get(), frame.getJniEnv().createLocalReference(str));
+    }
+}
+
+void JniSupport::onReturnKeyPressed() {
+    FakeJni::LocalFrame frame (vm);
+    auto returnPressed = activity->getClass().getMethod("()V", "nativeReturnKeyPressed");
+    if (returnPressed)
+        returnPressed->invoke(frame.getJniEnv(), activity.get());
 }
 
 void JniSupport::setGameControllerConnected(int devId, bool connected) {
