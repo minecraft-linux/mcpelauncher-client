@@ -127,6 +127,7 @@ int main(int argc, char *argv[]) {
     });
     support.startGame((ANativeActivity_createFunc *) hybris_dlsym(handle, "ANativeActivity_onCreate"));
     support.waitForGameExit();
+    support.stopGame();
 
     MinecraftUtils::workaroundShutdownCrash(handle);
 //    XboxLivePatches::workaroundShutdownFreeze(handle);

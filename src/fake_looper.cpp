@@ -30,6 +30,12 @@ void FakeLooper::initHybrisHooks() {
     hybris_hook("AInputQueue_attachLooper", (void *) +[](AInputQueue *queue, ALooper *looper, int ident, ALooper_callbackFunc callback, void *data) {
         ((FakeLooper *) (void *) looper)->attachInputQueue(ident, callback, data);
     });
+
+    hybris_hook("ANativeActivity_finish", (void *) +[](ANativeActivity *native) {
+        FakeJni::JniEnvContext ctx (*(FakeJni::Jvm *) native->vm);
+        auto activity = std::dynamic_pointer_cast<MainActivity>(ctx.getJniEnv().resolveReference(native->clazz));
+        activity->quitCallback();
+    });
 }
 
 void FakeLooper::prepare() {

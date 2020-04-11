@@ -64,6 +64,7 @@ public:
 
     std::string storageDirectory;
     TextInputHandler *textInput = nullptr;
+    std::function<void ()> quitCallback;
 
     int getAndroidVersion() {
         return 27;

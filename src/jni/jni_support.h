@@ -43,7 +43,11 @@ public:
 
     void startGame(ANativeActivity_createFunc *activityOnCreate);
 
+    void stopGame();
+
     void waitForGameExit();
+
+    void requestExitGame();
 
     void onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue);
 

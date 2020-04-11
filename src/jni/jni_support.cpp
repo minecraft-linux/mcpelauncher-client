@@ -1,6 +1,7 @@
 #include <log.h>
 #include <mcpelauncher/path_helper.h>
 #include <hybris/dlfcn.h>
+#include <hybris/hook.h>
 #include "jni_support.h"
 
 void JniSupport::registerJniClasses() {
@@ -24,6 +25,7 @@ void JniSupport::registerJniClasses() {
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(), {
             {"nativeRegisterThis", "()V"},
+            {"nativeShutdown", "()V"},
             {"nativeResize", "(II)V"},
             {"nativeSetTextboxText", "(Ljava/lang/String;)V"},
             {"nativeReturnKeyPressed", "()V"}
@@ -74,6 +76,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     activityRef = vm.createGlobalReference(activity);
 
     activity->textInput = &textInput;
+    activity->quitCallback = [this]() { requestExitGame(); };
     activity->storageDirectory = PathHelper::getPrimaryDataDirectory();
     assetManager = std::make_unique<FakeAssetManager>(PathHelper::getGameDir() + "/assets");
 
@@ -84,6 +87,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     nativeActivity.internalDataPath = "/internal";
     nativeActivity.externalDataPath = "/external";
     nativeActivity.clazz = activityRef;
+    nativeActivity.sdkVersion = activity->getAndroidVersion();
 
     Log::trace("JniSupport", "Invoking nativeRegisterThis\n");
     auto registerThis = activity->getClass().getMethod("()V", "nativeRegisterThis");
@@ -99,9 +103,28 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     nativeActivityCallbacks.onResume(&nativeActivity);
 }
 
+void JniSupport::stopGame() {
+    FakeJni::LocalFrame frame (vm);
+
+    Log::trace("JniSupport", "Invoking stop activity callbacks\n");
+    nativeActivityCallbacks.onPause(&nativeActivity);
+    nativeActivityCallbacks.onStop(&nativeActivity);
+    nativeActivityCallbacks.onDestroy(&nativeActivity);
+
+    Log::trace("JniSupport", "Invoking nativeShutdown\n");
+    auto shutdown = activity->getClass().getMethod("()V", "nativeShutdown");
+    shutdown->invoke(frame.getJniEnv(), activity.get());
+}
+
 void JniSupport::waitForGameExit() {
     std::unique_lock<std::mutex> lock (gameExitMutex);
     gameExitCond.wait(lock, [this]{ return gameExitVal; });
+}
+
+void JniSupport::requestExitGame() {
+    std::unique_lock<std::mutex> lock (gameExitMutex);
+    gameExitVal = true;
+    gameExitCond.notify_all();
 }
 
 void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue) {
