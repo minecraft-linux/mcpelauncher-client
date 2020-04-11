@@ -19,7 +19,7 @@ private:
     JniSupport &jniSupport;
     FakeInputQueue &inputQueue;
     std::unordered_map<int, GamepadData> gamepads;
-    void (*Mouse_feed)(char, char, short, short, short, short);
+    bool useDirectKeyboardInput;
     bool modCTRL = false;
 
 public:

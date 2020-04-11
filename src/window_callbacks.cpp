@@ -1,17 +1,15 @@
 #include "window_callbacks.h"
 #include "minecraft_gamepad_mapping.h"
+#include "symbols.h"
 
 #include <mcpelauncher/minecraft_version.h>
 #include <game_window_manager.h>
 #include <log.h>
 #include <mcpelauncher/path_helper.h>
-#include <hybris/dlfcn.h>
 
 WindowCallbacks::WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue) :
     window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
-    void *lib = hybris_dlopen("libminecraftpe.so", 0);
-    (void *&) Mouse_feed = hybris_dlsym(lib, "_ZN5Mouse4feedEccssss");
-    hybris_dlclose(lib);
+    useDirectKeyboardInput = (Keyboard::_states && Keyboard::_inputs && Keyboard::_gameControllerId);
 }
 
 void WindowCallbacks::registerCallbacks() {
@@ -45,17 +43,17 @@ void WindowCallbacks::onClose() {
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
     if (btn < 1 || btn > 3)
         return;
-    Mouse_feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
+    Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
-    Mouse_feed(0, 0, (short) x, (short) y, 0, 0);
+    Mouse::feed(0, 0, (short) x, (short) y, 0, 0);
 }
 void WindowCallbacks::onMouseRelativePosition(double x, double y) {
-    Mouse_feed(0, 0, 0, 0, (short) x, (short) y);
+    Mouse::feed(0, 0, 0, 0, (short) x, (short) y);
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     char cdy = (char) std::max(std::min(dy * 127.0, 127.0), -127.0);
-    Mouse_feed(4, cdy, 0, 0, (short) x, (short) y);
+    Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
 }
 void WindowCallbacks::onTouchStart(int id, double x, double y) {
 //    Multitouch::feed(1, 1, (short) x, (short) y, id);
@@ -73,6 +71,17 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
     if (key == KeyCode::LEFT_CTRL || key == KeyCode::RIGHT_CTRL)
 #endif
         modCTRL = (action != KeyAction::RELEASE);
+
+    if (useDirectKeyboardInput) {
+        Keyboard::InputEvent evData {};
+        evData.key = (unsigned int) key;
+        evData.event = (action == KeyAction::PRESS ? 1 : 0);
+        evData.controllerId = *Keyboard::_gameControllerId;
+        Keyboard::_inputs->push_back(evData);
+        Keyboard::_states[(int) key] = evData.event;
+        return;
+    }
+
     if (action == KeyAction::PRESS)
         inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(key)));
     else if (action == KeyAction::RELEASE)

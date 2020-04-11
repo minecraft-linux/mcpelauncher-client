@@ -29,6 +29,7 @@
 #include "fake_looper.h"
 #include "fake_assetmanager.h"
 #include "fake_egl.h"
+#include "symbols.h"
 
 static size_t base;
 LauncherOptions options;
@@ -107,6 +108,7 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
 
     Log::info("Launcher", "Applying patches");
+    SymbolsHelper::initSymbols(handle);
 #ifdef __i386__
 //    XboxShutdownPatch::install(handle);
     TexelAAPatch::install(handle);
