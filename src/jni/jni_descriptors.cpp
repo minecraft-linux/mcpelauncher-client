@@ -3,6 +3,10 @@
 
 using namespace FakeJni;
 
+BEGIN_NATIVE_DESCRIPTOR(BuildVersion)
+{Field<&BuildVersion::SDK_INT> {}, "SDK_INT"},
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(File)
 {Function<&File::getPath> {}, "getPath"},
 END_NATIVE_DESCRIPTOR
@@ -42,6 +46,9 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getFileDataBytes> {}, "getFileDataBytes"},
 {Function<&MainActivity::getIPAddresses> {}, "getIPAddresses"},
 {Function<&MainActivity::getBroadcastAddresses> {}, "getBroadcastAddresses"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(StoreListener)

@@ -75,10 +75,12 @@ int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **ou
         }
     }
 
-    associatedWindow->pollEvents();
     if (inputEntry && fakeInputQueue.hasEvents()) {
         inputEntry.fill(outFd, outData);
         return inputEntry.ident;
     }
+
+    associatedWindow->pollEvents();
+    associatedWindowCallbacks->markRequeueGamepadInput();
     return ALOOPER_POLL_TIMEOUT;
 }

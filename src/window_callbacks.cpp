@@ -1,5 +1,4 @@
 #include "window_callbacks.h"
-#include "minecraft_gamepad_mapping.h"
 #include "symbols.h"
 
 #include <mcpelauncher/minecraft_version.h>
@@ -113,20 +112,14 @@ void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
         gamepads.insert({gamepad, GamepadData()});
     else
         gamepads.erase(gamepad);
-//    if (GameControllerManager::sGamePadManager != nullptr)
-//        GameControllerManager::sGamePadManager->setGameControllerConnected(gamepad, connected);
+    jniSupport.setGameControllerConnected(gamepad, connected);
 }
 
 void WindowCallbacks::onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed) {
-    int mid = MinecraftGamepadMapping::mapButton(btn);
-    /*
-    auto state = pressed ? GameControllerButtonState::PRESSED : GameControllerButtonState::RELEASED;
-    if (GameControllerManager::sGamePadManager != nullptr && mid != -1) {
-        GameControllerManager::sGamePadManager->feedButton(gamepad, mid, state, true);
-        if (btn == GamepadButtonId::START && pressed)
-            GameControllerManager::sGamePadManager->feedJoinGame(gamepad, true);
-    }
-     */
+    if (pressed)
+        inputQueue.addEvent(FakeKeyEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AKEY_EVENT_ACTION_DOWN, mapGamepadToAndroidKey(btn)));
+    else
+        inputQueue.addEvent(FakeKeyEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AKEY_EVENT_ACTION_UP, mapGamepadToAndroidKey(btn)));
 }
 
 void WindowCallbacks::onGamepadAxis(int gamepad, GamepadAxisId ax, float value) {
@@ -134,20 +127,27 @@ void WindowCallbacks::onGamepadAxis(int gamepad, GamepadAxisId ax, float value) 
     if (gpi == gamepads.end())
         return;
     auto& gp = gpi->second;
+    if ((int) ax < 0 || (int) ax >= 6)
+        throw std::runtime_error("bad axis id");
+    gp.axis[(int) ax] = value;
 
-    /*
-    if (ax == GamepadAxisId::LEFT_X || ax == GamepadAxisId::LEFT_Y) {
-        gp.stickLeft[ax == GamepadAxisId::LEFT_Y ? 1 : 0] = value;
-        GameControllerManager::sGamePadManager->feedStick(gamepad, 0, (GameControllerStickState) 3, gp.stickLeft[0], -gp.stickLeft[1]);
-    } else if (ax == GamepadAxisId::RIGHT_X || ax == GamepadAxisId::RIGHT_Y) {
-        gp.stickRight[ax == GamepadAxisId::RIGHT_Y ? 1 : 0] = value;
-        GameControllerManager::sGamePadManager->feedStick(gamepad, 1, (GameControllerStickState) 3, gp.stickRight[0], -gp.stickRight[1]);
-    } else if (ax == GamepadAxisId::LEFT_TRIGGER) {
-        GameControllerManager::sGamePadManager->feedTrigger(gamepad, 0, value);
-    } else if (ax == GamepadAxisId::RIGHT_TRIGGER) {
-        GameControllerManager::sGamePadManager->feedTrigger(gamepad, 1, value);
+    if (needsQueueGamepadInput) {
+        inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AMOTION_EVENT_ACTION_MOVE, 0, 0.f, 0.f,
+                [this, gamepad](int axis) {
+                    auto gpi = gamepads.find(gamepad);
+                    if (gpi == gamepads.end())
+                        return 0.f;
+                    auto& gp = gpi->second;
+                    if (axis == AMOTION_EVENT_AXIS_X) return gp.axis[(int) GamepadAxisId::LEFT_X];
+                    if (axis == AMOTION_EVENT_AXIS_Y) return gp.axis[(int) GamepadAxisId::LEFT_Y];
+                    if (axis == AMOTION_EVENT_AXIS_RX) return gp.axis[(int) GamepadAxisId::RIGHT_X];
+                    if (axis == AMOTION_EVENT_AXIS_RY) return gp.axis[(int) GamepadAxisId::RIGHT_Y];
+                    if (axis == AMOTION_EVENT_AXIS_LTRIGGER) return gp.axis[(int) GamepadAxisId::LEFT_TRIGGER];
+                    if (axis == AMOTION_EVENT_AXIS_RTRIGGER) return gp.axis[(int) GamepadAxisId::RIGHT_TRIGGER];
+                    return 0.f;
+                }));
+        needsQueueGamepadInput = false;
     }
-     */
 }
 
 void WindowCallbacks::loadGamepadMappings() {
@@ -163,8 +163,8 @@ void WindowCallbacks::loadGamepadMappings() {
 }
 
 WindowCallbacks::GamepadData::GamepadData() {
-    stickLeft[0] = stickLeft[1] = 0.f;
-    stickRight[0] = stickRight[1] = 0.f;
+    for (int i = 0; i < 6; i++)
+        axis[i] = 0.f;
 }
 
 int WindowCallbacks::mapMinecraftToAndroidKey(KeyCode code) {
@@ -216,5 +216,26 @@ int WindowCallbacks::mapMinecraftToAndroidKey(KeyCode code) {
         case KeyCode::LEFT_ALT: return AKEYCODE_ALT_LEFT;
         case KeyCode::RIGHT_ALT: return AKEYCODE_ALT_RIGHT;
         default: return AKEYCODE_UNKNOWN;
+    }
+}
+
+int WindowCallbacks::mapGamepadToAndroidKey(GamepadButtonId btn) {
+    switch (btn) {
+        case GamepadButtonId::A: return AKEYCODE_BUTTON_A;
+        case GamepadButtonId::B: return AKEYCODE_BUTTON_B;
+        case GamepadButtonId::X: return AKEYCODE_BUTTON_X;
+        case GamepadButtonId::Y: return AKEYCODE_BUTTON_Y;
+        case GamepadButtonId::LB: return AKEYCODE_BUTTON_L1;
+        case GamepadButtonId::RB: return AKEYCODE_BUTTON_R1;
+        case GamepadButtonId::BACK: return AKEYCODE_BUTTON_SELECT;
+        case GamepadButtonId::START: return AKEYCODE_BUTTON_START;
+        case GamepadButtonId::GUIDE: return AKEYCODE_BUTTON_MODE;
+        case GamepadButtonId::LEFT_STICK: return AKEYCODE_BUTTON_THUMBL;
+        case GamepadButtonId::RIGHT_STICK: return AKEYCODE_BUTTON_THUMBR;
+        case GamepadButtonId::DPAD_UP: return AKEYCODE_DPAD_UP;
+        case GamepadButtonId::DPAD_RIGHT: return AKEYCODE_DPAD_RIGHT;
+        case GamepadButtonId::DPAD_DOWN: return AKEYCODE_DPAD_DOWN;
+        case GamepadButtonId::DPAD_LEFT: return AKEYCODE_DPAD_LEFT;
+        default: return -1;
     }
 }

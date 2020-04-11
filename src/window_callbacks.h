@@ -9,8 +9,7 @@ class WindowCallbacks {
 
 private:
     struct GamepadData {
-        float stickLeft[2];
-        float stickRight[2];
+        float axis[6];
 
         GamepadData();
     };
@@ -21,6 +20,7 @@ private:
     std::unordered_map<int, GamepadData> gamepads;
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
+    bool needsQueueGamepadInput = true;
 
 public:
     WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue);
@@ -28,6 +28,8 @@ public:
     static void loadGamepadMappings();
 
     void registerCallbacks();
+
+    void markRequeueGamepadInput() { needsQueueGamepadInput = true; }
 
     void onWindowSizeCallback(int w, int h);
 
@@ -48,5 +50,6 @@ public:
     void onGamepadAxis(int gamepad, GamepadAxisId ax, float value);
 
     static int mapMinecraftToAndroidKey(KeyCode code);
+    static int mapGamepadToAndroidKey(GamepadButtonId btn);
 
 };

@@ -2,6 +2,8 @@
 
 #include <random>
 
+FakeJni::JInt BuildVersion::SDK_INT = 27;
+
 std::shared_ptr<FakeJni::JString> MainActivity::createUUID() {
     static std::independent_bits_engine<std::random_device, CHAR_BIT, unsigned char> engine;
     unsigned char rawBytes[16];

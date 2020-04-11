@@ -19,6 +19,9 @@ void FakeInputQueue::initHybrisHooks() {
     hybris_hook("AInputEvent_getType", (void *) +[](const AInputEvent *event) {
         return ((const FakeInputEvent *) (const void *) event)->type;
     });
+    hybris_hook("AInputEvent_getDeviceId", (void *) +[](const AInputEvent *event) {
+        return ((const FakeInputEvent *) (const void *) event)->deviceId;
+    });
     hybris_hook("AKeyEvent_getAction", (void *) +[](const AInputEvent *event) {
         return ((const FakeKeyEvent *) (const void *) event)->action;
     });
@@ -34,17 +37,20 @@ void FakeInputQueue::initHybrisHooks() {
     hybris_hook("AMotionEvent_getPointerId", (void *) +[](const AInputEvent *event) {
         return ((const FakeMotionEvent *) (const void *) event)->pointerId;
     });
-    hybris_hook("AMotionEvent_getX", (void *) +[](const AInputEvent *event) {
+    hybris_hook("AMotionEvent_getX", (void *) +[](const AInputEvent *event, size_t pointerIndex) {
         return ((const FakeMotionEvent *) (const void *) event)->x;
     });
-    hybris_hook("AMotionEvent_getY", (void *) +[](const AInputEvent *event) {
+    hybris_hook("AMotionEvent_getY", (void *) +[](const AInputEvent *event, size_t pointerIndex) {
         return ((const FakeMotionEvent *) (const void *) event)->y;
     });
-    hybris_hook("AMotionEvent_getRawX", (void *) +[](const AInputEvent *event) {
+    hybris_hook("AMotionEvent_getRawX", (void *) +[](const AInputEvent *event, size_t pointerIndex) {
         return ((const FakeMotionEvent *) (const void *) event)->x;
     });
-    hybris_hook("AMotionEvent_getRawY", (void *) +[](const AInputEvent *event) {
+    hybris_hook("AMotionEvent_getRawY", (void *) +[](const AInputEvent *event, size_t pointerIndex) {
         return ((const FakeMotionEvent *) (const void *) event)->y;
+    });
+    hybris_hook("AMotionEvent_getAxisValue", (void *) +[](const AInputEvent *event, int32_t axis, size_t pointerIndex) {
+        return ((const FakeMotionEvent *) (const void *) event)->axisFunction(axis);
     });
 }
 

@@ -3,6 +3,15 @@
 #include <fake-jni/fake-jni.h>
 #include "java_types.h"
 
+class BuildVersion : public FakeJni::JObject {
+
+public:
+    DEFINE_CLASS_NAME("android/os/Build$VERSION")
+
+    static FakeJni::JInt SDK_INT;
+
+};
+
 class Context : public FakeJni::JObject {
 
 public:
@@ -99,5 +108,12 @@ public:
     std::shared_ptr<FakeJni::JArray<FakeJni::JString>> getBroadcastAddresses() {
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
     }
+
+};
+
+class JellyBeanDeviceManager : public FakeJni::JObject {
+
+public:
+    DEFINE_CLASS_NAME("com/mojang/minecraftpe/input/JellyBeanDeviceManager")
 
 };

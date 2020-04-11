@@ -47,4 +47,6 @@ public:
 
     void onWindowResized(int newWidth, int newHeight);
 
+    void setGameControllerConnected(int devId, bool connected);
+
 };

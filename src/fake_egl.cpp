@@ -59,7 +59,7 @@ EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, 
 }
 
 EGLBoolean eglSwapBuffers(EGLDisplay display, EGLSurface surface) {
-    Log::trace("FakeEGL", "eglSwapBuffers");
+//    Log::trace("FakeEGL", "eglSwapBuffers");
     ((GameWindow *) surface)->swapBuffers();
     return EGL_TRUE;
 }

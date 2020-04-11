@@ -8,6 +8,8 @@ void JniSupport::registerJniClasses() {
 
     vm.registerClass<File>();
     vm.registerClass<ClassLoader>();
+
+    vm.registerClass<BuildVersion>();
     vm.registerClass<Context>();
     vm.registerClass<ContextWrapper>();
     vm.registerClass<HardwareInfo>();
@@ -26,6 +28,10 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
             {"onStoreInitialized", "(JZ)V"}
+    }, symResolver);
+    registerNatives(JellyBeanDeviceManager::getDescriptor(), {
+            {"onInputDeviceAddedNative", "(I)V"},
+            {"onInputDeviceRemovedNative", "(I)V"}
     }, symResolver);
 }
 
@@ -107,4 +113,15 @@ void JniSupport::onWindowResized(int newWidth, int newHeight) {
     auto resize = activity->getClass().getMethod("(II)V", "nativeResize");
     if (resize)
         resize->invoke(frame.getJniEnv(), activity.get(), newWidth, newHeight);
+}
+
+void JniSupport::setGameControllerConnected(int devId, bool connected) {
+    static auto addedMethod = JellyBeanDeviceManager::getDescriptor()->getMethod("(I)V", "onInputDeviceAddedNative");
+    static auto removedMethod = JellyBeanDeviceManager::getDescriptor()->getMethod("(I)V", "onInputDeviceRemovedNative");
+
+    FakeJni::LocalFrame frame (vm);
+    if (connected && addedMethod)
+        addedMethod->invoke(frame.getJniEnv(), nullptr, devId);
+    else if (connected && removedMethod)
+        removedMethod->invoke(frame.getJniEnv(), nullptr, devId);
 }
