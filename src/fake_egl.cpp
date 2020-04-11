@@ -35,6 +35,10 @@ EGLDisplay eglGetCurrentDisplay() {
     return (EGLDisplay *) 1;
 }
 
+EGLContext eglGetCurrentContext() {
+    return (EGLContext *) (currentDrawSurface ? 1 : 0);
+}
+
 EGLBoolean eglChooseConfig(EGLDisplay display, EGLint const *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
     *num_config = 1;
     return EGL_TRUE;
@@ -87,6 +91,7 @@ void FakeEGL::initHybrisHooks() {
     hybris_hook("eglQueryString", (void *) fake_egl::eglQueryString);
     hybris_hook("eglGetDisplay", (void *) fake_egl::eglGetDisplay);
     hybris_hook("eglGetCurrentDisplay", (void *) fake_egl::eglGetCurrentDisplay);
+    hybris_hook("eglGetCurrentContext", (void *) fake_egl::eglGetCurrentContext);
     hybris_hook("eglChooseConfig", (void *) fake_egl::eglChooseConfig);
     hybris_hook("eglGetConfigAttrib", (void *) fake_egl::eglGetConfigAttrib);
     hybris_hook("eglCreateWindowSurface", (void *) fake_egl::eglCreateWindowSurface);
