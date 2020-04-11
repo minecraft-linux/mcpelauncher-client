@@ -51,6 +51,8 @@ public:
 
     void onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue);
 
+    void onWindowClosed();
+
     void onWindowResized(int newWidth, int newHeight);
 
     void onSetTextboxText(std::string const &text);

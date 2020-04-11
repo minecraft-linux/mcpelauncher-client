@@ -110,10 +110,6 @@ void JniSupport::stopGame() {
     nativeActivityCallbacks.onPause(&nativeActivity);
     nativeActivityCallbacks.onStop(&nativeActivity);
     nativeActivityCallbacks.onDestroy(&nativeActivity);
-
-    Log::trace("JniSupport", "Invoking nativeShutdown\n");
-    auto shutdown = activity->getClass().getMethod("()V", "nativeShutdown");
-    shutdown->invoke(frame.getJniEnv(), activity.get());
 }
 
 void JniSupport::waitForGameExit() {
@@ -132,6 +128,12 @@ void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue)
     // initialized; the thread initialization code runs ALooper_prepare before signaling it's ready.
     this->window = window;
     this->inputQueue = inputQueue;
+}
+
+void JniSupport::onWindowClosed() {
+    FakeJni::LocalFrame frame (vm);
+    auto shutdown = activity->getClass().getMethod("()V", "nativeShutdown");
+    shutdown->invoke(frame.getJniEnv(), activity.get());
 }
 
 void JniSupport::onWindowResized(int newWidth, int newHeight) {

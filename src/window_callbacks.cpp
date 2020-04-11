@@ -37,7 +37,7 @@ void WindowCallbacks::onWindowSizeCallback(int w, int h) {
 }
 
 void WindowCallbacks::onClose() {
-    // TODO: 
+    jniSupport.onWindowClosed();
 }
 
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
