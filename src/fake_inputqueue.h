@@ -4,15 +4,15 @@
 #include <deque>
 
 struct FakeInputEvent {
-    int32_t type;
+    int32_t source, type;
 
-    FakeInputEvent(int32_t type) : type(type) {}
+    FakeInputEvent(int32_t source, int32_t type) : source(source), type(type) {}
 };
 
 struct FakeKeyEvent : FakeInputEvent {
     int32_t action, keyCode;
 
-    FakeKeyEvent(int32_t action, int32_t keyCode) : FakeInputEvent(AINPUT_EVENT_TYPE_KEY), action(action), keyCode(keyCode) {}
+    FakeKeyEvent(int32_t action, int32_t keyCode) : FakeInputEvent(AINPUT_SOURCE_KEYBOARD, AINPUT_EVENT_TYPE_KEY), action(action), keyCode(keyCode) {}
 };
 
 class FakeInputQueue {

@@ -13,6 +13,9 @@ void FakeInputQueue::initHybrisHooks() {
     hybris_hook("AInputQueue_preDispatchEvent", (void *) +[]() {
         return 0;
     });
+    hybris_hook("AInputEvent_getSource", (void *) +[](const AInputEvent *event) {
+        return ((const FakeInputEvent *) (const void *) event)->source;
+    });
     hybris_hook("AInputEvent_getType", (void *) +[](const AInputEvent *event) {
         return ((const FakeInputEvent *) (const void *) event)->type;
     });
