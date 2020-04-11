@@ -56,6 +56,11 @@ void FakeLooper::prepare() {
     ShaderErrorPatch::onGLContextCreated();
 }
 
+FakeLooper::~FakeLooper() {
+    associatedWindow.reset();
+    associatedWindowCallbacks.reset();
+}
+
 int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
     if (androidEvent)
         return -1;

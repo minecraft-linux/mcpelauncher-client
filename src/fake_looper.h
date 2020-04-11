@@ -41,6 +41,8 @@ public:
         jniSupport = support;
     }
 
+    ~FakeLooper();
+
     void prepare();
 
     int addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data);
