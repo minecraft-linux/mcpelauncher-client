@@ -8,6 +8,7 @@
 #include <sys/poll.h>
 
 #include <game_window_manager.h>
+#include <log.h>
 
 JniSupport *FakeLooper::jniSupport;
 thread_local std::unique_ptr<FakeLooper> FakeLooper::currentLooper;
@@ -32,6 +33,10 @@ void FakeLooper::initHybrisHooks() {
 }
 
 void FakeLooper::prepare() {
+    Log::info("Launcher", "Loading gamepad mappings");
+    WindowCallbacks::loadGamepadMappings();
+
+    Log::info("Launcher", "Creating window");
     associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
             options.windowWidth, options.windowHeight, options.graphicsApi);
     jniSupport->onWindowCreated((ANativeWindow *) (void *) associatedWindow.get(),
