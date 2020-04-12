@@ -3,6 +3,7 @@
 #include "shader_error_patch.h"
 #include "splitscreen_patch.h"
 #include "gl_core_patch.h"
+#include "core_patches.h"
 
 #include <hybris/hook.h>
 #include <sys/poll.h>
@@ -52,6 +53,8 @@ void FakeLooper::prepare() {
     associatedWindowCallbacks = std::make_shared<WindowCallbacks>(*associatedWindow, *jniSupport, fakeInputQueue);
     associatedWindowCallbacks->registerCallbacks();
 
+    CorePatches::setGameWindow(associatedWindow);
+
     associatedWindow->show();
     SplitscreenPatch::onGLContextCreated();
     GLCorePatch::onGLContextCreated();
@@ -59,6 +62,7 @@ void FakeLooper::prepare() {
 }
 
 FakeLooper::~FakeLooper() {
+    CorePatches::setGameWindow(nullptr);
     associatedWindow.reset();
     associatedWindowCallbacks.reset();
     jniSupport->setLooperRunning(false);

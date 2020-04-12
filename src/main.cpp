@@ -31,6 +31,7 @@
 #include "fake_assetmanager.h"
 #include "fake_egl.h"
 #include "symbols.h"
+#include "core_patches.h"
 
 static size_t base;
 LauncherOptions options;
@@ -110,6 +111,7 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Applying patches");
     SymbolsHelper::initSymbols(handle);
+    CorePatches::install(handle);
 #ifdef __i386__
 //    XboxShutdownPatch::install(handle);
     TexelAAPatch::install(handle);
@@ -119,9 +121,6 @@ int main(int argc, char *argv[]) {
     ShaderErrorPatch::install(handle);
     if (options.graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
-
-    void* ptr = hybris_dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
-    PatchUtils::patchCallInstruction(ptr, (void*) +[]() { return true; }, true);
 
     Log::info("Launcher", "Initializing JNI");
     JniSupport support;
