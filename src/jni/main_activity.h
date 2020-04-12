@@ -80,6 +80,10 @@ public:
         return 27;
     }
 
+    FakeJni::JBoolean isNetworkEnabled() {
+        return true;
+    }
+
     std::shared_ptr<FakeJni::JString> getLocale() {
         return std::make_shared<FakeJni::JString>("en");
     }

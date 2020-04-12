@@ -41,6 +41,7 @@ END_NATIVE_DESCRIPTOR
 BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Constructor<MainActivity> {}},
 {Function<&MainActivity::getAndroidVersion> {}, "getAndroidVersion"},
+{Function<&MainActivity::isNetworkEnabled> {}, "isNetworkEnabled"},
 {Function<&MainActivity::getLocale> {}, "getLocale"},
 {Function<&MainActivity::getDeviceModel> {}, "getDeviceModel"},
 {Function<&MainActivity::getExternalStoragePath> {}, "getExternalStoragePath"},
