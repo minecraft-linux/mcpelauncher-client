@@ -80,7 +80,7 @@ public:
         return 27;
     }
 
-    FakeJni::JBoolean isNetworkEnabled() {
+    FakeJni::JBoolean isNetworkEnabled(FakeJni::JBoolean wifi) {
         return true;
     }
 
