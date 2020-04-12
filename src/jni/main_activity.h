@@ -155,6 +155,14 @@ public:
         return 0;
     }
 
+    FakeJni::JLong getUsedMemory();
+
+    FakeJni::JLong getFreeMemory();
+
+    FakeJni::JLong getMemoryLimit();
+
+    FakeJni::JLong getAvailableMemory();
+
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {

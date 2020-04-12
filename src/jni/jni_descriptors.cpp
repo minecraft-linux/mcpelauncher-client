@@ -55,6 +55,10 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::hideKeyboard> {}, "hideKeyboard"},
 {Function<&MainActivity::updateTextboxText> {}, "updateTextboxText"},
 {Function<&MainActivity::getCursorPosition> {}, "getCursorPosition"},
+{Function<&MainActivity::getUsedMemory> {}, "getUsedMemory"},
+{Function<&MainActivity::getFreeMemory> {}, "getFreeMemory"},
+{Function<&MainActivity::getMemoryLimit> {}, "getMemoryLimit"},
+{Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)
