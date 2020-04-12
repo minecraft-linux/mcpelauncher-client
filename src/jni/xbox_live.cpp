@@ -23,9 +23,20 @@ std::shared_ptr<FakeJni::JString> XboxInterop::getLocale() {
 void XboxInterop::invokeMSA(std::shared_ptr<Context> context, FakeJni::JInt requestCode, FakeJni::JBoolean isProd,
                             std::shared_ptr<FakeJni::JString> cid) {
     Log::info("XboxInterop", "InvokeMSA: requestCode=%i cid=%s", requestCode, cid->asStdString().c_str());
+    FakeJni::Jvm const *vm = &FakeJni::JniEnv::getCurrentEnv()->getVM();
 
     if (requestCode == 1) { // Silent sign in
-        ticketCallback("", requestCode, 1, "Must show UI to acquire an account.");
+        XboxLiveHelper::getInstance().requestXblToken(cid->asStdString(), true,
+                [vm, requestCode](std::string const& cid, std::string const& binaryToken) {
+                    ticketCallback(*vm, binaryToken, requestCode, TICKET_OK, "");
+                }, [vm, requestCode](simpleipc::rpc_error_code code, std::string const &err) {
+                    if (code == msa::client::ErrorCodes::NoSuchAccount)
+                        ticketCallback(*vm, "", requestCode, TICKET_UI_INTERACTION_REQUIRED, "Must show UI to acquire an account.");
+                    else if (code == msa::client::ErrorCodes::MustShowUI)
+                        ticketCallback(*vm, "", requestCode, TICKET_UI_INTERACTION_REQUIRED, "Must show UI to update account information.");
+                    else
+                        ticketCallback(*vm, "", requestCode, TICKET_UNKNOWN_ERROR, err);
+                });
     } else if (requestCode == 6) { // Sign out
         signOutCallback();
     } else {
@@ -49,8 +60,9 @@ void XboxInterop::invokeAuthFlow(FakeJni::JLong userPtr, std::shared_ptr<Activit
     });
 }
 
-void XboxInterop::ticketCallback(std::string const &ticket, int requestCode, int errorCode, std::string const &error) {
-    FakeJni::LocalFrame env;
+void XboxInterop::ticketCallback(FakeJni::Jvm const &vm, std::string const &ticket, int requestCode, int errorCode,
+        std::string const &error) {
+    FakeJni::LocalFrame env (vm);
     auto callback = getDescriptor()->getMethod("(Ljava/lang/String;IILjava/lang/String;)V", "ticket_callback");
     auto ticketRef = env.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(ticket));
     auto errorStrRef = env.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(error));

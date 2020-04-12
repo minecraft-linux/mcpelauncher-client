@@ -29,7 +29,12 @@ private:
     static constexpr int AUTH_FLOW_CANCEL = 1;
     static constexpr int AUTH_FLOW_ERROR = 2;
 
-    static void ticketCallback(std::string const &ticket, int requestCode, int errorCode, std::string const &errorStr);
+    static constexpr int TICKET_OK = 0;
+    static constexpr int TICKET_UI_INTERACTION_REQUIRED = 1;
+    static constexpr int TICKET_UNKNOWN_ERROR = 3;
+
+    static void ticketCallback(FakeJni::Jvm const &vm, std::string const &ticket, int requestCode, int errorCode,
+            std::string const &errorStr);
 
     static void authFlowCallback(FakeJni::Jvm const &vm, FakeJni::JLong userPtr, int status, std::string const &cid);
 
