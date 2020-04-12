@@ -159,6 +159,8 @@ public:
 
     FakeJni::JLong getFreeMemory();
 
+    FakeJni::JLong getTotalMemory();
+
     FakeJni::JLong getMemoryLimit();
 
     FakeJni::JLong getAvailableMemory();

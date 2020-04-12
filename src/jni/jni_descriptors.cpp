@@ -57,6 +57,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getCursorPosition> {}, "getCursorPosition"},
 {Function<&MainActivity::getUsedMemory> {}, "getUsedMemory"},
 {Function<&MainActivity::getFreeMemory> {}, "getFreeMemory"},
+{Function<&MainActivity::getTotalMemory> {}, "getTotalMemory"},
 {Function<&MainActivity::getMemoryLimit> {}, "getMemoryLimit"},
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 END_NATIVE_DESCRIPTOR

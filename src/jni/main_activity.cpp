@@ -66,7 +66,7 @@ FakeJni::JLong MainActivity::getFreeMemory() {
 #endif
 }
 
-FakeJni::JLong MainActivity::getMemoryLimit() {
+FakeJni::JLong MainActivity::getTotalMemory() {
 #ifdef __APPLE__
     uint64_t memsize;
     size_t len = sizeof(memsize);
@@ -81,6 +81,10 @@ FakeJni::JLong MainActivity::getMemoryLimit() {
 #endif
 }
 
+FakeJni::JLong MainActivity::getMemoryLimit() {
+    return getTotalMemory();
+}
+
 FakeJni::JLong MainActivity::getAvailableMemory() {
-    return getMemoryLimit();
+    return getTotalMemory();
 }
