@@ -11,7 +11,7 @@ public:
     using TextCallback = std::function<void (std::string)>;
 
 private:
-    bool enabled = true, multiline = false, shiftPressed = false;
+    bool enabled = false, multiline = false, shiftPressed = false;
     std::string currentText;
     size_t currentTextPosition = 0;
     size_t currentTextPositionUTF = 0;

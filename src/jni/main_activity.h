@@ -59,6 +59,9 @@ public:
 
 class MainActivity : public NativeActivity {
 
+private:
+    bool ignoreNextHideKeyboard = false;
+
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", NativeActivity)
 
@@ -114,11 +117,16 @@ public:
 
     void showKeyboard(std::shared_ptr<FakeJni::JString> text, FakeJni::JInt maxLen, FakeJni::JBoolean ignored,
             FakeJni::JBoolean ignored2, FakeJni::JBoolean multiline) {
+        ignoreNextHideKeyboard = false;
         if (textInput)
             textInput->enable(text->asStdString(), multiline);
     }
 
     void hideKeyboard() {
+        if (ignoreNextHideKeyboard) {
+            ignoreNextHideKeyboard = false;
+            return;
+        }
         if (textInput)
             textInput->disable();
     }
@@ -126,9 +134,11 @@ public:
     void updateTextboxText(std::shared_ptr<FakeJni::JString> newText) {
         if (textInput)
             textInput->update(newText->asStdString());
+        ignoreNextHideKeyboard = true;
     }
 
-    int getCursorPosition() {
+    FakeJni::JInt getCursorPosition() {
+        ignoreNextHideKeyboard = false;
         if (textInput)
             return textInput->getCursorPosition();
         return 0;
