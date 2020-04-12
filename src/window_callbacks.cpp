@@ -90,7 +90,7 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
         jniSupport.getTextInputHandler().onKeyPressed(key, action);
     }
 
-    if (useDirectKeyboardInput) {
+    if (useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
         Keyboard::InputEvent evData {};
         evData.key = (unsigned int) key;
         evData.event = (action == KeyAction::PRESS ? 1 : 0);
