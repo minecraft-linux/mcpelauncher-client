@@ -1,5 +1,6 @@
 #include "main_activity.h"
 #include "store.h"
+#include "xbox_live.h"
 
 using namespace FakeJni;
 
@@ -29,6 +30,9 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(HardwareInfo)
 {Function<&HardwareInfo::getAndroidVersion> {}, "getAndroidVersion"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Activity)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(NativeActivity)
@@ -69,4 +73,18 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(StoreFactory)
 {Function<&StoreFactory::createGooglePlayStore> {}, "createGooglePlayStore"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(XboxInterop)
+{Function<&XboxInterop::getLocalStoragePath> {}, "GetLocalStoragePath"},
+{Function<&XboxInterop::readConfigFile> {}, "ReadConfigFile"},
+{Function<&XboxInterop::getLocale> {}, "getLocale"},
+{Function<&XboxInterop::invokeMSA> {}, "InvokeMSA"},
+{Function<&XboxInterop::invokeAuthFlow> {}, "InvokeAuthFlow"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(XboxLoginCallback)
+{Function<&XboxLoginCallback::onLogin> {}, "onLogin"},
+{Function<&XboxLoginCallback::onSuccess> {}, "onSuccess"},
+{Function<&XboxLoginCallback::onError> {}, "onError"},
 END_NATIVE_DESCRIPTOR

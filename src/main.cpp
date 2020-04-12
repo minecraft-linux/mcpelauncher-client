@@ -25,6 +25,7 @@
 #endif
 #include <build_info.h>
 #include <hybris/dlfcn.h>
+#include <mcpelauncher/patch_utils.h>
 #include "main.h"
 #include "fake_looper.h"
 #include "fake_assetmanager.h"
@@ -118,6 +119,9 @@ int main(int argc, char *argv[]) {
     ShaderErrorPatch::install(handle);
     if (options.graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
+
+    void* ptr = hybris_dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
+    PatchUtils::patchCallInstruction(ptr, (void*) +[]() { return true; }, true);
 
     Log::info("Launcher", "Initializing JNI");
     JniSupport support;

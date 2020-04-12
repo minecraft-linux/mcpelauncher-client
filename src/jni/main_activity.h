@@ -39,10 +39,17 @@ public:
 
 };
 
-class NativeActivity : public ContextWrapper {
+class Activity : public ContextWrapper {
 
 public:
-    DEFINE_CLASS_NAME("android/app/NativeActivity", ContextWrapper)
+    DEFINE_CLASS_NAME("android/app/Activity", ContextWrapper)
+
+};
+
+class NativeActivity : public Activity {
+
+public:
+    DEFINE_CLASS_NAME("android/app/NativeActivity", Activity)
 
 };
 

@@ -3,6 +3,7 @@
 #include <hybris/dlfcn.h>
 #include <hybris/hook.h>
 #include "jni_support.h"
+#include "xbox_live.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -14,12 +15,16 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Context>();
     vm.registerClass<ContextWrapper>();
     vm.registerClass<HardwareInfo>();
+    vm.registerClass<Activity>();
     vm.registerClass<NativeActivity>();
     vm.registerClass<MainActivity>();
+
     vm.registerClass<StoreListener>();
     vm.registerClass<NativeStoreListener>();
     vm.registerClass<Store>();
     vm.registerClass<StoreFactory>();
+
+    vm.registerClass<XboxInterop>();
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
