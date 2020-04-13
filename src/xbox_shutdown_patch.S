@@ -38,3 +38,7 @@ xbox_shutdown_patch_run_one_hook_2_1_9:
     mov ecx, [esp+0x5C]
     mov eax, [ecx+0xC]
 ret
+
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif
