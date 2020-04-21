@@ -44,6 +44,12 @@ public:
     DEFINE_CLASS_NAME("javax/net/ssl/TrustManager")
 };
 
+class X509TrustManager : public TrustManager {
+
+public:
+    DEFINE_CLASS_NAME("javax/net/ssl/X509TrustManager", TrustManager)
+};
+
 class TrustManagerFactory : public FakeJni::JObject {
 
 public:

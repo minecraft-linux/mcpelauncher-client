@@ -117,6 +117,9 @@ END_NATIVE_DESCRIPTOR
 BEGIN_NATIVE_DESCRIPTOR(TrustManager)
 END_NATIVE_DESCRIPTOR
 
+BEGIN_NATIVE_DESCRIPTOR(X509TrustManager)
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(TrustManagerFactory)
 {Function<&TrustManagerFactory::getInstance> {}, "getInstance"},
 {Function<&TrustManagerFactory::getTrustManagers> {}, "getTrustManagers"},

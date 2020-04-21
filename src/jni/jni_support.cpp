@@ -24,12 +24,15 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Store>();
     vm.registerClass<StoreFactory>();
 
+    vm.registerClass<XboxInterop>();
+
     vm.registerClass<InputStream>();
     vm.registerClass<ByteArrayInputStream>();
     vm.registerClass<Certificate>();
     vm.registerClass<X509Certificate>();
     vm.registerClass<CertificateFactory>();
     vm.registerClass<TrustManager>();
+    vm.registerClass<X509TrustManager>();
     vm.registerClass<TrustManagerFactory>();
     vm.registerClass<StrictHostnameVerifier>();
 

@@ -18,7 +18,7 @@ std::shared_ptr<TrustManagerFactory> TrustManagerFactory::getInstance(std::share
 
 std::shared_ptr<FakeJni::JArray<TrustManager>> TrustManagerFactory::getTrustManagers() {
     auto a = std::make_shared<FakeJni::JArray<TrustManager>>(1);
-    (*a)[0] = std::make_shared<TrustManager>();
+    (*a)[0] = std::make_shared<X509TrustManager>();
     return a;
 }
 
