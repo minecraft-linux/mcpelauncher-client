@@ -85,12 +85,12 @@ void GLCorePatch::reflectShaderUniformsHook(void* th) {
     unsigned int vertexArr;
     glGenVertexArrays(1, &vertexArr);
     glBindVertexArray(vertexArr);
-    *((unsigned int*) ((unsigned int) th + shaderVertexArrOffset)) = vertexArr;
+    *((unsigned int*) ((size_t) th + shaderVertexArrOffset)) = vertexArr;
     reflectShaderUniformsOriginal(th);
 }
 
 void GLCorePatch::bindVertexArrayHook(void* th, void* a, void* b) {
-    unsigned int vertexArr = *((unsigned int*) ((unsigned int) th + shaderVertexArrOffset));
+    unsigned int vertexArr = *((unsigned int*) ((size_t) th + shaderVertexArrOffset));
     if (bindVertexArrayOriginal == nullptr)
         abort();
     glBindVertexArray(vertexArr);
