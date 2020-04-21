@@ -35,7 +35,6 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<X509TrustManager>();
     vm.registerClass<TrustManagerFactory>();
     vm.registerClass<StrictHostnameVerifier>();
-
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
