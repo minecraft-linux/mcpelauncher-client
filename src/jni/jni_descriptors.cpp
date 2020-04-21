@@ -1,6 +1,7 @@
 #include "main_activity.h"
 #include "store.h"
 #include "xbox_live.h"
+#include "cert_manager.h"
 
 using namespace FakeJni;
 
@@ -93,4 +94,34 @@ BEGIN_NATIVE_DESCRIPTOR(XboxLoginCallback)
 {Function<&XboxLoginCallback::onLogin> {}, "onLogin"},
 {Function<&XboxLoginCallback::onSuccess> {}, "onSuccess"},
 {Function<&XboxLoginCallback::onError> {}, "onError"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(InputStream)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(ByteArrayInputStream)
+{Constructor<ByteArrayInputStream, std::shared_ptr<FakeJni::JByteArray>> {}},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Certificate)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(X509Certificate)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(CertificateFactory)
+{Function<&CertificateFactory::getInstance> {}, "getInstance"},
+{Function<&CertificateFactory::generateCertificate> {}, "generateCertificate"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(TrustManager)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(TrustManagerFactory)
+{Function<&TrustManagerFactory::getInstance> {}, "getInstance"},
+{Function<&TrustManagerFactory::getTrustManagers> {}, "getTrustManagers"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(StrictHostnameVerifier)
+{Constructor<StrictHostnameVerifier> {}},
 END_NATIVE_DESCRIPTOR

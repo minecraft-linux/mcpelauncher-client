@@ -3,6 +3,7 @@
 #include <mcpelauncher/linker.h>
 #include "jni_support.h"
 #include "xbox_live.h"
+#include "cert_manager.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -23,7 +24,15 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Store>();
     vm.registerClass<StoreFactory>();
 
-    vm.registerClass<XboxInterop>();
+    vm.registerClass<InputStream>();
+    vm.registerClass<ByteArrayInputStream>();
+    vm.registerClass<Certificate>();
+    vm.registerClass<X509Certificate>();
+    vm.registerClass<CertificateFactory>();
+    vm.registerClass<TrustManager>();
+    vm.registerClass<TrustManagerFactory>();
+    vm.registerClass<StrictHostnameVerifier>();
+
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
