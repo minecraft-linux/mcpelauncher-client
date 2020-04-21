@@ -6,11 +6,24 @@
 #include <log.h>
 #include <cstring>
 #include <game_window.h>
-#include <hybris/hook.h>
+#include <mcpelauncher/linker.h>
 
 namespace fake_egl {
 
 static thread_local EGLSurface currentDrawSurface;
+static void *(*hostProcAddrFn)(const char *);
+
+EGLBoolean eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor) {
+    if (major)
+        *major = 1;
+    if (minor)
+        *minor = 5;
+    return EGL_TRUE;
+}
+
+EGLBoolean eglTerminate(EGLDisplay display) {
+    return EGL_TRUE;
+}
 
 EGLint eglGetError() {
     return 0;
@@ -53,8 +66,16 @@ EGLSurface eglCreateWindowSurface(EGLDisplay display, EGLConfig config, EGLNativ
     return native_window;
 }
 
+EGLBoolean eglDestroySurface(EGLDisplay display, EGLSurface surface) {
+    return EGL_TRUE;
+}
+
 EGLContext eglCreateContext(EGLDisplay display, EGLConfig config, EGLContext share_context, EGLint const * attrib_list) {
     return (EGLContext *) 1;
+}
+
+EGLBoolean eglDestroyContext(EGLDisplay display, EGLContext context) {
+    return EGL_TRUE;
 }
 
 EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context) {
@@ -84,20 +105,37 @@ EGLBoolean eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attrib
     return EGL_TRUE;
 }
 
+void *eglGetProcAddress(const char *name) {
+    if (!strcmp(name, "glInvalidateFramebuffer"))
+        return (void *) +[]() {};
+    return hostProcAddrFn(name);
 }
 
-void FakeEGL::initHybrisHooks() {
-    hybris_hook("eglGetError", (void *) fake_egl::eglGetError);
-    hybris_hook("eglQueryString", (void *) fake_egl::eglQueryString);
-    hybris_hook("eglGetDisplay", (void *) fake_egl::eglGetDisplay);
-    hybris_hook("eglGetCurrentDisplay", (void *) fake_egl::eglGetCurrentDisplay);
-    hybris_hook("eglGetCurrentContext", (void *) fake_egl::eglGetCurrentContext);
-    hybris_hook("eglChooseConfig", (void *) fake_egl::eglChooseConfig);
-    hybris_hook("eglGetConfigAttrib", (void *) fake_egl::eglGetConfigAttrib);
-    hybris_hook("eglCreateWindowSurface", (void *) fake_egl::eglCreateWindowSurface);
-    hybris_hook("eglCreateContext", (void *) fake_egl::eglCreateContext);
-    hybris_hook("eglMakeCurrent", (void *) fake_egl::eglMakeCurrent);
-    hybris_hook("eglSwapBuffers", (void *) fake_egl::eglSwapBuffers);
-    hybris_hook("eglSwapInterval", (void *) fake_egl::eglSwapInterval);
-    hybris_hook("eglQuerySurface", (void *) fake_egl::eglQuerySurface);
+}
+
+void FakeEGL::setProcAddrFunction(void *(*fn)(const char *)) {
+    fake_egl::hostProcAddrFn = fn;
+}
+
+void FakeEGL::installLibrary() {
+    std::unordered_map<std::string, void*> syms;
+    syms["eglInitialize"] = (void *) fake_egl::eglInitialize;
+    syms["eglTerminate"] = (void *) fake_egl::eglTerminate;
+    syms["eglGetError"] = (void *) fake_egl::eglGetError;
+    syms["eglQueryString"] = (void *) fake_egl::eglQueryString;
+    syms["eglGetDisplay"] = (void *) fake_egl::eglGetDisplay;
+    syms["eglGetCurrentDisplay"] = (void *) fake_egl::eglGetCurrentDisplay;
+    syms["eglGetCurrentContext"] = (void *) fake_egl::eglGetCurrentContext;
+    syms["eglChooseConfig"] = (void *) fake_egl::eglChooseConfig;
+    syms["eglGetConfigAttrib"] = (void *) fake_egl::eglGetConfigAttrib;
+    syms["eglCreateWindowSurface"] = (void *) fake_egl::eglCreateWindowSurface;
+    syms["eglDestroySurface"] = (void *) fake_egl::eglDestroySurface;
+    syms["eglCreateContext"] = (void *) fake_egl::eglCreateContext;
+    syms["eglDestroyContext"] = (void *) fake_egl::eglDestroyContext;
+    syms["eglMakeCurrent"] = (void *) fake_egl::eglMakeCurrent;
+    syms["eglSwapBuffers"] = (void *) fake_egl::eglSwapBuffers;
+    syms["eglSwapInterval"] = (void *) fake_egl::eglSwapInterval;
+    syms["eglQuerySurface"] = (void *) fake_egl::eglQuerySurface;
+    syms["eglGetProcAddress"] = (void *) fake_egl::eglGetProcAddress;
+    linker::load_library("libEGL.so", syms);
 }

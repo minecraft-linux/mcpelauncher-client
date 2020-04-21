@@ -1,11 +1,11 @@
 #include "texel_aa_patch.h"
 
-#include <hybris/dlfcn.h>
+#include <mcpelauncher/linker.h>
 #include <memory.h>
 #include <log.h>
 
 void TexelAAPatch::install(void *handle) {
-    auto ptr = (unsigned char*) hybris_dlsym(handle, "_ZN31GeneralSettingsScreenController28_registerControllerCallbacksEv");
+    auto ptr = (unsigned char*) linker::dlsym(handle, "_ZN31GeneralSettingsScreenController28_registerControllerCallbacksEv");
     if (ptr == nullptr)
         return;
     int hash = 0x96F031FF;

@@ -3,7 +3,6 @@
 #include <FileUtil.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <hybris/hook.h>
 #include <log.h>
 #include "fake_assetmanager.h"
 
@@ -128,20 +127,21 @@ const char *AAssetDir_getNextFileName(AAssetDir *assetDir) {
 
 }
 
-void FakeAssetManager::initHybrisHooks() {
+void FakeAssetManager::initHybrisHooks(std::unordered_map<std::string, void*> &syms) {
     using namespace fake_assetmanager;
-    hybris_hook("AAssetManager_open", (void *) AAssetManager_open);
-    hybris_hook("AAssetManager_openDir", (void *) AAssetManager_openDir);
-    hybris_hook("AAsset_close", (void *) AAsset_close);
-    hybris_hook("AAsset_isAllocated", (void *) AAsset_isAllocated);
-    hybris_hook("AAsset_read", (void *) AAsset_read);
-    hybris_hook("AAsset_seek", (void *) AAsset_seek);
-    hybris_hook("AAsset_getLength64", (void *) AAsset_getLength64);
-    hybris_hook("AAsset_getLength", (void *) AAsset_getLength);
-    hybris_hook("AAsset_getRemainingLength64", (void *) AAsset_getRemainingLength64);
-    hybris_hook("AAsset_getRemainingLength", (void *) AAsset_getRemainingLength);
-    hybris_hook("AAsset_getBuffer", (void *) AAsset_getBuffer);
-    hybris_hook("AAssetDir_close", (void *) AAssetDir_close);
-    hybris_hook("AAssetDir_rewind", (void *) AAssetDir_rewind);
-    hybris_hook("AAssetDir_getNextFileName", (void *) AAssetDir_getNextFileName);
+    syms["AAssetManager_open"] = (void *) AAssetManager_open;
+    syms["AAssetManager_openDir"] = (void *) AAssetManager_openDir;
+    syms["AAsset_close"] = (void *) AAsset_close;
+    syms["AAsset_isAllocated"] = (void *) AAsset_isAllocated;
+    syms["AAsset_read"] = (void *) AAsset_read;
+    syms["AAsset_seek64"] = (void *) AAsset_seek64;
+    syms["AAsset_seek"] = (void *) AAsset_seek;
+    syms["AAsset_getLength64"] = (void *) AAsset_getLength64;
+    syms["AAsset_getLength"] = (void *) AAsset_getLength;
+    syms["AAsset_getRemainingLength64"] = (void *) AAsset_getRemainingLength64;
+    syms["AAsset_getRemainingLength"] = (void *) AAsset_getRemainingLength;
+    syms["AAsset_getBuffer"] = (void *) AAsset_getBuffer;
+    syms["AAssetDir_close"] = (void *) AAssetDir_close;
+    syms["AAssetDir_rewind"] = (void *) AAssetDir_rewind;
+    syms["AAssetDir_getNextFileName"] = (void *) AAssetDir_getNextFileName;
 }

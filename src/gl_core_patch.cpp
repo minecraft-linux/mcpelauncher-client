@@ -1,6 +1,6 @@
 #include "gl_core_patch.h"
 
-#include <hybris/dlfcn.h>
+#include <mcpelauncher/linker.h>
 #include <log.h>
 #include <mcpelauncher/patch_utils.h>
 #include <game_window_manager.h>
@@ -15,17 +15,17 @@ void (*GLCorePatch::bindVertexArrayOriginal)(void*, void*, void*);
 size_t GLCorePatch::shaderVertexArrOffset;
 
 void GLCorePatch::install(void* handle) {
-    void* ptr = hybris_dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsRKN4Core4PathES6_S6_");
+    void* ptr = linker::dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsRKN4Core4PathES6_S6_");
     size_t shaderSizeOffset = 0x21B;
     shaderVertexArrOffset = 0xAC;
     if (!MinecraftVersion::isAtLeast(1, 6)) {
-        ptr = hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
+        ptr = linker::dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
         shaderSizeOffset = 0x90C - 0x7F0;
         shaderVertexArrOffset = 0xA0;
     } else if (!MinecraftVersion::isAtLeast(1, 8)) {
         shaderSizeOffset = 0x5C9 - 0x4C0;
     } else if (!MinecraftVersion::isAtLeast(1, 12)) {
-        ptr = hybris_dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsS2_S2_S2_");
+        ptr = linker::dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsS2_S2_S2_");
         shaderSizeOffset = 0xD8F - 0xB30;
     } else if (!MinecraftVersion::isAtLeast(1, 13)) {
         shaderSizeOffset = 0xF58 - 0xD60;
@@ -36,41 +36,41 @@ void GLCorePatch::install(void* handle) {
     }
     ((unsigned char*) ptr)[shaderSizeOffset + 1] += 4;
 
-    reflectShaderUniformsOriginal = (void (*)(void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
-    ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERNS_11ShaderCacheERNS_13ShaderProgramES4_S4_") + (0x720 - 0x6A0));
+    reflectShaderUniformsOriginal = (void (*)(void*)) linker::dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
+    ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGLC2ERNS_11ShaderCacheERNS_13ShaderProgramES4_S4_") + (0x720 - 0x6A0));
     PatchUtils::patchCallInstruction(ptr, (void*) &reflectShaderUniformsHook, false);
 
-    bindVertexArrayOriginal = (void (*)(void*, void*, void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
+    bindVertexArrayOriginal = (void (*)(void*, void*, void*)) linker::dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
     if (MinecraftVersion::isAtLeast(1, 9)) {
-        ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x605 - 0x590));
+        ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x605 - 0x590));
         PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
     } else if (MinecraftVersion::isAtLeast(1, 6)) {
-        ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x83E - 0x7E0));
+        ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x83E - 0x7E0));
         PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
     } else {
-        ptr = (void*) ((size_t) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x72 - 0x10));
+        ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x72 - 0x10));
         PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
     }
 
-    ptr = hybris_dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
+    ptr = linker::dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
     PatchUtils::patchCallInstruction(ptr, (void*) &supportsImmediateModeHook, true);
 
-    ptr = hybris_dlsym(handle, "_ZNK3mce9BufferOGL10bindBufferERNS_13RenderContextE");
+    ptr = linker::dlsym(handle, "_ZNK3mce9BufferOGL10bindBufferERNS_13RenderContextE");
     ((unsigned char*) ptr)[0x29] = 0x90;
     ((unsigned char*) ptr)[0x2A] = 0x90;
 
-    ptr = hybris_dlsym(handle, "_ZN3mce16ShaderProgramOGL20compileShaderProgramERNS_11ShaderCacheE");
+    ptr = linker::dlsym(handle, "_ZN3mce16ShaderProgramOGL20compileShaderProgramERNS_11ShaderCacheE");
     const char* versionStr = "#version 410\n";
     unsigned char* patchData = (unsigned char*) ((size_t) ptr + (0xB3 - 0x40));
     patchData[0] = 0xB9;
     *((size_t*) (patchData + 1)) = (size_t) versionStr;
     patchData[5] = 0x90;
 
-    ptr = hybris_dlsym(handle, "_ZN3mce9BufferOGL12updateBufferERNS_13RenderContextEjPKvjNS_7MapTypeE");
+    ptr = linker::dlsym(handle, "_ZN3mce9BufferOGL12updateBufferERNS_13RenderContextEjPKvjNS_7MapTypeE");
     ((unsigned char*) ptr)[0x31] = 0x90;
     ((unsigned char*) ptr)[0x32] = 0x90;
 
-    ptr = hybris_dlsym(handle, "_ZN3mce9BufferOGL14recreateBufferERNS_13RenderContextEjPKvj");
+    ptr = linker::dlsym(handle, "_ZN3mce9BufferOGL14recreateBufferERNS_13RenderContextEjPKvj");
     ((unsigned char*) ptr)[0x31] = 0xEB;
 
 }

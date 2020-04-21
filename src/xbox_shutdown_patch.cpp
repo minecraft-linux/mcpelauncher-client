@@ -1,6 +1,6 @@
 #include "xbox_shutdown_patch.h"
 
-#include <hybris/dlfcn.h>
+#include <mcpelauncher/linker.h>
 #include <mcpelauncher/patch_utils.h>
 #include <cstring>
 #include <log.h>
@@ -25,14 +25,14 @@ void XboxShutdownPatch::sleepHook(unsigned int ms) {
 }
 
 void XboxShutdownPatch::install(void* handle) {
-    void* ptr = hybris_dlsym(handle, "_ZN4xbox8services5utils5sleepEj");
+    void* ptr = linker::dlsym(handle, "_ZN4xbox8services5utils5sleepEj");
     if (ptr == nullptr) {
         Log::warn("XboxShutdownPatch", "sleep() symbol not found");
         return;
     }
     PatchUtils::patchCallInstruction(ptr, (void*) &sleepHook, true);
 
-    ptr = hybris_dlsym(handle, "_ZN5boost4asio6detail15task_io_service10do_run_oneERNS1_11scoped_lockINS1_11posix_mutexEEERNS1_27task_io_service_thread_infoERKNS_6system10error_codeE");
+    ptr = linker::dlsym(handle, "_ZN5boost4asio6detail15task_io_service10do_run_oneERNS1_11scoped_lockINS1_11posix_mutexEEERNS1_27task_io_service_thread_infoERKNS_6system10error_codeE");
     if (MinecraftVersion::isAtLeast(1, 9)) {
         ptr = (void *) ((size_t) ptr + (0x39C8938 - 0x39C86D0));
         PatchUtils::patchCallInstruction((void*) ((size_t) ptr - 7), (void*) &xbox_shutdown_patch_run_one_hook_1_1_9, false);

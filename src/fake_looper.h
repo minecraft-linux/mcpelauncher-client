@@ -52,6 +52,6 @@ public:
     int pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData);
 
 
-    static void initHybrisHooks();
+    static void initHybrisHooks(std::unordered_map<std::string, void*> &syms);
 
 };

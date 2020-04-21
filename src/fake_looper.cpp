@@ -5,7 +5,6 @@
 #include "gl_core_patch.h"
 #include "core_patches.h"
 
-#include <hybris/hook.h>
 #include <sys/poll.h>
 
 #include <game_window_manager.h>
@@ -14,29 +13,29 @@
 JniSupport *FakeLooper::jniSupport;
 thread_local std::unique_ptr<FakeLooper> FakeLooper::currentLooper;
 
-void FakeLooper::initHybrisHooks() {
-    hybris_hook("ALooper_prepare", (void *) +[]() {
+void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void*> &syms) {
+    syms["ALooper_prepare"] = (void *) +[]() {
         if (currentLooper)
             throw std::runtime_error("Looper already prepared");
         currentLooper = std::make_unique<FakeLooper>();
         currentLooper->prepare();
         return (ALooper *) (void *) currentLooper.get();
-    });
-    hybris_hook("ALooper_addFd", (void *) +[](ALooper *looper, int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
+    };
+    syms["ALooper_addFd"] = (void *) +[](ALooper *looper, int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
         return ((FakeLooper *) (void *) looper)->addFd(fd, ident, events, callback, data);
-    });
-    hybris_hook("ALooper_pollAll", (void *) +[](int timeoutMillis, int *outFd, int *outEvents, void **outData) {
+    };
+    syms["ALooper_pollAll"] = (void *) +[](int timeoutMillis, int *outFd, int *outEvents, void **outData) {
         return currentLooper->pollAll(timeoutMillis, outFd, outEvents, outData);
-    });
-    hybris_hook("AInputQueue_attachLooper", (void *) +[](AInputQueue *queue, ALooper *looper, int ident, ALooper_callbackFunc callback, void *data) {
+    };
+    syms["AInputQueue_attachLooper"] = (void *) +[](AInputQueue *queue, ALooper *looper, int ident, ALooper_callbackFunc callback, void *data) {
         ((FakeLooper *) (void *) looper)->attachInputQueue(ident, callback, data);
-    });
+    };
 
-    hybris_hook("ANativeActivity_finish", (void *) +[](ANativeActivity *native) {
+    syms["ANativeActivity_finish"] = (void *) +[](ANativeActivity *native) {
         FakeJni::JniEnvContext ctx (*(FakeJni::Jvm *) native->vm);
         auto activity = std::dynamic_pointer_cast<MainActivity>(ctx.getJniEnv().resolveReference(native->clazz));
         activity->quitCallback();
-    });
+    };
 }
 
 void FakeLooper::prepare() {

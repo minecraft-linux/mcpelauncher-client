@@ -1,5 +1,4 @@
 #include <log.h>
-#include <hybris/hook.h>
 #include <dlfcn.h>
 #include <game_window_manager.h>
 #include <argparser.h>
@@ -24,8 +23,10 @@
 #include "xbox_shutdown_patch.h"
 #endif
 #include <build_info.h>
-#include <hybris/dlfcn.h>
 #include <mcpelauncher/patch_utils.h>
+#include <libc_shim.h>
+#include <mcpelauncher/linker.h>
+#include <minecraft/imported/android_symbols.h>
 #include "main.h"
 #include "fake_looper.h"
 #include "fake_assetmanager.h"
@@ -50,7 +51,6 @@ int main(int argc, char *argv[]) {
     argparser::arg<std::string> cacheDir (p, "--cache-dir", "-dc", "Directory to use for cache");
     argparser::arg<int> windowWidth (p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
-    argparser::arg<bool> mallocZero (p, "--malloc-zero", "-mz", "Patch malloc to always zero initialize memory, this may help workaround MCPE bugs");
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
     if (!p.parse(argc, (const char**) argv))
         return 1;
@@ -68,8 +68,6 @@ int main(int argc, char *argv[]) {
         PathHelper::setDataDir(dataDir);
     if (!cacheDir.get().empty())
         PathHelper::setCacheDir(cacheDir);
-    if (mallocZero)
-        MinecraftUtils::setMallocZero();
 
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
 #ifdef __i386__
@@ -82,18 +80,23 @@ int main(int argc, char *argv[]) {
 #endif
 
     Log::trace("Launcher", "Loading hybris libraries");
+    MinecraftUtils::setupHybris();
     if (!disableFmod)
         MinecraftUtils::loadFMod();
     else
         MinecraftUtils::stubFMod();
-    MinecraftUtils::setupHybris();
-    FakeAssetManager::initHybrisHooks();
-    FakeInputQueue::initHybrisHooks();
-    FakeLooper::initHybrisHooks();
-    FakeEGL::initHybrisHooks();
-    hybris_hook("eglGetProcAddress", (void*) windowManager->getProcAddrFunc());
-    MinecraftUtils::setupGLES2Symbols((void* (*)(const char*)) windowManager->getProcAddrFunc());
-    hybris_hook("glInvalidateFramebuffer", (void*) +[]{});
+    FakeEGL::setProcAddrFunction((void *(*)(const char*)) windowManager->getProcAddrFunc());
+    FakeEGL::installLibrary();
+    MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
+
+    std::unordered_map<std::string, void*> android_syms;
+    FakeAssetManager::initHybrisHooks(android_syms);
+    FakeInputQueue::initHybrisHooks(android_syms);
+    FakeLooper::initHybrisHooks(android_syms);
+    for (auto s = android_symbols; *s; s++) // stub missing symbols
+        android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
+    linker::load_library("libandroid.so", android_syms);
+
 #ifdef USE_ARMHF_SUPPORT
     ArmhfSupport::install();
 #endif
@@ -126,9 +129,9 @@ int main(int argc, char *argv[]) {
     JniSupport support;
     FakeLooper::setJniSupport(&support);
     support.registerMinecraftNatives(+[](const char *sym) {
-        return hybris_dlsym(handle, sym);
+        return linker::dlsym(handle, sym);
     });
-    support.startGame((ANativeActivity_createFunc *) hybris_dlsym(handle, "ANativeActivity_onCreate"));
+    support.startGame((ANativeActivity_createFunc *) linker::dlsym(handle, "ANativeActivity_onCreate"));
     support.waitForGameExit();
     support.stopGame();
 

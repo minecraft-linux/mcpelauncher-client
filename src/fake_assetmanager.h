@@ -1,9 +1,9 @@
-#include <utility>
-
 #pragma once
 
 #include <string>
 #include <memory>
+#include <unordered_map>
+#include <utility>
 
 struct AAssetManager;
 
@@ -13,7 +13,7 @@ struct FakeAssetManager {
 
     FakeAssetManager(std::string rootDir);
 
-    static void initHybrisHooks();
+    static void initHybrisHooks(std::unordered_map<std::string, void*> &syms);
 
     explicit operator AAssetManager*() const {
         return (AAssetManager *) this;

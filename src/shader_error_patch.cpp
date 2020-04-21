@@ -1,7 +1,6 @@
 #include "shader_error_patch.h"
-#include <hybris/dlfcn.h>
+#include <mcpelauncher/linker.h>
 #include <game_window_manager.h>
-#include <hybris/hook.h>
 #include <log.h>
 
 void (*ShaderErrorPatch::glGetShaderiv)(unsigned int shader, int pname, int* params);
@@ -12,8 +11,9 @@ void (*ShaderErrorPatch::glGetProgramInfoLog)(unsigned int program, unsigned int
 void (*ShaderErrorPatch::glLinkProgram)(unsigned int program);
 
 void ShaderErrorPatch::install(void *handle) {
-    hybris_hook("glCompileShader", (void*) glCompileShaderHook);
-    hybris_hook("glLinkProgram", (void*) glLinkProgramHook);
+    // TODO:
+//    hybris_hook("glCompileShader", (void*) glCompileShaderHook);
+//    hybris_hook("glLinkProgram", (void*) glLinkProgramHook);
 }
 
 void ShaderErrorPatch::onGLContextCreated() {

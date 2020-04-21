@@ -1,7 +1,6 @@
 #include <log.h>
 #include <mcpelauncher/path_helper.h>
-#include <hybris/dlfcn.h>
-#include <hybris/hook.h>
+#include <mcpelauncher/linker.h>
 #include "jni_support.h"
 #include "xbox_live.h"
 
@@ -75,7 +74,7 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
 void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     FakeJni::LocalFrame frame (vm);
 
-    vm.attachLibrary("libminecraftpe.so", "", {hybris_dlopen, hybris_dlsym, hybris_dlclose});
+    vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose});
 
     activity = std::make_shared<MainActivity>();
     activityRef = vm.createGlobalReference(activity);

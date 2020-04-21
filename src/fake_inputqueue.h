@@ -35,7 +35,7 @@ private:
     std::deque<FakeMotionEvent> motionEvents;
 
 public:
-    static void initHybrisHooks();
+    static void initHybrisHooks(std::unordered_map<std::string, void*> &syms);
 
     bool hasEvents() const { return !keyEvents.empty() || !motionEvents.empty(); }
 
