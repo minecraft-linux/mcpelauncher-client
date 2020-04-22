@@ -27,6 +27,12 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void*> &sym
     syms["AKeyEvent_getKeyCode"] = (void *) +[](const AInputEvent *event) {
         return ((const FakeKeyEvent *) (const void *) event)->keyCode;
     };
+    syms["AKeyEvent_getRepeatCount"] = (void *) +[](const AInputEvent *event) {
+        return (int32_t) 0;
+    };
+    syms["AKeyEvent_getMetaState"] = (void *) +[](const AInputEvent *event) {
+        return (int32_t) 0;
+    };
     syms["AMotionEvent_getAction"] = (void *) +[](const AInputEvent *event) {
         return ((const FakeMotionEvent *) (const void *) event)->action;
     };
@@ -83,5 +89,5 @@ void FakeInputQueue::addEvent(FakeKeyEvent event) {
 }
 
 void FakeInputQueue::addEvent(FakeMotionEvent event) {
-    motionEvents.push_back(event);
+    motionEvents.push_back(std::move(event));
 }

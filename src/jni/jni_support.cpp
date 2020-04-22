@@ -88,6 +88,13 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
 
     vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose});
 
+    auto clz = vm.findClass("android/os/Build$VERSION");
+    auto clzRef = (jclass) frame.getJniEnv().createLocalReference(std::const_pointer_cast<FakeJni::JClass>(clz));
+    auto sdkInt = frame.getJniEnv().GetStaticFieldID(clzRef, "SDK_INT", "I");
+    jint test = frame.getJniEnv().GetStaticIntField(clzRef, sdkInt);
+    if (test != 27)
+        abort();
+
     activity = std::make_shared<MainActivity>();
     activityRef = vm.createGlobalReference(activity);
 

@@ -10,6 +10,7 @@ class WindowCallbacks {
 private:
     struct GamepadData {
         float axis[6];
+        bool button[15];
 
         GamepadData();
     };
@@ -21,6 +22,8 @@ private:
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
+
+    void queueGamepadAxisInputIfNeeded(int gamepad);
 
 public:
     WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue);
