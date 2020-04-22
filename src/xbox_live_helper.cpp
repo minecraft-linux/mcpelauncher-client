@@ -4,6 +4,7 @@
 #include <mcpelauncher/path_helper.h>
 #include <mcpelauncher/minecraft_version.h>
 #include "xbox_live_helper.h"
+#include "jni/xbox_live.h"
 
 using namespace simpleipc;
 
@@ -118,12 +119,33 @@ std::string XboxLiveHelper::getCllMsaToken(std::string const& cid) {
     return msa::client::token_pointer_cast<msa::client::CompactToken>(token.data())->getBinaryToken();
 }
 
+void XboxLiveHelper::setJvm(FakeJni::Jvm *vm) {
+    this->vm = vm;
+}
+
 std::string XboxLiveHelper::getCllXToken(bool refresh) {
-    return std::string(); // TODO:
+    if (auto callback = XboxInterop::getDescriptor()->getMethod("(Z)Ljava/lang/String;", "get_uploader_x_token_callback")) {
+        FakeJni::LocalFrame env (*vm);
+        if (auto xtokenRef = callback->invoke(env.getJniEnv(), XboxInterop::getDescriptor().get(), (jboolean)refresh).l) {
+            if (auto xtoken = std::dynamic_pointer_cast<FakeJni::JString>(env.getJniEnv().resolveReference(xtokenRef))) {
+                return xtoken->asStdString();
+            }
+        }
+    }
+    return std::string();
 }
 
 std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
-    return std::string(); // TODO:
+    if (auto callback = XboxInterop::getDescriptor()->getMethod("(Ljava/lang/String;)Ljava/lang/String;", "get_supporting_x_token_callback")) {
+        FakeJni::LocalFrame env (*vm);
+        auto xuidRef = env.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(xuid));
+        if (auto xticketRef = callback->invoke(env.getJniEnv(), XboxInterop::getDescriptor().get(), xuidRef).l) {
+            if (auto xticket = std::dynamic_pointer_cast<FakeJni::JString>(env.getJniEnv().resolveReference(xticketRef))) {
+                return xticket->asStdString();
+            }
+        }
+    }
+    return std::string();
 }
 
 void XboxLiveHelper::logCll(cll::Event const& event) {

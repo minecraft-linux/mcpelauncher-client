@@ -22,6 +22,10 @@ public:
     static void invokeAuthFlow(FakeJni::JLong userPtr, std::shared_ptr<Activity> activity, FakeJni::JBoolean isProd,
             std::shared_ptr<FakeJni::JString> signInText);
 
+    static void initCLL(std::shared_ptr<Context> arg0, std::shared_ptr<FakeJni::JString> arg1);
+
+    static void logCLL(std::shared_ptr<FakeJni::JString> ticket, std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> data);
+
 private:
     friend class XboxLoginCallback;
 

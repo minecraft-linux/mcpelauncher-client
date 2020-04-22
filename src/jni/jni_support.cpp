@@ -4,6 +4,7 @@
 #include "jni_support.h"
 #include "xbox_live.h"
 #include "cert_manager.h"
+#include "../xbox_live_helper.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -94,6 +95,8 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     activity->quitCallback = [this]() { requestExitGame(); };
     activity->storageDirectory = PathHelper::getPrimaryDataDirectory();
     assetManager = std::make_unique<FakeAssetManager>(PathHelper::getGameDir() + "/assets");
+
+    XboxLiveHelper::getInstance().setJvm(&vm);
 
     nativeActivity.callbacks = &nativeActivityCallbacks;
     nativeActivity.vm = (JavaVM *) &vm;

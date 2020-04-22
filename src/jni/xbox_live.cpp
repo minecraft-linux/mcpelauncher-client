@@ -60,6 +60,16 @@ void XboxInterop::invokeAuthFlow(FakeJni::JLong userPtr, std::shared_ptr<Activit
     });
 }
 
+void XboxInterop::initCLL(std::shared_ptr<Context> arg0, std::shared_ptr<FakeJni::JString> arg1) {
+    XboxLiveHelper::getInstance().initCll();
+}
+
+void XboxInterop::logCLL(std::shared_ptr<FakeJni::JString> ticket, std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> data) {
+    cll::Event event(name->asStdString(), nlohmann::json::parse(data->asStdString()),
+                     cll::EventFlags::PersistenceCritical | cll::EventFlags::LatencyRealtime, {ticket->asStdString()});
+    XboxLiveHelper::getInstance().logCll(event);
+}
+
 void XboxInterop::ticketCallback(FakeJni::Jvm const &vm, std::string const &ticket, int requestCode, int errorCode,
         std::string const &error) {
     FakeJni::LocalFrame env (vm);

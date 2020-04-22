@@ -21,7 +21,7 @@ void CllUploadAuthStep::refreshTokens(bool force) {
     if (msaToken.empty() || force)
         msaToken = XboxLiveHelper::getInstance().getCllMsaToken(cid);
     if (xToken.empty() || force)
-        xToken = XboxLiveHelper::getCllXToken(force);
+        xToken = XboxLiveHelper::getInstance().getCllXToken(force);
 }
 
 void CllUploadAuthStep::onRequest(cll::EventUploadRequest& request) {
@@ -42,7 +42,7 @@ void CllUploadAuthStep::onRequest(cll::EventUploadRequest& request) {
         for (auto const& ticket : event["ext"]["android"]["tickets"]) {
             std::string ticketStr = ticket;
             if (tickets.count(ticketStr) == 0) {
-                auto tk = XboxLiveHelper::getCllXTicket(ticketStr);
+                auto tk = XboxLiveHelper::getInstance().getCllXTicket(ticketStr);
                 if (!tk.empty())
                     tickets.insert({ticketStr, "x:" + tk});
             }

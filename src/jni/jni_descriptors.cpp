@@ -88,6 +88,8 @@ BEGIN_NATIVE_DESCRIPTOR(XboxInterop)
 {Function<&XboxInterop::getLocale> {}, "getLocale"},
 {Function<&XboxInterop::invokeMSA> {}, "InvokeMSA"},
 {Function<&XboxInterop::invokeAuthFlow> {}, "InvokeAuthFlow"},
+{Function<&XboxInterop::initCLL> {}, "InitCLL"},
+{Function<&XboxInterop::logCLL> {}, "LogCLL"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(XboxLoginCallback)
