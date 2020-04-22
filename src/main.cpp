@@ -33,6 +33,7 @@
 #include "fake_egl.h"
 #include "symbols.h"
 #include "core_patches.h"
+#include "thread_mover.h"
 
 static size_t base;
 LauncherOptions options;
@@ -80,6 +81,11 @@ int main(int argc, char *argv[]) {
 #endif
 
     Log::trace("Launcher", "Loading hybris libraries");
+    linker::init();
+    auto libC = MinecraftUtils::getLibCSymbols();
+    ThreadMover::hookLibC(libC);
+    linker::load_library("libc.so", libC);
+    MinecraftUtils::loadLibM();
     MinecraftUtils::setupHybris();
     if (!disableFmod)
         MinecraftUtils::loadFMod();
@@ -131,9 +137,13 @@ int main(int argc, char *argv[]) {
     support.registerMinecraftNatives(+[](const char *sym) {
         return linker::dlsym(handle, sym);
     });
-    support.startGame((ANativeActivity_createFunc *) linker::dlsym(handle, "ANativeActivity_onCreate"));
-    support.waitForGameExit();
-    support.stopGame();
+    std::thread startThread([&support]() {
+        support.startGame((ANativeActivity_createFunc *) linker::dlsym(handle, "ANativeActivity_onCreate"));
+    });
+    startThread.detach();
+
+    Log::info("Launcher", "Executing main thread");
+    ThreadMover::executeMainThread();
 
 //    XboxLivePatches::workaroundShutdownFreeze(handle);
 #ifdef __i386__
