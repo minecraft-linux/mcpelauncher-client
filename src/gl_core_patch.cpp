@@ -2,103 +2,80 @@
 
 #include <mcpelauncher/linker.h>
 #include <log.h>
-#include <mcpelauncher/patch_utils.h>
-#include <game_window_manager.h>
 #include <mcpelauncher/minecraft_version.h>
 
+bool GLCorePatch::enabled = false;
+std::unordered_map<unsigned int, unsigned int> GLCorePatch::vaoMap;
+std::pair<int, unsigned int> GLCorePatch::buffers[2] = { {0x8892, 0}, {0x8893, 0} };
 void (*GLCorePatch::glGenVertexArrays)(int n, unsigned int* arrays);
 void (*GLCorePatch::glBindVertexArray)(unsigned int array);
-
-void (*GLCorePatch::reflectShaderUniformsOriginal)(void*);
-void (*GLCorePatch::bindVertexArrayOriginal)(void*, void*, void*);
-
-size_t GLCorePatch::shaderVertexArrOffset;
+void (*GLCorePatch::glShaderSource_orig)(unsigned int shader, unsigned int count, const char **string, int *length);
+void (*GLCorePatch::glLinkProgram_orig)(unsigned int program);
+void (*GLCorePatch::glUseProgram_orig)(unsigned int program);
+void (*GLCorePatch::glBindBuffer_orig)(int target, unsigned int buffer);
 
 void GLCorePatch::install(void* handle) {
-    void* ptr = linker::dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsRKN4Core4PathES6_S6_");
-    size_t shaderSizeOffset = 0x21B;
-    shaderVertexArrOffset = 0xAC;
-    if (!MinecraftVersion::isAtLeast(1, 6)) {
-        ptr = linker::dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
-        shaderSizeOffset = 0x90C - 0x7F0;
-        shaderVertexArrOffset = 0xA0;
-    } else if (!MinecraftVersion::isAtLeast(1, 8)) {
-        shaderSizeOffset = 0x5C9 - 0x4C0;
-    } else if (!MinecraftVersion::isAtLeast(1, 12)) {
-        ptr = linker::dlsym(handle, "_ZN3mce15ShaderGroupBase10loadShaderERKSsS2_S2_S2_");
-        shaderSizeOffset = 0xD8F - 0xB30;
-    } else if (!MinecraftVersion::isAtLeast(1, 13)) {
-        shaderSizeOffset = 0xF58 - 0xD60;
-    }
-    if (((unsigned char*) ptr)[shaderSizeOffset + 1] != shaderVertexArrOffset) {
-        Log::error("Launcher", "Graphics patch error: unexpected byte");
-        exit(1);
-    }
-    ((unsigned char*) ptr)[shaderSizeOffset + 1] += 4;
+    enabled = true;
 
-    reflectShaderUniformsOriginal = (void (*)(void*)) linker::dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
-    ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGLC2ERNS_11ShaderCacheERNS_13ShaderProgramES4_S4_") + (0x720 - 0x6A0));
-    PatchUtils::patchCallInstruction(ptr, (void*) &reflectShaderUniformsHook, false);
-
-    bindVertexArrayOriginal = (void (*)(void*, void*, void*)) linker::dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
-    if (MinecraftVersion::isAtLeast(1, 9)) {
-        ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x605 - 0x590));
-        PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
-    } else if (MinecraftVersion::isAtLeast(1, 6)) {
-        ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x83E - 0x7E0));
-        PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
-    } else {
-        ptr = (void*) ((size_t) linker::dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0x72 - 0x10));
-        PatchUtils::patchCallInstruction(ptr, (void*) &bindVertexArrayHook, false);
-    }
-
-    ptr = linker::dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
-    PatchUtils::patchCallInstruction(ptr, (void*) &supportsImmediateModeHook, true);
-
-    ptr = linker::dlsym(handle, "_ZNK3mce9BufferOGL10bindBufferERNS_13RenderContextE");
-    ((unsigned char*) ptr)[0x29] = 0x90;
-    ((unsigned char*) ptr)[0x2A] = 0x90;
-
-    ptr = linker::dlsym(handle, "_ZN3mce16ShaderProgramOGL20compileShaderProgramERNS_11ShaderCacheE");
-    const char* versionStr = "#version 410\n";
-    unsigned char* patchData = (unsigned char*) ((size_t) ptr + (0xB3 - 0x40));
-    patchData[0] = 0xB9;
-    *((size_t*) (patchData + 1)) = (size_t) versionStr;
-    patchData[5] = 0x90;
-
-    ptr = linker::dlsym(handle, "_ZN3mce9BufferOGL12updateBufferERNS_13RenderContextEjPKvjNS_7MapTypeE");
-    ((unsigned char*) ptr)[0x31] = 0x90;
-    ((unsigned char*) ptr)[0x32] = 0x90;
-
-    ptr = linker::dlsym(handle, "_ZN3mce9BufferOGL14recreateBufferERNS_13RenderContextEjPKvj");
-    ((unsigned char*) ptr)[0x31] = 0xEB;
-
+    char*  ptr = (char*) (void *) ((size_t) linker::get_library_base(handle) + 0x3AB4160);
+    unsigned char replace[6] = { 0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3 };
+    memcpy(ptr, replace, 6);
 }
 
-void GLCorePatch::onGLContextCreated() {
-    auto getProcAddr = GameWindowManager::getManager()->getProcAddrFunc();
-    glGenVertexArrays = (void (*)(int, unsigned int*)) getProcAddr("glGenVertexArrays");
-    glBindVertexArray = (void (*)(unsigned int)) getProcAddr("glBindVertexArray");
+void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides, void *(*resolver)(const char *)) {
+    if (!enabled)
+        return;
+
+    glGenVertexArrays = (void (*)(int, unsigned int*)) resolver("glGenVertexArrays");
+    glBindVertexArray = (void (*)(unsigned int)) resolver("glBindVertexArray");
+
+    glShaderSource_orig = (void (*)(unsigned int, unsigned int, const char **, int *)) resolver("glShaderSource");
+    glLinkProgram_orig = (void (*)(unsigned int)) resolver("glLinkProgram");
+    glUseProgram_orig = (void (*)(unsigned int)) resolver("glUseProgram");
+    glBindBuffer_orig = (void (*)(int, unsigned int)) resolver("glBindBuffer");
+
+    overrides["glShaderSource"] = (void *) glShaderSource;
+    overrides["glLinkProgram"] = (void *) glLinkProgram;
+    overrides["glUseProgram"] = (void *) glUseProgram;
+    overrides["glBindBuffer"] = (void *) glBindBuffer;
 }
 
-void GLCorePatch::reflectShaderUniformsHook(void* th) {
+void GLCorePatch::glShaderSource(unsigned int shader, unsigned int count, const char **string, int *length) {
+    if (*length > 0 && !strcmp(string[0], "#version 300 es\n")) {
+        string[0] = "#version 410\n";
+        length[0] = strlen("#version 410\n");
+    }
+    glShaderSource_orig(shader, count, string, length);
+}
+
+void GLCorePatch::glLinkProgram(unsigned int program) {
+    glLinkProgram_orig(program);
+
     unsigned int vertexArr;
     glGenVertexArrays(1, &vertexArr);
     glBindVertexArray(vertexArr);
-    *((unsigned int*) ((size_t) th + shaderVertexArrOffset)) = vertexArr;
-    reflectShaderUniformsOriginal(th);
+    vaoMap[program] = vertexArr;
 }
 
-void GLCorePatch::bindVertexArrayHook(void* th, void* a, void* b) {
-    unsigned int vertexArr = *((unsigned int*) ((size_t) th + shaderVertexArrOffset));
-    if (bindVertexArrayOriginal == nullptr)
-        abort();
-    glBindVertexArray(vertexArr);
-    bindVertexArrayOriginal(th, a, b);
+void GLCorePatch::glUseProgram(unsigned int program) {
+    glUseProgram_orig(program);
+
+    if (program != 0) {
+        glBindVertexArray(vaoMap.at(program));
+        for (auto &e : GLCorePatch::buffers)
+            glBindBuffer_orig(e.first, e.second);
+    }
 }
 
-bool GLCorePatch::supportsImmediateModeHook() {
-    return false;
+void GLCorePatch::glBindBuffer(int target, unsigned int buffer) {
+    glBindBuffer_orig(target, buffer);
+
+    for (auto &e : GLCorePatch::buffers) {
+        if (e.first == target) {
+            e.second = buffer;
+            return;
+        }
+    }
 }
 
 bool GLCorePatch::mustUseDesktopGL() {

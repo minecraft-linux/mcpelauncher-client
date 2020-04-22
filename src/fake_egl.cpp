@@ -1,4 +1,6 @@
 #include "fake_egl.h"
+#include "gl_core_patch.h"
+#include <map>
 
 #define __ANDROID__
 #include <EGL/egl.h>
@@ -12,6 +14,7 @@ namespace fake_egl {
 
 static thread_local EGLSurface currentDrawSurface;
 static void *(*hostProcAddrFn)(const char *);
+static std::unordered_map<std::string, void*> hostProcOverrides;
 
 EGLBoolean eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor) {
     if (major)
@@ -106,8 +109,9 @@ EGLBoolean eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attrib
 }
 
 void *eglGetProcAddress(const char *name) {
-    if (!strcmp(name, "glInvalidateFramebuffer"))
-        return (void *) +[]() {};
+    auto it = hostProcOverrides.find(name);
+    if (it != hostProcOverrides.end())
+        return it->second;
     return hostProcAddrFn(name);
 }
 
@@ -138,4 +142,9 @@ void FakeEGL::installLibrary() {
     syms["eglQuerySurface"] = (void *) fake_egl::eglQuerySurface;
     syms["eglGetProcAddress"] = (void *) fake_egl::eglGetProcAddress;
     linker::load_library("libEGL.so", syms);
+}
+
+void FakeEGL::setupGLOverrides() {
+    fake_egl::hostProcOverrides["glInvalidateFramebuffer"] = (void *) +[]() {}; // Stub for a NVIDIA bug
+    GLCorePatch::installGL(fake_egl::hostProcOverrides, fake_egl::eglGetProcAddress);
 }

@@ -127,9 +127,9 @@ int main(int argc, char *argv[]) {
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
+#endif
     if (options.graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
-#endif
 
     Log::info("Launcher", "Initializing JNI");
     JniSupport support;

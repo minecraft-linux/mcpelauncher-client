@@ -12,4 +12,6 @@ struct FakeEGL {
 
     static void installLibrary();
 
+    static void setupGLOverrides();
+
 };

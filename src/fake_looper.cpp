@@ -4,6 +4,7 @@
 #include "splitscreen_patch.h"
 #include "gl_core_patch.h"
 #include "core_patches.h"
+#include "fake_egl.h"
 
 #include <sys/poll.h>
 
@@ -55,8 +56,8 @@ void FakeLooper::prepare() {
     CorePatches::setGameWindow(associatedWindow);
 
     associatedWindow->show();
+    FakeEGL::setupGLOverrides();
     SplitscreenPatch::onGLContextCreated();
-    GLCorePatch::onGLContextCreated();
     ShaderErrorPatch::onGLContextCreated();
 }
 
