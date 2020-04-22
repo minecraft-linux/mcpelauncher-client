@@ -2,6 +2,7 @@
 #include "store.h"
 #include "xbox_live.h"
 #include "cert_manager.h"
+#include "package_source.h"
 
 using namespace FakeJni;
 
@@ -129,4 +130,18 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(StrictHostnameVerifier)
 {Constructor<StrictHostnameVerifier> {}},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(PackageSource)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(PackageSourceListener)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(NativePackageSourceListener)
+{Constructor<NativePackageSourceListener> {}},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(PackageSourceFactory)
+{Function<&PackageSourceFactory::createGooglePlayPackageSource> {}, "createGooglePlayPackageSource"},
 END_NATIVE_DESCRIPTOR

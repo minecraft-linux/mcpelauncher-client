@@ -4,6 +4,7 @@
 #include "jni_support.h"
 #include "xbox_live.h"
 #include "cert_manager.h"
+#include "package_source.h"
 #include "../xbox_live_helper.h"
 
 void JniSupport::registerJniClasses() {
@@ -36,6 +37,11 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<X509TrustManager>();
     vm.registerClass<TrustManagerFactory>();
     vm.registerClass<StrictHostnameVerifier>();
+
+    vm.registerClass<PackageSource>();
+    vm.registerClass<PackageSourceListener>();
+    vm.registerClass<NativePackageSourceListener>();
+    vm.registerClass<PackageSourceFactory>();
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
