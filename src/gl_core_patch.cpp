@@ -1,8 +1,10 @@
 #include "gl_core_patch.h"
 
+#include <cstring>
 #include <mcpelauncher/linker.h>
 #include <log.h>
 #include <mcpelauncher/minecraft_version.h>
+#include <mcpelauncher/patch_utils.h>
 
 bool GLCorePatch::enabled = false;
 std::unordered_map<unsigned int, unsigned int> GLCorePatch::vaoMap;
@@ -15,11 +17,13 @@ void (*GLCorePatch::glUseProgram_orig)(unsigned int program);
 void (*GLCorePatch::glBindBuffer_orig)(int target, unsigned int buffer);
 
 void GLCorePatch::install(void* handle) {
-    enabled = true;
-
-    char*  ptr = (char*) (void *) ((size_t) linker::get_library_base(handle) + 0x3AB4160);
+    void *ptr = PatchUtils::patternSearch(handle, "8B 15 ?? ?? ?? ?? 85 D2 78 07 83 FA 01 0F 94 C0 C3 50 E8 ?? ?? ?? ?? C1 EA 10 F7 D2 83 E2 01 89");
+    if (!ptr)
+        throw std::runtime_error("Failed to find gl::supportsImmediateMode");
     unsigned char replace[6] = { 0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3 };
     memcpy(ptr, replace, 6);
+
+    enabled = true;
 }
 
 void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides, void *(*resolver)(const char *)) {
