@@ -118,12 +118,12 @@ int main(int argc, char *argv[]) {
 #ifdef __i386__
 //    XboxShutdownPatch::install(handle);
     TexelAAPatch::install(handle);
-#endif
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
     if (options.graphicsApi == GraphicsApi::OPENGL)
         GLCorePatch::install(handle);
+#endif
 
     Log::info("Launcher", "Initializing JNI");
     JniSupport support;
