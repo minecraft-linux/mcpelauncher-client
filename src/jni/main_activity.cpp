@@ -2,7 +2,12 @@
 
 #include <random>
 #include <unistd.h>
+#ifndef __APPLE__
 #include <sys/sysinfo.h>
+#else
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#endif
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
 

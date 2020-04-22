@@ -1,9 +1,11 @@
 #include <cstdio>
 #include <cstring>
+#include <cerrno>
 #include <FileUtil.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <log.h>
+#include <android/compat.h>
 #include "fake_assetmanager.h"
 
 struct AAsset {

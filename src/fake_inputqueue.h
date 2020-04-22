@@ -3,6 +3,8 @@
 #include <android/input.h>
 #include <deque>
 #include <functional>
+#include <string>
+#include <unordered_map>
 
 struct FakeInputEvent {
     int32_t source, type;
