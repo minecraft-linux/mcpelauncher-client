@@ -158,6 +158,7 @@ void JniSupport::requestExitGame() {
     gameExitCond.notify_all();
     std::thread([this]() {
         JniSupport::stopGame();
+        exit(0);
     }).detach();
 }
 
