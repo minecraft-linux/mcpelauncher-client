@@ -144,6 +144,7 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Executing main thread");
     ThreadMover::executeMainThread();
+    support.setLooperRunning(false);
 
 //    XboxLivePatches::workaroundShutdownFreeze(handle);
 #ifdef __i386__

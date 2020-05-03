@@ -65,7 +65,6 @@ FakeLooper::~FakeLooper() {
     CorePatches::setGameWindow(nullptr);
     associatedWindow.reset();
     associatedWindowCallbacks.reset();
-    jniSupport->setLooperRunning(false);
 }
 
 int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {

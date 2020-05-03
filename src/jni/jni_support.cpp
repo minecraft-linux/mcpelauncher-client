@@ -156,6 +156,9 @@ void JniSupport::requestExitGame() {
     std::unique_lock<std::mutex> lock (gameExitMutex);
     gameExitVal = true;
     gameExitCond.notify_all();
+    std::thread([this]() {
+        JniSupport::stopGame();
+    }).detach();
 }
 
 void JniSupport::setLooperRunning(bool running) {
