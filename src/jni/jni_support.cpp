@@ -6,6 +6,7 @@
 #include "cert_manager.h"
 #include "package_source.h"
 #include "../xbox_live_helper.h"
+#include "http_stub.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -42,6 +43,10 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<PackageSourceListener>();
     vm.registerClass<NativePackageSourceListener>();
     vm.registerClass<PackageSourceFactory>();
+
+    vm.registerClass<Header>();
+    vm.registerClass<HTTPResponse>();
+    vm.registerClass<HTTPRequest>();
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {

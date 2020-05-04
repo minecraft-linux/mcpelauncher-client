@@ -3,6 +3,7 @@
 #include "xbox_live.h"
 #include "cert_manager.h"
 #include "package_source.h"
+#include "http_stub.h"
 
 using namespace FakeJni;
 
@@ -145,4 +146,24 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(PackageSourceFactory)
 {Function<&PackageSourceFactory::createGooglePlayPackageSource> {}, "createGooglePlayPackageSource"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Header)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(HTTPResponse)
+{Function<&HTTPResponse::getStatus> {}, "getStatus"},
+{Function<&HTTPResponse::getBody> {}, "getBody"},
+{Function<&HTTPResponse::getResponseCode> {}, "getResponseCode"},
+{Function<&HTTPResponse::getHeaders> {}, "getHeaders"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(HTTPRequest)
+{Function<&HTTPRequest::setURL> {}, "setURL"},
+{Function<&HTTPRequest::setRequestBody> {}, "setRequestBody"},
+{Function<&HTTPRequest::setCookieData> {}, "setCookieData"},
+{Function<&HTTPRequest::setContentType> {}, "setContentType"},
+{Function<&HTTPRequest::send> {}, "send"},
+{Function<&HTTPRequest::abort> {}, "abort"},
+{Constructor<HTTPRequest> {}},
 END_NATIVE_DESCRIPTOR
