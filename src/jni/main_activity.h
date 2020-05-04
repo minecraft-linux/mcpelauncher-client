@@ -171,6 +171,7 @@ public:
 
     std::shared_ptr<FakeJni::JIntArray> getImageData(std::shared_ptr<FakeJni::JString> filename, jboolean b);
 
+    void pickImage(FakeJni::JLong callback);
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {

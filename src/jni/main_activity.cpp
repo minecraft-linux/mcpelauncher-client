@@ -11,6 +11,7 @@
 #include <mcpelauncher/linker.h>
 #include <fstream>
 #include <sstream>
+#include <file_picker_factory.h>
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
 
@@ -121,4 +122,19 @@ std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<F
     }
     stbi_image_free(image);
     return ret;
+}
+
+void MainActivity::pickImage(FakeJni::JLong callback) {
+    auto picker = FilePickerFactory::createFilePicker();
+    picker->setTitle("Select image");
+    picker->setFileNameFilters({ "*.png" });
+    if (picker->show()) {
+        auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
+    } else {
+        auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), this, callback);
+    }
 }
