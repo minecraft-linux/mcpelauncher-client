@@ -89,7 +89,7 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
         throw std::runtime_error("RegisterNatives failed");
 }
 
-void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
+void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, void* handle) {
     FakeJni::LocalFrame frame (vm);
 
     vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose});
@@ -101,7 +101,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     if (test != 27)
         abort();
 
-    activity = std::make_shared<MainActivity>();
+    activity = std::make_shared<MainActivity>(handle);
     activityRef = vm.createGlobalReference(activity);
 
     activity->textInput = &textInput;

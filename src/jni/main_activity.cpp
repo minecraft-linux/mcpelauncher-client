@@ -8,8 +8,16 @@
 #include <sys/sysctl.h>
 #include <mach/mach.h>
 #endif
+#include <mcpelauncher/linker.h>
+#include <fstream>
+#include <sstream>
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
+
+MainActivity::MainActivity(void * handle) {
+    stbi_load_from_memory = (decltype(stbi_load_from_memory)) linker::dlsym(handle, "stbi_load_from_memory");
+    stbi_image_free = (decltype(stbi_image_free)) linker::dlsym(handle, "stbi_image_free");
+}
 
 std::shared_ptr<FakeJni::JString> MainActivity::createUUID() {
     static std::independent_bits_engine<std::random_device, CHAR_BIT, unsigned char> engine;
@@ -92,4 +100,25 @@ FakeJni::JLong MainActivity::getMemoryLimit() {
 
 FakeJni::JLong MainActivity::getAvailableMemory() {
     return getTotalMemory();
+}
+
+std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<FakeJni::JString> filename, jboolean b) {
+    if(!stbi_load_from_memory || !stbi_image_free) return 0;
+    int width, height, channels;
+    std::ifstream f(filename->asStdString().data());
+    if(!f.is_open()) return 0;
+    std::stringstream s;
+    s << f.rdbuf();
+    auto buf = s.str();
+    auto image = stbi_load_from_memory((unsigned char*)buf.data(), buf.length(), &width, &height, &channels, 4);
+    if(!image) return 0;
+    auto ret = std::make_shared<FakeJni::JIntArray>(2 + width * height);
+    (*ret)[0] = width;
+    (*ret)[1] = height;
+    
+    for(int x = 0; x < width * height; x++) {
+        (*ret)[2 + x] = (image[x * 4 + 2]) | (image[x * 4 + 1] << 8) | (image[x * 4 + 0] << 16) | (image[x * 4 + 3] << 24);
+    }
+    stbi_image_free(image);
+    return ret;
 }

@@ -41,7 +41,7 @@ public:
 
     void registerMinecraftNatives(void *(*symResolver)(const char *));
 
-    void startGame(ANativeActivity_createFunc *activityOnCreate);
+    void startGame(ANativeActivity_createFunc *activityOnCreate, void*);
 
     void stopGame();
 

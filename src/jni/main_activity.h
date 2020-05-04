@@ -68,9 +68,13 @@ class MainActivity : public NativeActivity {
 
 private:
     bool ignoreNextHideKeyboard = false;
+    unsigned char* (*stbi_load_from_memory)(unsigned char const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
+    void (*stbi_image_free)(void *retval_from_stbi_load);
 
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", NativeActivity)
+
+    MainActivity(void * handle);
 
     std::string storageDirectory;
     TextInputHandler *textInput = nullptr;
@@ -164,6 +168,8 @@ public:
     FakeJni::JLong getMemoryLimit();
 
     FakeJni::JLong getAvailableMemory();
+
+    std::shared_ptr<FakeJni::JIntArray> getImageData(std::shared_ptr<FakeJni::JString> filename, jboolean b);
 
 };
 

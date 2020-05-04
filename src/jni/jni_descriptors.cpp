@@ -41,7 +41,6 @@ BEGIN_NATIVE_DESCRIPTOR(NativeActivity)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(MainActivity)
-{Constructor<MainActivity> {}},
 {Function<&MainActivity::getAndroidVersion> {}, "getAndroidVersion"},
 {Function<&MainActivity::isNetworkEnabled> {}, "isNetworkEnabled"},
 {Function<&MainActivity::getLocale> {}, "getLocale"},
@@ -62,6 +61,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getTotalMemory> {}, "getTotalMemory"},
 {Function<&MainActivity::getMemoryLimit> {}, "getMemoryLimit"},
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
+{Function<&MainActivity::getImageData> {}, "getImageData"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)
