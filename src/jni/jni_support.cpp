@@ -50,7 +50,9 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
             {"nativeShutdown", "()V"},
             {"nativeResize", "(II)V"},
             {"nativeSetTextboxText", "(Ljava/lang/String;)V"},
-            {"nativeReturnKeyPressed", "()V"}
+            {"nativeReturnKeyPressed", "()V"},
+            {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"},
+            {"nativeOnPickImageCancel", "(J)V"}
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
             {"onStoreInitialized", "(JZ)V"}

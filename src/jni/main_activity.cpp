@@ -8,6 +8,7 @@
 #include <sys/sysctl.h>
 #include <mach/mach.h>
 #endif
+#include <file_picker_factory.h>
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
 
@@ -92,4 +93,19 @@ FakeJni::JLong MainActivity::getMemoryLimit() {
 
 FakeJni::JLong MainActivity::getAvailableMemory() {
     return getTotalMemory();
+}
+
+void MainActivity::pickImage(FakeJni::JLong callback) {
+    auto picker = FilePickerFactory::createFilePicker();
+    picker->setTitle("Select image");
+    picker->setFileNameFilters({ "*.png" });
+    if (picker->show()) {
+        auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
+    } else {
+        auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), this, callback);
+    }
 }

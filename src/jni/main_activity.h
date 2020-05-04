@@ -165,6 +165,7 @@ public:
 
     FakeJni::JLong getAvailableMemory();
 
+    void pickImage(FakeJni::JLong callback);
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {
