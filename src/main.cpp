@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
 #ifdef USE_ARMHF_SUPPORT
     ArmhfSupport::install();
 #endif
+    linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib();
