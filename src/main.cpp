@@ -17,7 +17,7 @@
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
 #endif
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 #include "cpuid.h"
 #include "texel_aa_patch.h"
 #include "xbox_shutdown_patch.h"
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
         PathHelper::setCacheDir(cacheDir);
 
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
     {
         CpuId cpuid;
         Log::info("Launcher", "CPU: %s %s", cpuid.getManufacturer(), cpuid.getBrandString());
@@ -89,8 +89,6 @@ int main(int argc, char *argv[]) {
     MinecraftUtils::setupHybris();
     if (!disableFmod)
         MinecraftUtils::loadFMod();
-    else
-        MinecraftUtils::stubFMod();
     FakeEGL::setProcAddrFunction((void *(*)(const char*)) windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
     MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
@@ -158,7 +156,7 @@ int main(int argc, char *argv[]) {
 
 void printVersionInfo() {
     printf("mcpelauncher-client %s / manifest %s\n", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
     CpuId cpuid;
     printf("CPU: %s %s\n", cpuid.getManufacturer(), cpuid.getBrandString());
     printf("SSSE3 support: %s\n", cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
