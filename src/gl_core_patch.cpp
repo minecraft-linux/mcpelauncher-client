@@ -5,6 +5,7 @@
 #include <log.h>
 #include <mcpelauncher/minecraft_version.h>
 #include <mcpelauncher/patch_utils.h>
+#include <stdexcept>
 
 bool GLCorePatch::enabled = false;
 std::unordered_map<unsigned int, unsigned int> GLCorePatch::vaoMap;
