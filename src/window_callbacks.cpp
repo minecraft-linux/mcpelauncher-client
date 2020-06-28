@@ -90,6 +90,9 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
         jniSupport.getTextInputHandler().onKeyPressed(key, action);
     }
 
+    if (key == KeyCode::FN11 && action == KeyAction::PRESS)
+        window.setFullscreen(fullscreen = !fullscreen);
+
     if (useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
         Keyboard::InputEvent evData {};
         evData.key = (unsigned int) key & 0xff;

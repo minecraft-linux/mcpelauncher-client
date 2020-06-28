@@ -22,6 +22,7 @@ private:
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
+    bool fullscreen = false;
 
     void queueGamepadAxisInputIfNeeded(int gamepad);
 
