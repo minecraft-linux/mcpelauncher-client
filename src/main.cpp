@@ -121,7 +121,6 @@ int main(int argc, char *argv[]) {
     SymbolsHelper::initSymbols(handle);
     CorePatches::install(handle);
 #ifdef __i386__
-//    XboxShutdownPatch::install(handle);
     TexelAAPatch::install(handle);
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
@@ -147,10 +146,6 @@ int main(int argc, char *argv[]) {
     support.setLooperRunning(false);
 
 //    XboxLivePatches::workaroundShutdownFreeze(handle);
-#ifdef __i386__
-    XboxShutdownPatch::notifyShutdown();
-#endif
-
     XboxLiveHelper::getInstance().shutdown();
     return 0;
 }
