@@ -147,6 +147,8 @@ int main(int argc, char *argv[]) {
 
 //    XboxLivePatches::workaroundShutdownFreeze(handle);
     XboxLiveHelper::getInstance().shutdown();
+    // Workaround for XboxLive ShutdownFreeze
+    _Exit(0);
     return 0;
 }
 
