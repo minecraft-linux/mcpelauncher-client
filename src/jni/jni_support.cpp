@@ -100,10 +100,12 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
         throw std::runtime_error("RegisterNatives failed");
 }
 
+extern int do_dlclose(void* handle);
+
 void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     FakeJni::LocalFrame frame (vm);
 
-    vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose});
+    vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, do_dlclose});
 
     auto clz = vm.findClass("android/os/Build$VERSION");
     auto clzRef = (jclass) frame.getJniEnv().createLocalReference(std::const_pointer_cast<FakeJni::JClass>(clz));
