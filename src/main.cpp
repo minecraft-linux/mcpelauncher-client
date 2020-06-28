@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
     });
     std::thread startThread([&support]() {
         support.startGame((ANativeActivity_createFunc *) linker::dlsym(handle, "ANativeActivity_onCreate"));
+        linker::dlclose(handle);
     });
     startThread.detach();
 

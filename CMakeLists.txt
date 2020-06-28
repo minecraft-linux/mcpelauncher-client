@@ -9,6 +9,13 @@ add_executable(mcpelauncher-client src/main.cpp src/main.h src/window_callbacks.
 target_link_libraries(mcpelauncher-client logger mcpelauncher-core gamewindow filepicker msa-daemon-client cll-telemetry argparser baron android-support-headers libc-shim)
 target_include_directories(mcpelauncher-client PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/build_info/)
 
+#if (IS_ARMHF_BUILD)
+#    #target_sources(mcpelauncher-client PRIVATE src/armhf_support.cpp src/armhf_support.h)
+#    #target_compile_definitions(mcpelauncher-client PRIVATE USE_ARMHF_SUPPORT)
+#else()
+#    target_sources(src/xbox_shutdown_patch.cpp src/xbox_shutdown_patch.h src/texel_aa_patch.cpp src/texel_aa_patch.h)
+#endif()
+
 if (IS_ARMHF_BUILD)
     target_sources(mcpelauncher-client PRIVATE src/armhf_support.cpp src/armhf_support.h)
     target_compile_definitions(mcpelauncher-client PRIVATE USE_ARMHF_SUPPORT)

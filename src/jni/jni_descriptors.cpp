@@ -64,6 +64,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getMemoryLimit> {}, "getMemoryLimit"},
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 {Function<&MainActivity::pickImage> {}, "pickImage"},
+{Function<&MainActivity::initializeXboxLive> {}, "initializeXboxLive"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)

@@ -166,6 +166,8 @@ public:
     FakeJni::JLong getAvailableMemory();
 
     void pickImage(FakeJni::JLong callback);
+
+    void initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {
