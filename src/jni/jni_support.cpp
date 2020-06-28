@@ -53,6 +53,9 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(), {
             {"nativeRegisterThis", "()V"},
             {"nativeShutdown", "()V"},
+            {"nativeUnregisterThis", "()V"},
+            {"nativeStopThis", "()V"},
+            {"nativeOnDestroy", "()V"},
             {"nativeResize", "(II)V"},
             {"nativeSetTextboxText", "(Ljava/lang/String;)V"},
             {"nativeReturnKeyPressed", "()V"},
@@ -99,7 +102,7 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
 void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     FakeJni::LocalFrame frame (vm);
 
-    vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose});
+    vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose_unlocked});
 
     auto clz = vm.findClass("android/os/Build$VERSION");
     auto clzRef = (jclass) frame.getJniEnv().createLocalReference(std::const_pointer_cast<FakeJni::JClass>(clz));
@@ -145,6 +148,12 @@ void JniSupport::stopGame() {
     FakeJni::LocalFrame frame (vm);
 
     Log::trace("JniSupport", "Invoking stop activity callbacks\n");
+    auto nativeStopThis = activity->getClass().getMethod("()V", "nativeStopThis");
+    nativeStopThis->invoke(frame.getJniEnv(), activity.get());
+    auto nativeUnregisterThis = activity->getClass().getMethod("()V", "nativeUnregisterThis");
+    nativeUnregisterThis->invoke(frame.getJniEnv(), activity.get());
+    auto nativeOnDestroy = activity->getClass().getMethod("()V", "nativeOnDestroy");
+    nativeOnDestroy->invoke(frame.getJniEnv(), activity.get());
     nativeActivityCallbacks.onPause(&nativeActivity);
     nativeActivityCallbacks.onStop(&nativeActivity);
     nativeActivityCallbacks.onDestroy(&nativeActivity);
@@ -152,6 +161,7 @@ void JniSupport::stopGame() {
     Log::trace("JniSupport", "Waiting for looper clean up\n");
     std::unique_lock<std::mutex> lock (gameExitMutex);
     gameExitCond.wait(lock, [this]{ return !looperRunning; });
+    Log::trace("JniSupport", "exited\n");
 }
 
 void JniSupport::waitForGameExit() {
@@ -165,7 +175,6 @@ void JniSupport::requestExitGame() {
     gameExitCond.notify_all();
     std::thread([this]() {
         JniSupport::stopGame();
-        exit(0);
     }).detach();
 }
 
