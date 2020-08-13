@@ -15,6 +15,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<ClassLoader>();
 
     vm.registerClass<BuildVersion>();
+    vm.registerClass<PackageInfo>();
     vm.registerClass<Context>();
     vm.registerClass<ContextWrapper>();
     vm.registerClass<HardwareInfo>();
@@ -28,6 +29,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<StoreFactory>();
 
     vm.registerClass<XboxInterop>();
+    vm.registerClass<Ecdsa>();
 
     vm.registerClass<InputStream>();
     vm.registerClass<ByteArrayInputStream>();

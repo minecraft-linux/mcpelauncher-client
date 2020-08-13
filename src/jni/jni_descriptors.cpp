@@ -11,6 +11,10 @@ BEGIN_NATIVE_DESCRIPTOR(BuildVersion)
 {Field<&BuildVersion::SDK_INT> {}, "SDK_INT"},
 END_NATIVE_DESCRIPTOR
 
+BEGIN_NATIVE_DESCRIPTOR(PackageInfo)
+{Field<&PackageInfo::versionName> {}, "versionName"},
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(File)
 {Function<&File::getPath> {}, "getPath"},
 END_NATIVE_DESCRIPTOR
@@ -94,6 +98,10 @@ BEGIN_NATIVE_DESCRIPTOR(XboxInterop)
 {Function<&XboxInterop::invokeAuthFlow> {}, "InvokeAuthFlow"},
 {Function<&XboxInterop::initCLL> {}, "InitCLL"},
 {Function<&XboxInterop::logCLL> {}, "LogCLL"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Ecdsa)
+{Constructor<Ecdsa> {}},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(XboxLoginCallback)
