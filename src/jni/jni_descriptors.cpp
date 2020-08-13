@@ -1,6 +1,7 @@
 #include "main_activity.h"
 #include "store.h"
 #include "xbox_live.h"
+#include "lib_http_client.h"
 #include "cert_manager.h"
 #include "package_source.h"
 #include "http_stub.h"
@@ -102,6 +103,24 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Ecdsa)
 {Constructor<Ecdsa> {}},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(HttpClientRequest)
+{Constructor<HttpClientRequest> {}},
+{Function<&HttpClientRequest::isNetworkAvailable> {}, "isNetworkAvailable"},
+{Function<&HttpClientRequest::createClientRequest> {}, "createClientRequest"},
+{Function<&HttpClientRequest::setHttpUrl> {}, "setHttpUrl"},
+{Function<&HttpClientRequest::setHttpMethodAndBody> {}, "setHttpMethodAndBody"},
+{Function<&HttpClientRequest::setHttpHeader> {}, "setHttpHeader"},
+{Function<&HttpClientRequest::doRequestAsync> {}, "doRequestAsync"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(HttpClientResponse)
+{Function<&HttpClientResponse::getNumHeaders> {}, "getNumHeaders"},
+{Function<&HttpClientResponse::getHeaderNameAtIndex> {}, "getHeaderNameAtIndex"},
+{Function<&HttpClientResponse::getHeaderValueAtIndex> {}, "getHeaderValueAtIndex"},
+{Function<&HttpClientResponse::getResponseBodyBytes> {}, "getResponseBodyBytes"},
+{Function<&HttpClientResponse::getResponseCode> {}, "getResponseCode"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(XboxLoginCallback)

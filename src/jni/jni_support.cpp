@@ -3,6 +3,7 @@
 #include <mcpelauncher/linker.h>
 #include "jni_support.h"
 #include "xbox_live.h"
+#include "lib_http_client.h"
 #include "cert_manager.h"
 #include "package_source.h"
 #include "../xbox_live_helper.h"
@@ -30,6 +31,8 @@ void JniSupport::registerJniClasses() {
 
     vm.registerClass<XboxInterop>();
     vm.registerClass<Ecdsa>();
+    vm.registerClass<HttpClientRequest>();
+    vm.registerClass<HttpClientResponse>();
 
     vm.registerClass<InputStream>();
     vm.registerClass<ByteArrayInputStream>();
@@ -71,6 +74,10 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(JellyBeanDeviceManager::getDescriptor(), {
             {"onInputDeviceAddedNative", "(I)V"},
             {"onInputDeviceRemovedNative", "(I)V"}
+    }, symResolver);
+    registerNatives(HttpClientRequest::getDescriptor(), {
+            {"OnRequestCompleted", "(JLcom/xbox/httpclient/HttpClientResponse;)V"},
+            {"OnRequestFailed", "(JLjava/lang/String;)V"}
     }, symResolver);
 }
 
