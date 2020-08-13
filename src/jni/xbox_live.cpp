@@ -122,3 +122,6 @@ void XboxLoginCallback::onSuccess() {
 void XboxLoginCallback::onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message) {
     XboxInterop::authFlowCallback(jvm, userPtr, XboxInterop::AUTH_FLOW_ERROR, "");
 }
+
+Ecdsa::Ecdsa() {
+}

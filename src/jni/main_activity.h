@@ -13,6 +13,14 @@ public:
 
 };
 
+class PackageInfo : public FakeJni::JObject {
+
+public:
+    DEFINE_CLASS_NAME("android/content/pm/PackageInfo")
+
+    std::shared_ptr<FakeJni::JString> versionName = std::make_shared<FakeJni::JString>("TODO");
+};
+
 class Context : public FakeJni::JObject {
 
 public:
