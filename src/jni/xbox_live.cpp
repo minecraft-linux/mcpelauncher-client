@@ -123,5 +123,3 @@ void XboxLoginCallback::onError(int httpStatus, int status, std::shared_ptr<Fake
     XboxInterop::authFlowCallback(jvm, userPtr, XboxInterop::AUTH_FLOW_ERROR, "");
 }
 
-Ecdsa::Ecdsa() {
-}

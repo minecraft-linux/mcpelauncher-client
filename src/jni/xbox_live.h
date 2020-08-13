@@ -71,9 +71,3 @@ public:
     void onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message);
 
 };
-
-class Ecdsa : public FakeJni::JObject {
-public:
-    DEFINE_CLASS_NAME("com/microsoft/xal/crypto/Ecdsa")
-    Ecdsa();
-};
