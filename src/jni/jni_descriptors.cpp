@@ -20,6 +20,10 @@ BEGIN_NATIVE_DESCRIPTOR(PackageInfo)
 {Field<&PackageInfo::versionName> {}, "versionName"},
 END_NATIVE_DESCRIPTOR
 
+BEGIN_NATIVE_DESCRIPTOR(PackageManager)
+{Function<&PackageManager::getPackageInfo> {}, "getPackageInfo"},
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(File)
 {Function<&File::getPath> {}, "getPath"},
 END_NATIVE_DESCRIPTOR
@@ -43,6 +47,8 @@ BEGIN_NATIVE_DESCRIPTOR(Context)
 {Function<&Context::getCacheDir> {}, "getCacheDir"},
 {Function<&Context::getClassLoader> {}, "getClassLoader"},
 {Function<&Context::getApplicationContext> {}, "getApplicationContext"},
+{Function<&Context::getPackageName> {}, "getPackageName"},
+{Function<&Context::getPackageManager> {}, "getPackageManager"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(ContextWrapper)

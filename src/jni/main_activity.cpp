@@ -110,3 +110,9 @@ void MainActivity::pickImage(FakeJni::JLong callback) {
         method->invoke(frame.getJniEnv(), this, callback);
     }
 }
+
+void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
+    auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
+    FakeJni::LocalFrame frame;
+    method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
+}
