@@ -8,6 +8,7 @@
 #ifdef HAVE_PULSEAUDIO
 #include "pulseaudio.h"
 #endif
+#include "java_types.h"
 
 using namespace FakeJni;
 
@@ -25,6 +26,11 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(ClassLoader)
 {Function<&ClassLoader::loadClass> {}, "loadClass"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Locale)
+{Function<&Locale::getDefault> {}, "getDefault"},
+{Function<&Locale::toString> {}, "toString"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Context)
