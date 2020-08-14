@@ -6,6 +6,7 @@
 #include "package_source.h"
 #include "http_stub.h"
 #include "java_types.h"
+#include "accounts.h"
 
 
 using namespace FakeJni;
@@ -88,6 +89,14 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 {Function<&MainActivity::pickImage> {}, "pickImage"},
 {Function<&MainActivity::initializeXboxLive> {}, "initializeXboxLive"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(AccountManager)
+{Function<&AccountManager::get> {}, "get"},
+{Function<&AccountManager::getAccountsByType> {}, "getAccountsByType"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Account)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)
