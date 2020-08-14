@@ -2,6 +2,7 @@
 
 #include <fake-jni/fake-jni.h>
 #include <locale>
+#include <uuid/uuid.h>
 
 class File : public FakeJni::JObject {
 
@@ -48,5 +49,18 @@ public:
 
 private:
     std::locale l;
+
+};
+
+class UUID : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("java/util/UUID")
+
+    UUID(uuid_t *uuid);
+    static std::shared_ptr<UUID> randomUUID();
+    std::shared_ptr<FakeJni::JString> toString();
+
+private:
+    uuid_t uuid;
 
 };

@@ -33,6 +33,11 @@ BEGIN_NATIVE_DESCRIPTOR(Locale)
 {Function<&Locale::toString> {}, "toString"},
 END_NATIVE_DESCRIPTOR
 
+BEGIN_NATIVE_DESCRIPTOR(UUID)
+{Function<&UUID::randomUUID> {}, "randomUUID"},
+{Function<&UUID::toString> {}, "toString"},
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(Context)
 {Function<&Context::getFilesDir> {}, "getFilesDir"},
 {Function<&Context::getCacheDir> {}, "getCacheDir"},

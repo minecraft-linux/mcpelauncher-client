@@ -18,6 +18,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<File>();
     vm.registerClass<ClassLoader>();
     vm.registerClass<Locale>();
+    vm.registerClass<UUID>();
 
     vm.registerClass<BuildVersion>();
     vm.registerClass<PackageInfo>();

@@ -2,11 +2,13 @@ cmake_minimum_required (VERSION 2.6)
 
 project(mcpelauncher-client LANGUAGES CXX ASM)
 
+find_package(CURL REQUIRED)
+
 git_commit_hash(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_COMMIT_HASH)
 configure_file(src/build_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/build_info/build_info.h)
 
-add_executable(mcpelauncher-client src/main.cpp src/main.h src/window_callbacks.cpp src/window_callbacks.h src/xbox_live_helper.cpp src/xbox_live_helper.h src/splitscreen_patch.cpp src/splitscreen_patch.h src/cll_upload_auth_step.cpp src/cll_upload_auth_step.h src/gl_core_patch.cpp src/gl_core_patch.h src/hbui_patch.cpp src/hbui_patch.h src/utf8_util.h src/shader_error_patch.cpp src/shader_error_patch.h src/jni/jni_descriptors.cpp src/jni/java_types.h src/jni/main_activity.cpp src/jni/main_activity.h src/jni/store.h src/jni/cert_manager.cpp src/jni/cert_manager.h src/jni/http_stub.cpp src/jni/http_stub.h src/jni/package_source.cpp src/jni/package_source.h src/jni/jni_support.h src/jni/jni_support.cpp src/fake_looper.cpp src/fake_looper.h src/fake_assetmanager.cpp src/fake_assetmanager.h src/fake_egl.cpp src/fake_egl.h src/fake_inputqueue.cpp src/fake_inputqueue.h src/symbols.cpp src/symbols.h src/text_input_handler.cpp src/text_input_handler.h src/jni/xbox_live.cpp src/jni/xbox_live.h src/core_patches.cpp src/core_patches.h  src/thread_mover.cpp src/thread_mover.h src/jni/lib_http_client.cpp src/jni/lib_http_client.h src/jni/java_types.cpp)
-target_link_libraries(mcpelauncher-client logger mcpelauncher-core gamewindow filepicker msa-daemon-client cll-telemetry argparser baron android-support-headers libc-shim)
+add_executable(mcpelauncher-client src/main.cpp src/main.h src/window_callbacks.cpp src/window_callbacks.h src/xbox_live_helper.cpp src/xbox_live_helper.h src/splitscreen_patch.cpp src/splitscreen_patch.h src/cll_upload_auth_step.cpp src/cll_upload_auth_step.h src/gl_core_patch.cpp src/gl_core_patch.h src/hbui_patch.cpp src/hbui_patch.h src/utf8_util.h src/shader_error_patch.cpp src/shader_error_patch.h src/jni/jni_descriptors.cpp src/jni/java_types.h src/jni/main_activity.cpp src/jni/main_activity.h src/jni/store.h src/jni/cert_manager.cpp src/jni/cert_manager.h src/jni/http_stub.cpp src/jni/http_stub.h src/jni/package_source.cpp src/jni/package_source.h src/jni/jni_support.h src/jni/jni_support.cpp src/fake_looper.cpp src/fake_looper.h src/fake_assetmanager.cpp src/fake_assetmanager.h src/fake_egl.cpp src/fake_egl.h src/fake_inputqueue.cpp src/fake_inputqueue.h src/symbols.cpp src/symbols.h src/text_input_handler.cpp src/text_input_handler.h src/jni/xbox_live.cpp src/jni/xbox_live.h src/core_patches.cpp src/core_patches.h  src/thread_mover.cpp src/thread_mover.h src/jni/lib_http_client.cpp src/jni/lib_http_client.h src/jni/java_types.cpp src/jni/accounts.cpp src/jni/accounts.h)
+target_link_libraries(mcpelauncher-client logger mcpelauncher-core gamewindow filepicker msa-daemon-client cll-telemetry argparser baron android-support-headers libc-shim uuid)
 target_include_directories(mcpelauncher-client PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/build_info/)
 
 if (IS_ARM_BUILD)
