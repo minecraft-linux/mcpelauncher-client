@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fake-jni/fake-jni.h>
+#include <locale>
 
 class File : public FakeJni::JObject {
 
@@ -33,5 +34,19 @@ public:
         return std::const_pointer_cast<FakeJni::JClass>(
                 context.getJniEnv().getVM().findClass(str->asStdString().c_str()));
     }
+
+};
+
+class Locale : public FakeJni::JObject {
+
+public:
+    DEFINE_CLASS_NAME("java/util/Locale")
+
+    Locale(std::locale locale);
+    static std::shared_ptr<Locale> getDefault();
+    std::shared_ptr<FakeJni::JString> toString();
+
+private:
+    std::locale l;
 
 };

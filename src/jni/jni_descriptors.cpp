@@ -5,6 +5,8 @@
 #include "cert_manager.h"
 #include "package_source.h"
 #include "http_stub.h"
+#include "java_types.h"
+
 
 using namespace FakeJni;
 
@@ -22,6 +24,11 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(ClassLoader)
 {Function<&ClassLoader::loadClass> {}, "loadClass"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Locale)
+{Function<&Locale::getDefault> {}, "getDefault"},
+{Function<&Locale::toString> {}, "toString"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Context)
