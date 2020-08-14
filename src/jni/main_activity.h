@@ -18,7 +18,22 @@ class PackageInfo : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("android/content/pm/PackageInfo")
 
-    std::shared_ptr<FakeJni::JString> versionName = std::make_shared<FakeJni::JString>("TODO");
+    PackageInfo() {
+        versionName = std::make_shared<FakeJni::JString>("TODO");
+    }
+    std::shared_ptr<FakeJni::JString> versionName;
+
+};
+
+class PackageManager : public FakeJni::JObject {
+
+public:
+    DEFINE_CLASS_NAME("android/content/pm/PackageManager")
+
+    std::shared_ptr<PackageInfo> getPackageInfo(std::shared_ptr<FakeJni::JString> packageName, FakeJni::JInt flags) {
+        return std::make_shared<PackageInfo>(PackageInfo());
+    }
+
 };
 
 class Context : public FakeJni::JObject {
@@ -36,6 +51,14 @@ public:
 
     std::shared_ptr<Context> getApplicationContext() {
         return std::static_pointer_cast<Context>(shared_from_this());
+    }
+
+    std::shared_ptr<FakeJni::JString> getPackageName() {
+        return std::make_shared<FakeJni::JString>("com.mojang.minecraftpe");
+    }
+
+    std::shared_ptr<PackageManager> getPackageManager() {
+        return std::make_shared<PackageManager>(PackageManager());
     }
 
 };

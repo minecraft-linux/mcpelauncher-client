@@ -19,6 +19,7 @@ void JniSupport::registerJniClasses() {
 
     vm.registerClass<BuildVersion>();
     vm.registerClass<PackageInfo>();
+    vm.registerClass<PackageManager>();
     vm.registerClass<Context>();
     vm.registerClass<ContextWrapper>();
     vm.registerClass<HardwareInfo>();
