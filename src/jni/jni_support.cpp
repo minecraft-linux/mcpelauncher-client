@@ -11,6 +11,7 @@
 #ifdef HAVE_PULSEAUDIO
 #include "pulseaudio.h"
 #endif
+#include "accounts.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -29,6 +30,8 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Activity>();
     vm.registerClass<NativeActivity>();
     vm.registerClass<MainActivity>();
+    vm.registerClass<AccountManager>();
+    vm.registerClass<Account>();
 
     vm.registerClass<StoreListener>();
     vm.registerClass<NativeStoreListener>();

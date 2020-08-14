@@ -9,6 +9,7 @@
 #include "pulseaudio.h"
 #endif
 #include "java_types.h"
+#include "accounts.h"
 
 using namespace FakeJni;
 
@@ -89,6 +90,14 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getMemoryLimit> {}, "getMemoryLimit"},
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 {Function<&MainActivity::pickImage> {}, "pickImage"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(AccountManager)
+{Function<&AccountManager::get> {}, "get"},
+{Function<&AccountManager::getAccountsByType> {}, "getAccountsByType"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Account)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)
