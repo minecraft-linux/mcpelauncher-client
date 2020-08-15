@@ -222,3 +222,7 @@ BEGIN_NATIVE_DESCRIPTOR(HTTPRequest)
 {Function<&HTTPRequest::abort> {}, "abort"},
 {Constructor<HTTPRequest> {}},
 END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(ShaHasher)
+{Constructor<ShaHasher> {}},
+END_NATIVE_DESCRIPTOR

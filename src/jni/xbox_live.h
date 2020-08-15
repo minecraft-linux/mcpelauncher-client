@@ -71,3 +71,12 @@ public:
     void onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message);
 
 };
+
+class ShaHasher : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/microsoft/xal/crypto/ShaHasher")
+
+    ShaHasher() {
+
+    }
+};

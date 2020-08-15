@@ -58,6 +58,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Header>();
     vm.registerClass<HTTPResponse>();
     vm.registerClass<HTTPRequest>();
+    vm.registerClass<ShaHasher>();
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
