@@ -1,51 +1,103 @@
 #include "lib_http_client.h"
+#include "../util.h"
+#include <log.h>
+#include <curl/curl.h>
+
+using namespace std::placeholders;
 
 Ecdsa::Ecdsa() = default;
 
-HttpClientRequest::HttpClientRequest() = default;
+HttpClientRequest::HttpClientRequest() {
+    curl = curl_easy_init();
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpClientRequest::write_callback_wrapper);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, this);
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpClientRequest::header_callback_wrapper);
+}
+
+HttpClientRequest::~HttpClientRequest() {
+    curl_easy_cleanup(curl);
+}
 
 FakeJni::JBoolean HttpClientRequest::isNetworkAvailable(std::shared_ptr<Context> context) {
     return true;
 }
 
 std::shared_ptr<HttpClientRequest> HttpClientRequest::createClientRequest() {
-    return std::make_shared<HttpClientRequest>(HttpClientRequest());
+    return std::make_shared<HttpClientRequest>();
 }
 
 void HttpClientRequest::setHttpUrl(std::shared_ptr<FakeJni::JString> url) {
-
+    curl_easy_setopt(curl, CURLOPT_URL, url->asStdString().c_str());
 }
 
 void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> method,
                                              std::shared_ptr<FakeJni::JString> contentType,
                                              std::shared_ptr<FakeJni::JByteArray> body) {
-
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method->asStdString().c_str());
+    //Body and content Type not yet supported
 }
 
 void HttpClientRequest::setHttpHeader(std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> value) {
-
+    header = curl_slist_append(header, (name->asStdString() + ": " + value->asStdString()).c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
 }
 
 void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
-
+    auto ret = curl_easy_perform(curl);
+    long response_code;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+    FakeJni::LocalFrame frame;
+    if (ret == CURLE_OK) {
+        auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
+        method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(response_code, response, headers)));
+    }
+    else {
+        auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
+        method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
+    }
 }
 
 FakeJni::JInt HttpClientResponse::getNumHeaders() {
-    return 0;
+    return headers.size();
 }
 
 std::shared_ptr<FakeJni::JString> HttpClientResponse::getHeaderNameAtIndex(FakeJni::JInt index) {
-    return std::shared_ptr<FakeJni::JString>();
+    return std::make_shared<FakeJni::JString>(headers[index].name);
 }
 
 std::shared_ptr<FakeJni::JString> HttpClientResponse::getHeaderValueAtIndex(FakeJni::JInt index) {
-    return std::shared_ptr<FakeJni::JString>();
+    return std::make_shared<FakeJni::JString>(headers[index].value);
 }
 
 std::shared_ptr<FakeJni::JByteArray> HttpClientResponse::getResponseBodyBytes() {
-    return std::shared_ptr<FakeJni::JByteArray>();
+    return std::make_shared<FakeJni::JByteArray>(body);
 }
 
 FakeJni::JInt HttpClientResponse::getResponseCode() {
-    return 200;
+    return response_code;
+}
+
+HttpClientResponse::HttpClientResponse(int response_code, std::vector<signed char> body, std::vector<ResponseHeader> headers) :
+    response_code(response_code),
+    body(body),
+    headers(headers)
+{}
+
+size_t HttpClientRequest::write_callback(char *ptr, size_t size, size_t nmemb) {
+    response.insert(response.end(), ptr, ptr + nmemb);
+    return size * nmemb;
+}
+
+size_t HttpClientRequest::header_callback(char *buffer, size_t size, size_t nitems) {
+    auto string = std::string(buffer, nitems);
+    auto location = string.find(": ");
+    if (location != std::string::npos) {
+        auto name = string.substr(0, location);
+        auto value = string.substr(location+1, string.length());
+        trim(name);
+        trim(value);
+        headers.emplace_back(name, value);
+    }
+    return size * nitems;
 }
