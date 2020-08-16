@@ -2,6 +2,7 @@
 
 #include <fake-jni/fake-jni.h>
 #include "main_activity.h"
+#include <openssl/sha.h>
 
 class XboxLoginCallback;
 
@@ -71,12 +72,58 @@ public:
     void onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message);
 
 };
+extern int ___ctr;
 
 class ShaHasher : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/ShaHasher")
+    SHA256_CTX shactx = {};
 
     ShaHasher() {
+        auto ret = SHA256_Init(&shactx);
+    }
 
+    void AddBytes(std::shared_ptr<FakeJni::JByteArray> barray) {
+        auto data = barray->getArray();
+        auto len = barray->getSize();
+        auto ret = SHA256_Update(&shactx, data, len);
+    }
+
+    std::shared_ptr<FakeJni::JByteArray> SignHash() {
+        // if(___ctr) {
+        //     ___ctr--;
+        //     return nullptr;
+        // }
+        // auto ret = std::make_shared<FakeJni::JByteArray>(257);
+        // for(int i = 0; i < 256; i++) {
+        //     (*ret)[i] = 'A' + (i % ('Z'-'A'));
+        // }
+        // (*ret)[256] = 0;
+        // return ret;
+        auto arr = std::make_shared<FakeJni::JByteArray>(SHA256_DIGEST_LENGTH);
+        auto ret = SHA256_Final((unsigned char*)arr->getArray(), &shactx);
+        return arr;
+    }
+};
+
+class SecureRandom : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/microsoft/xal/crypto/SecureRandom")
+    static std::shared_ptr<FakeJni::JByteArray> GenerateRandomBytes(int bytes) {
+        return std::make_shared<FakeJni::JByteArray>(bytes);
+    }
+};
+
+class WebView : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/microsoft/xal/browser/WebView")
+
+    static void showUrl(FakeJni::JLong l, std::shared_ptr<Context> ctx, std::shared_ptr<FakeJni::JString> starturl, std::shared_ptr<FakeJni::JString> endurl, FakeJni::JInt i, FakeJni::JBoolean z, FakeJni::JLong j2) {
+        auto a = starturl->asStdString();
+        auto b = endurl->asStdString();
+        char * result = "";
+        auto method = WebView::getDescriptor()->getMethod("(JLjava/lang/String;ZLjava/lang/String;)V", "urlOperationSucceeded");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), WebView::getDescriptor().get(), l, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(result)), false, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("webkit-noDefault::0::none")));
     }
 };

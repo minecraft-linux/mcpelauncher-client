@@ -11,6 +11,7 @@
 #include <file_picker_factory.h>
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
+std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE = std::make_shared<FakeJni::JString>("AndroidX");
 
 std::shared_ptr<FakeJni::JString> MainActivity::createUUID() {
     static std::independent_bits_engine<std::random_device, CHAR_BIT, unsigned char> engine;

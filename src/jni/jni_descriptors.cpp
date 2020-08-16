@@ -13,6 +13,7 @@ using namespace FakeJni;
 
 BEGIN_NATIVE_DESCRIPTOR(BuildVersion)
 {Field<&BuildVersion::SDK_INT> {}, "SDK_INT"},
+{Field<&BuildVersion::RELEASE> {}, "RELEASE"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(PackageInfo)
@@ -57,6 +58,7 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(HardwareInfo)
 {Function<&HardwareInfo::getAndroidVersion> {}, "getAndroidVersion"},
+{Function<&HardwareInfo::getInstallerPackageName> {}, "getInstallerPackageName"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Activity)
@@ -89,6 +91,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 {Function<&MainActivity::pickImage> {}, "pickImage"},
 {Function<&MainActivity::initializeXboxLive> {}, "initializeXboxLive"},
+{Function<&MainActivity::getSecureStorageKey> {}, "getSecureStorageKey"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(AccountManager)
@@ -130,6 +133,18 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Ecdsa)
 {Constructor<Ecdsa> {}},
+{Function<&Ecdsa::sign> {}, "sign"},
+{Function<&Ecdsa::getPublicKey> {}, "getPublicKey"},
+{Function<&Ecdsa::generateKey> {}, "generateKey"},
+{Function<&Ecdsa::restoreKeyAndId> {}, "restoreKeyAndId"},
+{Function<&Ecdsa::getUniqueId> {}, "getUniqueId"},
+
+
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(EcdsaPublicKey)
+{Function<&EcdsaPublicKey::getBase64UrlX> {}, "getBase64UrlX"},
+{Function<&EcdsaPublicKey::getBase64UrlY> {}, "getBase64UrlY"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(HttpClientRequest)
@@ -225,4 +240,16 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(ShaHasher)
 {Constructor<ShaHasher> {}},
+{Function<&ShaHasher::AddBytes> {}, "AddBytes"},
+{Function<&ShaHasher::SignHash> {}, "SignHash"},
+END_NATIVE_DESCRIPTOR
+
+
+
+BEGIN_NATIVE_DESCRIPTOR(SecureRandom)
+{Function<&SecureRandom::GenerateRandomBytes> {}, "GenerateRandomBytes"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(WebView)
+{Function<&WebView::showUrl> {}, "showUrl"},
 END_NATIVE_DESCRIPTOR

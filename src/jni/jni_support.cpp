@@ -59,6 +59,9 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<HTTPResponse>();
     vm.registerClass<HTTPRequest>();
     vm.registerClass<ShaHasher>();
+    vm.registerClass<SecureRandom>();
+    vm.registerClass<WebView>();
+    
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
@@ -85,6 +88,9 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(HttpClientRequest::getDescriptor(), {
             {"OnRequestCompleted", "(JLcom/xbox/httpclient/HttpClientResponse;)V"},
             {"OnRequestFailed", "(JLjava/lang/String;)V"}
+    }, symResolver);
+    registerNatives(WebView::getDescriptor(), {
+            {"urlOperationSucceeded", "(JLjava/lang/String;ZLjava/lang/String;)V"},
     }, symResolver);
 }
 

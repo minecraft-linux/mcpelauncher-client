@@ -10,6 +10,7 @@ public:
     DEFINE_CLASS_NAME("android/os/Build$VERSION")
 
     static FakeJni::JInt SDK_INT;
+    static std::shared_ptr<FakeJni::JString> RELEASE;
 
 };
 
@@ -19,7 +20,7 @@ public:
     DEFINE_CLASS_NAME("android/content/pm/PackageInfo")
 
     PackageInfo() {
-        versionName = std::make_shared<FakeJni::JString>("TODO");
+        versionName = std::make_shared<FakeJni::JString>((jchar*)u"1.16.20.03", 10);
     }
     std::shared_ptr<FakeJni::JString> versionName;
 
@@ -61,6 +62,11 @@ public:
         return std::make_shared<PackageManager>(PackageManager());
     }
 
+    std::shared_ptr<FakeJni::JString> getSecureStorageKey(std::shared_ptr<FakeJni::JString> str) {
+        auto st = str->asStdString();
+        return std::make_shared<FakeJni::JString>("1.1.0");
+    }
+
 };
 
 class ContextWrapper : public Context {
@@ -91,6 +97,10 @@ public:
 
     static std::shared_ptr<FakeJni::JString> getAndroidVersion() {
         return std::make_shared<FakeJni::JString>("Linux");
+    }
+
+    std::shared_ptr<FakeJni::JString> getInstallerPackageName() {
+        return std::make_shared<FakeJni::JString>("com.mojang.minecraftpe");
     }
 
 };
