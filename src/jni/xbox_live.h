@@ -3,6 +3,7 @@
 #include <fake-jni/fake-jni.h>
 #include "main_activity.h"
 #include <openssl/sha.h>
+#include <iostream>
 
 class XboxLoginCallback;
 
@@ -121,9 +122,11 @@ public:
     static void showUrl(FakeJni::JLong l, std::shared_ptr<Context> ctx, std::shared_ptr<FakeJni::JString> starturl, std::shared_ptr<FakeJni::JString> endurl, FakeJni::JInt i, FakeJni::JBoolean z, FakeJni::JLong j2) {
         auto a = starturl->asStdString();
         auto b = endurl->asStdString();
-        char * result = "";
+        std::cout << "OpenThisURL: " << a << "\n";
+        std::string result = "";
+        std::getline(std::cin, result);
         auto method = WebView::getDescriptor()->getMethod("(JLjava/lang/String;ZLjava/lang/String;)V", "urlOperationSucceeded");
         FakeJni::LocalFrame frame;
-        method->invoke(frame.getJniEnv(), WebView::getDescriptor().get(), l, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(result)), false, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("webkit-noDefault::0::none")));
+        method->invoke(frame.getJniEnv(), WebView::getDescriptor().get(), l, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(result.data())), false, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("webkit-noDefault::0::none")));
     }
 };
