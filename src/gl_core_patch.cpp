@@ -91,7 +91,7 @@ void GLCorePatch::glBindBuffer(int target, unsigned int buffer) {
 
 bool GLCorePatch::mustUseDesktopGL() {
 #ifdef __APPLE__
-    return true;
+    return false;
 #else
     return false;
 #endif
