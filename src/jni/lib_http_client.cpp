@@ -36,18 +36,24 @@ std::shared_ptr<HttpClientRequest> HttpClientRequest::createClientRequest() {
 void HttpClientRequest::setHttpUrl(std::shared_ptr<FakeJni::JString> url) {
     auto url2 = url->asStdString();
     curl_easy_setopt(curl, CURLOPT_URL, url2.c_str());
+#ifdef XAL_HTTP_LOG
     Log::trace("xal-http", "setHttpUrl: '%s'", url2.data());
+#endif
 }
 
 void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> method,
                                              std::shared_ptr<FakeJni::JString> contentType,
                                              std::shared_ptr<FakeJni::JByteArray> body) {
     this->method = method->asStdString();
+#ifdef XAL_HTTP_LOG
     Log::trace("xal-http", "setHttpMethod: '%s'", this->method.data());
+#endif
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.data());
     this->body = body ? std::vector<char>((char*)body->getArray(), (char*)body->getArray() + body->getSize()) : std::vector<char>{};
     if(this->body.size()) {
+#ifdef XAL_HTTP_LOG
         Log::trace("xal-http", "setHttpBody: '%s'", this->body.data());
+#endif
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, this->body.size());
     }
@@ -55,14 +61,18 @@ void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> m
     if(conttype.length()) {
         header = curl_slist_append(header, ("Content-Type: " + conttype).data());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
+#ifdef XAL_HTTP_LOG
         Log::trace("xal-http", "setHttpContentType: '%s'", conttype.data());
+#endif
     }
 }
 
 void HttpClientRequest::setHttpHeader(std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> value) {
     header = curl_slist_append(header, (name->asStdString() + ": " + value->asStdString()).c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
+#ifdef XAL_HTTP_LOG
     Log::trace("xal-http", "setHttpHeader: '%s: %s'", name->asStdString().data(), value->asStdString().data());
+#endif
 }
 
 void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
@@ -73,7 +83,9 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
     if (ret == CURLE_OK) {
         auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
         method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(response_code, response, headers)));
+#ifdef XAL_HTTP_LOG
         Log::trace("xal-http", "doRequestAsync: '%ld %s'", response_code, response.data());
+#endif
     }
     else {
         auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
