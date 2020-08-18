@@ -90,13 +90,16 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
         jniSupport.getTextInputHandler().onKeyPressed(key, action);
     }
 
+    if (key == KeyCode::FN11 && action == KeyAction::PRESS)
+        window.setFullscreen(fullscreen = !fullscreen);
+
     if (useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
         Keyboard::InputEvent evData {};
-        evData.key = (unsigned int) key;
+        evData.key = (unsigned int) key & 0xff;
         evData.event = (action == KeyAction::PRESS ? 1 : 0);
         evData.controllerId = *Keyboard::_gameControllerId;
         Keyboard::_inputs->push_back(evData);
-        Keyboard::_states[(int) key] = evData.event;
+        Keyboard::_states[(int) key & 0xff] = evData.event;
         return;
     }
 

@@ -127,7 +127,7 @@ extern int do_dlclose(void* handle);
 void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     FakeJni::LocalFrame frame (vm);
 
-    vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, do_dlclose});
+    vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose_unlocked});
 
     auto clz = vm.findClass("android/os/Build$VERSION");
     auto clzRef = (jclass) frame.getJniEnv().createLocalReference(std::const_pointer_cast<FakeJni::JClass>(clz));
@@ -186,8 +186,6 @@ void JniSupport::stopGame() {
     std::unique_lock<std::mutex> lock (gameExitMutex);
     gameExitCond.wait(lock, [this]{ return !looperRunning; });
     Log::trace("JniSupport", "exited\n");
-    // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    // exit(0);
 }
 
 void JniSupport::waitForGameExit() {

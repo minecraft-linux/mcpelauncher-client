@@ -108,6 +108,10 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib();
+    if (!handle) {
+      Log::error("Launcher", "Failed to load Minecraft library, please reinstall or wait for an update to support the new release");
+      return 51;
+    }
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%p", (void *) MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
@@ -121,7 +125,6 @@ int main(int argc, char *argv[]) {
     SymbolsHelper::initSymbols(handle);
     CorePatches::install(handle);
 #ifdef __i386__
-//    XboxShutdownPatch::install(handle);
     TexelAAPatch::install(handle);
     HbuiPatch::install(handle);
     SplitscreenPatch::install(handle);
@@ -147,11 +150,9 @@ int main(int argc, char *argv[]) {
     support.setLooperRunning(false);
 
 //    XboxLivePatches::workaroundShutdownFreeze(handle);
-#ifdef __i386__
-    XboxShutdownPatch::notifyShutdown();
-#endif
-
     XboxLiveHelper::getInstance().shutdown();
+    // Workaround for XboxLive ShutdownFreeze
+    _Exit(0);
     return 0;
 }
 
