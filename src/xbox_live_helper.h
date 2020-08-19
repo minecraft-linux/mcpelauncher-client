@@ -67,4 +67,6 @@ public:
 
     void logCll(cll::Event const& event);
 
+    void openWebbrowser(std::string const& url, std::string const& endurl, std::function<void(std::string endurl)> callback);
+
 };

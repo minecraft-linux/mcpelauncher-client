@@ -152,3 +152,9 @@ void XboxLiveHelper::logCll(cll::Event const& event) {
     initCll();
     cll->add(event);
 }
+
+void XboxLiveHelper::openWebbrowser(const std::string &url, const std::string &endurl, std::function<void(std::string endurl)> callback) {
+    getMsaClient().openWebbrowser(url, endurl).call([callback](rpc_result<std::string> res) {
+        callback(res.data());
+    });
+}
