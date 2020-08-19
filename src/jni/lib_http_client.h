@@ -8,8 +8,7 @@
 #include <openssl/bn.h>
 #include <utility>
 #include <base64.h>
-
-extern int ___ctr;
+#include <stdexcept>
 
 class EcdsaPublicKey : public FakeJni::JObject {
     std::string xbase64;
@@ -18,18 +17,29 @@ public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/EccPubKey")
 
     EcdsaPublicKey(EC_KEY * eckey, EC_GROUP * ecgroup) {
-        int ret;
         const EC_POINT * point = EC_KEY_get0_public_key(eckey);
+        if (point) {
+            throw std::runtime_error("OpenSSL failed to get ecdsa public key");
+        }
         BIGNUM *x = BN_new(), *y = BN_new();
-        ret = EC_POINT_get_affine_coordinates(ecgroup, point, x, y, NULL);
+        if (!x || !y) {
+            throw std::runtime_error("OpenSSL failed to allocate bignum");
+        }
+        if (EC_POINT_get_affine_coordinates(ecgroup, point, x, y, NULL) != 1) {
+            throw std::runtime_error("OpenSSL failed to get affine coordinates");
+        }
         auto len = BN_num_bytes(x);
-        std::string bug(len, '_');
-        ret = BN_bn2bin(x, (unsigned char*)bug.data());
-        xbase64 = Base64::encode(bug);
+        std::string buf(len, '_');
+        if (BN_bn2bin(x, (unsigned char*)buf.data()) != len) {
+            throw std::runtime_error("OpenSSL failed to export bignum");
+        }
+        xbase64 = Base64::encode(buf);
         len = BN_num_bytes(y);
-        bug = std::string(len, '_');
-        ret = BN_bn2bin(y, (unsigned char*)bug.data());
-        ybase64 = Base64::encode(bug);
+        buf = std::string(len, '_');
+        if (BN_bn2bin(y, (unsigned char*)buf.data()) != len) {
+            throw std::runtime_error("OpenSSL failed to export bignum");
+        }
+        ybase64 = Base64::encode(buf);
     }
 
     std::shared_ptr<FakeJni::JString> getBase64UrlX() {
@@ -52,13 +62,21 @@ public:
     }
 
     void generateKey(std::shared_ptr<FakeJni::JString> unique_id) {
-        // TODO Errorhandling....
         this->unique_id = unique_id;
-        int ret;
         ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1); //openssl alias of secp256r1
+        if (!ecgroup) {
+            throw std::runtime_error("OpenSSL failed to allocate group prime256v1");
+        }
         eckey = EC_KEY_new();
-        ret = EC_KEY_set_group(eckey, ecgroup);
-        ret = EC_KEY_generate_key(eckey);
+        if (!eckey) {
+            throw std::runtime_error("OpenSSL failed to allocate eckey");
+        }
+        if (EC_KEY_set_group(eckey, ecgroup) != 1) {
+            throw std::runtime_error("OpenSSL failed to get affine coordinates");
+        }
+        if (EC_KEY_generate_key(eckey) != 1) {
+            throw std::runtime_error("OpenSSL failed to get affine coordinates");
+        }
     }
 
     static EC_KEY * eckey;
@@ -66,33 +84,28 @@ public:
     static std::shared_ptr<FakeJni::JString> unique_id;
 
     std::shared_ptr<FakeJni::JByteArray> sign(std::shared_ptr<FakeJni::JByteArray> a) {
-        int ret;
-
         ECDSA_SIG * sig = ECDSA_do_sign((const unsigned char*)a->getArray(), a->getSize(), eckey);
+        if (!sig) {
+            throw std::runtime_error("OpenSSL failed to sign bytearray");
+        }
         auto n = (EC_GROUP_order_bits(ecgroup) + 7) / 8;
         const BIGNUM* r = ECDSA_SIG_get0_r(sig);
+        if (!r) {
+            throw std::runtime_error("OpenSSL failed to get r");
+        }
         const BIGNUM* s = ECDSA_SIG_get0_s(sig);
+        if (!g) {
+            throw std::runtime_error("OpenSSL failed to get s");
+        }
         auto buf = std::make_shared<FakeJni::JByteArray>(2 * n);
-        ret = BN_bn2binpad(r, (unsigned char*)buf->getArray(), n); // ret == n
-        ret = BN_bn2binpad(s, (unsigned char*)buf->getArray() + n, n); // ret == n
+        if (BN_bn2binpad(r, (unsigned char*)buf->getArray(), n) != n) {
+            throw std::runtime_error("OpenSSL failed to export bignum");
+        }
+        if (BN_bn2binpad(s, (unsigned char*)buf->getArray() + n, n) != n) {
+            throw std::runtime_error("OpenSSL failed to export bignum");
+        }
         ECDSA_SIG_free(sig);
         return buf;
-        // return buf;
-        // auto data = a->getArray();
-        // // if(___ctr) {
-        // //     ___ctr--;
-        // //     return std::make_shared<FakeJni::JByteArray>(0);
-        // // } else {
-        //     {
-        // auto ret = std::make_shared<FakeJni::JByteArray>(257);
-        // for(int i = 0; i < 256; i++) {
-        //     (*ret)[i] = 'A' + (i % ('Z'-'A'));
-        // }
-        // (*ret)[256] = 0;
-        // // Log::trace("Ecdsa", "Sign: %s");
-        // return ret;
-        // }
-
     }
 
     std::shared_ptr<EcdsaPublicKey> getPublicKey() {
