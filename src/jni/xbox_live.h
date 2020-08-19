@@ -78,13 +78,12 @@ public:
 class ShaHasher : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/ShaHasher")
-    EVP_MD *md = NULL;
     EVP_MD_CTX *mdctx = NULL;
     
     ShaHasher() {
-        md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
+        const EVP_MD* md = EVP_get_digestbynid(NID_sha256);
         if (md == NULL) {
-            throw std::runtime_error("OpenSSL failed to fetch \"SHA2-256\"");
+            throw std::runtime_error("OpenSSL failed to get \"SHA2-256\"");
         }
         mdctx = EVP_MD_CTX_new();
         if (md == NULL) {
@@ -97,7 +96,6 @@ public:
     
     ~ShaHasher() {
         EVP_MD_CTX_free(mdctx);
-        EVP_MD_meth_free(md);
     }
 
     void AddBytes(std::shared_ptr<FakeJni::JByteArray> barray) {
@@ -115,7 +113,7 @@ public:
            throw std::runtime_error("OpenSSL failed to finish evp digest");
         }
         auto arr = std::make_shared<FakeJni::JByteArray>(md_len);
-        memcpy(array->getArray(), md_value, md_len);
+        memcpy(arr->getArray(), md_value, md_len);
         return arr;
     }
 };

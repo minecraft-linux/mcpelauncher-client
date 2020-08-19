@@ -94,7 +94,7 @@ public:
             throw std::runtime_error("OpenSSL failed to get r");
         }
         const BIGNUM* s = ECDSA_SIG_get0_s(sig);
-        if (!g) {
+        if (!s) {
             throw std::runtime_error("OpenSSL failed to get s");
         }
         auto buf = std::make_shared<FakeJni::JByteArray>(2 * n);
