@@ -18,7 +18,7 @@ public:
 
     EcdsaPublicKey(EC_KEY * eckey, EC_GROUP * ecgroup) {
         const EC_POINT * point = EC_KEY_get0_public_key(eckey);
-        if (point) {
+        if (!point) {
             throw std::runtime_error("OpenSSL failed to get ecdsa public key");
         }
         BIGNUM *x = BN_new(), *y = BN_new();
