@@ -133,6 +133,15 @@ public:
     static void showUrl(FakeJni::JLong l, std::shared_ptr<Context> ctx, std::shared_ptr<FakeJni::JString> starturl, std::shared_ptr<FakeJni::JString> endurl, FakeJni::JInt i, FakeJni::JBoolean z, FakeJni::JLong j2) {
         auto a = starturl->asStdString();
         auto b = endurl->asStdString();
+        system((
+#if defined(__APPLE__)
+            "open "
+#elif defined (_WIN32)
+            "start "
+#else
+            "xdg-open "
+#endif
+  + a).c_str());
         std::cout << "OpenThisURL: " << a << "\n";
         std::string result = "";
         std::getline(std::cin, result);
