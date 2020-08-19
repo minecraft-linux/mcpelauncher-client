@@ -11,8 +11,6 @@ EC_KEY *Ecdsa::eckey = NULL;
 EC_GROUP *Ecdsa::ecgroup = NULL;
 std::shared_ptr<FakeJni::JString> Ecdsa::unique_id = NULL;
 
-int ___ctr = 1;
-
 HttpClientRequest::HttpClientRequest() {
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
@@ -37,7 +35,7 @@ void HttpClientRequest::setHttpUrl(std::shared_ptr<FakeJni::JString> url) {
     auto url2 = url->asStdString();
     curl_easy_setopt(curl, CURLOPT_URL, url2.c_str());
 #ifdef XAL_HTTP_LOG
-    Log::trace("xal-http", "setHttpUrl: '%s'", url2.data());
+    Log::trace("xal-http", "setHttpUrl: '%s'", url2.c_str());
 #endif
 }
 
@@ -46,23 +44,23 @@ void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> m
                                              std::shared_ptr<FakeJni::JByteArray> body) {
     this->method = method->asStdString();
 #ifdef XAL_HTTP_LOG
-    Log::trace("xal-http", "setHttpMethod: '%s'", this->method.data());
+    Log::trace("xal-http", "setHttpMethod: '%s'", this->method.c_str());
 #endif
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.data());
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
     this->body = body ? std::vector<char>((char*)body->getArray(), (char*)body->getArray() + body->getSize()) : std::vector<char>{};
     if(this->body.size()) {
 #ifdef XAL_HTTP_LOG
-        Log::trace("xal-http", "setHttpBody: '%s'", this->body.data());
+        Log::trace("xal-http", "setHttpBody: '%s'", this->body.c_str());
 #endif
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, this->body.size());
     }
     auto conttype = contentType->asStdString();
     if(conttype.length()) {
-        header = curl_slist_append(header, ("Content-Type: " + conttype).data());
+        header = curl_slist_append(header, ("Content-Type: " + conttype).c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
 #ifdef XAL_HTTP_LOG
-        Log::trace("xal-http", "setHttpContentType: '%s'", conttype.data());
+        Log::trace("xal-http", "setHttpContentType: '%s'", conttype.c_str());
 #endif
     }
 }
@@ -71,7 +69,7 @@ void HttpClientRequest::setHttpHeader(std::shared_ptr<FakeJni::JString> name, st
     header = curl_slist_append(header, (name->asStdString() + ": " + value->asStdString()).c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
 #ifdef XAL_HTTP_LOG
-    Log::trace("xal-http", "setHttpHeader: '%s: %s'", name->asStdString().data(), value->asStdString().data());
+    Log::trace("xal-http", "setHttpHeader: '%s: %s'", name->asStdString().c_str(), value->asStdString().c_str());
 #endif
 }
 
@@ -84,7 +82,7 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
         auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
         method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(response_code, response, headers)));
 #ifdef XAL_HTTP_LOG
-        Log::trace("xal-http", "doRequestAsync: '%ld %s'", response_code, response.data());
+        Log::trace("xal-http", "doRequestAsync: '%ld %s'", response_code, response.c_str());
 #endif
     }
     else {
