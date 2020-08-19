@@ -2,7 +2,8 @@
 
 #include <fake-jni/fake-jni.h>
 #include "main_activity.h"
-#include <openssl/sha.h>
+#include <cstring>
+#include <openssl/evp.h>
 #include <iostream>
 
 class XboxLoginCallback;
@@ -73,36 +74,48 @@ public:
     void onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message);
 
 };
-extern int ___ctr;
 
 class ShaHasher : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/ShaHasher")
-    SHA256_CTX shactx = {};
-
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    
     ShaHasher() {
-        auto ret = SHA256_Init(&shactx);
+        md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
+        if (md == NULL) {
+            throw std::runtime_error("OpenSSL failed to fetch \"SHA2-256\"");
+        }
+        mdctx = EVP_MD_CTX_new();
+        if (md == NULL) {
+            throw std::runtime_error("OpenSSL failed to create mdctx");
+        }
+        if (EVP_DigestInit_ex(mdctx, md, NULL) != 1) {
+            throw std::runtime_error("OpenSSL failed to initialize evp digest");
+        }
+    }
+    
+    ~ShaHasher() {
+        EVP_MD_CTX_free(mdctx);
+        EVP_MD_meth_free(md);
     }
 
     void AddBytes(std::shared_ptr<FakeJni::JByteArray> barray) {
         auto data = barray->getArray();
         auto len = barray->getSize();
-        auto ret = SHA256_Update(&shactx, data, len);
+        if (EVP_DigestUpdate(mdctx, data, len) != 1) {
+           throw std::runtime_error("OpenSSL failed to update evp digest");
+        }
     }
 
     std::shared_ptr<FakeJni::JByteArray> SignHash() {
-        // if(___ctr) {
-        //     ___ctr--;
-        //     return nullptr;
-        // }
-        // auto ret = std::make_shared<FakeJni::JByteArray>(257);
-        // for(int i = 0; i < 256; i++) {
-        //     (*ret)[i] = 'A' + (i % ('Z'-'A'));
-        // }
-        // (*ret)[256] = 0;
-        // return ret;
-        auto arr = std::make_shared<FakeJni::JByteArray>(SHA256_DIGEST_LENGTH);
-        auto ret = SHA256_Final((unsigned char*)arr->getArray(), &shactx);
+        unsigned char md_value[EVP_MAX_MD_SIZE];
+        unsigned int md_len = 0;
+        if (EVP_DigestFinal_ex(mdctx, md_value, &md_len) != 1) {
+           throw std::runtime_error("OpenSSL failed to finish evp digest");
+        }
+        auto arr = std::make_shared<FakeJni::JByteArray>(md_len);
+        memcpy(array->getArray(), md_value, md_len);
         return arr;
     }
 };
