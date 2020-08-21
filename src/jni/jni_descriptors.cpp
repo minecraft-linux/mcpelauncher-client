@@ -7,6 +7,7 @@
 #include "http_stub.h"
 #include "java_types.h"
 #include "accounts.h"
+#include "jbase64.h"
 
 
 using namespace FakeJni;
@@ -252,4 +253,22 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(WebView)
 {Function<&WebView::showUrl> {}, "showUrl"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(JBase64)
+{Function<&JBase64::decode> {}, "decode"},
+END_NATIVE_DESCRIPTOR
+
+
+BEGIN_NATIVE_DESCRIPTOR(Arrays)
+{Function<&Arrays::copyOfRange> {}, "copyOfRange"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(PublicKey)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Signature)
+{Function<&Signature::initVerify> {}, "initVerify"},
+{Function<&Signature::verify> {}, "verify"},
+{Function<&Signature::getInstance> {}, "getInstance"},
 END_NATIVE_DESCRIPTOR

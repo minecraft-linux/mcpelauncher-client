@@ -9,6 +9,7 @@
 #include "../xbox_live_helper.h"
 #include "http_stub.h"
 #include "accounts.h"
+#include "jbase64.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -61,6 +62,11 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<ShaHasher>();
     vm.registerClass<SecureRandom>();
     vm.registerClass<WebView>();
+
+    vm.registerClass<JBase64>();
+    vm.registerClass<Arrays>();
+    vm.registerClass<Signature>();
+    vm.registerClass<PublicKey>();
     
 }
 
@@ -157,6 +163,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
 
     Log::trace("JniSupport", "Invoking nativeRegisterThis\n");
     auto registerThis = activity->getClass().getMethod("()V", "nativeRegisterThis");
+    if(registerThis)
     registerThis->invoke(frame.getJniEnv(), activity.get());
 
     Log::trace("JniSupport", "Invoking ANativeActivity_onCreate\n");
