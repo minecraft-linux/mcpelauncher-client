@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Loading hybris libraries");
     linker::init();
+    linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
     auto libC = MinecraftUtils::getLibCSymbols();
     ThreadMover::hookLibC(libC);
     linker::load_library("libc.so", libC);
@@ -104,7 +105,6 @@ int main(int argc, char *argv[]) {
 #ifdef USE_ARMHF_SUPPORT
     ArmhfSupport::install();
 #endif
-    linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib();
