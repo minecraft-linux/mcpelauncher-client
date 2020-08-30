@@ -38,6 +38,7 @@ void JniSupport::registerJniClasses() {
 
     vm.registerClass<XboxInterop>();
     vm.registerClass<Ecdsa>();
+    vm.registerClass<EcdsaPublicKey>();
     vm.registerClass<HttpClientRequest>();
     vm.registerClass<HttpClientResponse>();
 
