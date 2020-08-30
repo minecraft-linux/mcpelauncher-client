@@ -12,8 +12,6 @@
 #include "jbase64.h"
 
 void JniSupport::registerJniClasses() {
-    vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
-
     vm.registerClass<File>();
     vm.registerClass<ClassLoader>();
     vm.registerClass<Locale>();
@@ -257,9 +255,9 @@ void JniSupport::setGameControllerConnected(int devId, bool connected) {
     static auto addedMethod = JellyBeanDeviceManager::getDescriptor()->getMethod("(I)V", "onInputDeviceAddedNative");
     static auto removedMethod = JellyBeanDeviceManager::getDescriptor()->getMethod("(I)V", "onInputDeviceRemovedNative");
 
-    FakeJni::LocalFrame frame (vm);
-    if (connected && addedMethod)
-        addedMethod->invoke(frame.getJniEnv(), nullptr, devId);
-    else if (connected && removedMethod)
-        removedMethod->invoke(frame.getJniEnv(), nullptr, devId);
+    // FakeJni::LocalFrame frame (vm);
+    // if (connected && addedMethod)
+    //     addedMethod->invoke(frame.getJniEnv(), nullptr, devId);
+    // else if (connected && removedMethod)
+    //     removedMethod->invoke(frame.getJniEnv(), nullptr, devId);
 }

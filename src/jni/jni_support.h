@@ -18,10 +18,8 @@ private:
         const char *sig;
     };
 
-    Baron::Jvm vm;
     ANativeActivityCallbacks nativeActivityCallbacks;
     ANativeActivity nativeActivity;
-    std::shared_ptr<MainActivity> activity;
     jobject activityRef;
     std::unique_ptr<FakeAssetManager> assetManager;
     ANativeWindow *window;
@@ -37,6 +35,8 @@ private:
                          void *(*symResolver)(const char *));
 
 public:
+    Baron::Jvm vm;
+    std::shared_ptr<MainActivity> activity;
     JniSupport();
 
     void registerMinecraftNatives(void *(*symResolver)(const char *));
