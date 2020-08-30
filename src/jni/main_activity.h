@@ -32,7 +32,7 @@ public:
     DEFINE_CLASS_NAME("android/content/pm/PackageManager")
 
     std::shared_ptr<PackageInfo> getPackageInfo(std::shared_ptr<FakeJni::JString> packageName, FakeJni::JInt flags) {
-        return std::make_shared<PackageInfo>(PackageInfo());
+        return std::make_shared<PackageInfo>();
     }
 
 };
@@ -59,7 +59,7 @@ public:
     }
 
     std::shared_ptr<PackageManager> getPackageManager() {
-        return std::make_shared<PackageManager>(PackageManager());
+        return std::make_shared<PackageManager>();
     }
 
     std::shared_ptr<FakeJni::JString> getSecureStorageKey(std::shared_ptr<FakeJni::JString> str) {
