@@ -20,7 +20,7 @@ public:
     DEFINE_CLASS_NAME("android/content/pm/PackageInfo")
 
     PackageInfo() {
-        versionName = std::make_shared<FakeJni::JString>((jchar*)u"1.16.20.03", 10);
+        versionName = std::make_shared<FakeJni::JString>("1.16.20.03");
     }
     std::shared_ptr<FakeJni::JString> versionName;
 
