@@ -9,6 +9,7 @@
 #include <mach/mach.h>
 #endif
 #include <file_picker_factory.h>
+#include <climits>
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
 std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE = std::make_shared<FakeJni::JString>("AndroidX");
