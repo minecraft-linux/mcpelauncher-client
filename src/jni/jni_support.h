@@ -27,7 +27,6 @@ private:
     std::condition_variable gameExitCond;
     std::mutex gameExitMutex;
     bool gameExitVal = false, looperRunning = false;
-    TextInputHandler textInput;
 
     void registerJniClasses();
 
@@ -37,6 +36,7 @@ private:
 public:
     Baron::Jvm vm;
     std::shared_ptr<MainActivity> activity;
+    TextInputHandler textInput;
     JniSupport();
 
     void registerMinecraftNatives(void *(*symResolver)(const char *));

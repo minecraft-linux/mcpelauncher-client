@@ -511,13 +511,7 @@ symbols["setpriority"] = (void*) +[]() {
     auto MainActivity_ = vm->GetEnv()->GetClass("com/mojang/minecraftpe/MainActivity");
     mainActivity->clazz = MainActivity_;
     mainActivity->storageDirectory = dataDir;
-    // cb = (void*)soinfo_from_handle(libcpp)->base;
-    // mb = (void*)soinfo_from_handle(libmcpe)->base;
-    // Obsolete workaround
-    //size_t baseE = soinfo_from_handle(libmcpe)->base;
-    //char *patch = (char*) (baseE + 0x17405A0);
-    //*patch = 0xC3;
-  #if 1
+    mainActivity->textInput = &sup.textInput;
 
     auto JNI_OnLoad = (jint (*)(JavaVM* vm, void* reserved))__loader_dlsym(libmcpe, "JNI_OnLoad", nullptr);
 
@@ -554,16 +548,6 @@ symbols["setpriority"] = (void*) +[]() {
     // window->prepareRunLoop();
     run_main.first(run_main.second);
     return 0;
-#else
-    auto runner = __loader_dlopen("../libs/libtest_runner.so", 0, 0);
-    tb = (void*)soinfo_from_handle(runner)->base;
-    // RunExe("../libs/test_runner", argc, argv);
-    
-    auto _Z12cpprest_initP7_JavaVM = (void(*)(JavaVM * vm))__loader_dlsym(runner, "_Z12cpprest_initP7_JavaVM", 0);
-    _Z12cpprest_initP7_JavaVM(vm->GetJavaVM());
-    auto _main = (int(*)(int argc, char**argv))__loader_dlsym(runner, "__main", 0);
-    _main(argc, argv);
-#endif
 }
 
 void printVersionInfo() {
