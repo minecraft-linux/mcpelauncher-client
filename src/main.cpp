@@ -35,6 +35,7 @@
 #include "core_patches.h"
 #include "thread_mover.h"
 #include "log.h"
+ #include <unistd.h>
 #include <minecraft/imported/egl_symbols.h>
 #include <minecraft/imported/libm_symbols.h>
 #include <minecraft/imported/fmod_symbols.h>
@@ -475,10 +476,13 @@ symbols["setpriority"] = (void*) +[]() {
         };
     }
     InstallALooper(symbols);
+    symbols["ANativeActivity_finish"] = (void *)+[](ANativeActivity *activity) {
+      Log::warn("Launcher", "Android %s called", "ANativeActivity_finish");
+      _Exit(0);
+    };
     linker::load_library("libandroid.so", symbols);
     linker::load_library("libOpenSLES.so", { });
-    // char s[] = "/home/christopher/cpprestsdk/Build_android/build/build.x86_64.debug/Release/Binaries";
-    // auto es = chdir(s);
+    (void)chdir((PathHelper::getGameDir() + "/assets").data());
     auto libcpp =  __loader_dlopen("../lib/" ANDROID_ARCH "/libc++_shared.so", 0, 0);
     if(!libcpp) {
         libcpp = __loader_dlopen("../lib/" ANDROID_ARCH "/libgnustl_shared.so", 0, 0);
@@ -500,6 +504,7 @@ symbols["setpriority"] = (void*) +[]() {
     //     return -1;
     // }.
     CorePatches::install(libmcpe);
+    linker::patch(libmcpe);
     CorePatches::setGameWindow(window);
     JniSupport sup;
     FakeInputQueue q;
