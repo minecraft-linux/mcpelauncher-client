@@ -1,5 +1,6 @@
 #include "java_types.h"
 #include <locale>
+#include "main_activity.h"
 
 Locale::Locale(std::locale locale) : l(locale) {
 }
@@ -12,18 +13,15 @@ std::shared_ptr<FakeJni::JString> Locale::toString() {
     return std::make_shared<FakeJni::JString>(l.name());
 }
 
-UUID::UUID(uuid_t *u) {
-    std::copy(std::begin(*u), std::end(*u), uuid);
+UUID::UUID(std::shared_ptr<FakeJni::JString> uuid) : uuid(uuid) {
+    
 }
 
 std::shared_ptr<UUID> UUID::randomUUID() {
-    uuid_t uuid;
-    uuid_generate(uuid);
-    return std::make_shared<UUID>(UUID(&uuid));
+    auto uuid = MainActivity().createUUID();
+    return std::make_shared<UUID>(std::make_shared<FakeJni::JString>("{" + uuid->asStdString() + "}"));
 }
 
 std::shared_ptr<FakeJni::JString> UUID::toString() {
-    char uuidStr[37];
-    uuid_unparse_lower(uuid, uuidStr);
-    return std::make_shared<FakeJni::JString>(std::string(uuidStr));
+    return uuid;
 }
