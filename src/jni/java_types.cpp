@@ -19,7 +19,7 @@ UUID::UUID(std::shared_ptr<FakeJni::JString> uuid) : uuid(uuid) {
 
 std::shared_ptr<UUID> UUID::randomUUID() {
     auto uuid = MainActivity().createUUID();
-    return std::make_shared<UUID>(std::make_shared<FakeJni::JString>("{" + uuid->asStdString() + "}"));
+    return std::make_shared<UUID>(uuid);
 }
 
 std::shared_ptr<FakeJni::JString> UUID::toString() {
