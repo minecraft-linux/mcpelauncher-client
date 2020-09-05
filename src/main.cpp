@@ -314,24 +314,6 @@ int main(int argc, char *argv[]) {
     if (!cacheDir.get().empty())
         PathHelper::setCacheDir(cacheDir);
     CreateIfNeededWindow();
-#if defined(__x86_64__) && defined(__APPLE__)
-    // On OS X there doesn't seem to be any way to modify the %fs base.
-    // Let's use %gs instead. Install a signal handler for SIGSEGV to
-    // dynamically patch up instructions that access %fs.
-    static bool handler_set_up = false;
-    if (!handler_set_up) {
-        struct sigaction sa = {
-            .sa_sigaction = handle_sigsegv,
-            .sa_flags = SA_SIGINFO,
-        };
-        sigemptyset(&sa.sa_mask);
-        sigaction(SIGSEGV, &sa, NULL);
-        handler_set_up = true;
-    }
-    void * val2 = tls_get();
-    static uintptr_t guard = 0;
-    tls_set(&guard);
-#endif
     linker::init();
     std::unordered_map<std::string, void *> symbols;
     auto h = dlopen("libm."
