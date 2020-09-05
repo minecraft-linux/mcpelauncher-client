@@ -487,7 +487,7 @@ symbols["setpriority"] = (void*) +[]() {
     auto mainActivity = std::make_shared<MainActivity>();
     auto MainActivity_ = vm->GetEnv()->GetClass("com/mojang/minecraftpe/MainActivity");
     mainActivity->clazz = MainActivity_;
-    mainActivity->storageDirectory = dataDir;
+    mainActivity->storageDirectory = PathHelper::getPrimaryDataDirectory();
     mainActivity->textInput = &sup.textInput;
 
     auto JNI_OnLoad = (jint (*)(JavaVM* vm, void* reserved))__loader_dlsym(libmcpe, "JNI_OnLoad", nullptr);
