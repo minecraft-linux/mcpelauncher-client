@@ -316,22 +316,12 @@ int main(int argc, char *argv[]) {
     CreateIfNeededWindow();
     linker::init();
     std::unordered_map<std::string, void *> symbols;
-    auto h = dlopen("libm."
-#ifdef __APPLE__
-    "dylib"
-#else
-    "so.1"
-#endif
-    , RTLD_LAZY);
 
     auto libcshim = shim::get_shimmed_symbols();
     for (auto && item : libcshim) {
         symbols[item.name] = item.value;
     }
 
-    for (size_t i = 0; libm_symbols[i]; i++) {
-        symbols[libm_symbols[i]] = dlsym(h, libm_symbols[i]);
-    }
 symbols["__cxa_pure_virtual"] = (void*) +[]() {
 
 };
@@ -433,7 +423,7 @@ symbols["setpriority"] = (void*) +[]() {
     // for (size_t i = 0; libm_symbols[i]; i++) {
     //     symbols[libm_symbols[i]] = dlsym(h, libm_symbols[i]);
     // }
-    linker::load_library("libm.so", /* symbols */ {});
+    MinecraftUtils::loadLibM();
     symbols.clear();
     for (size_t i = 0; egl_symbols[i]; i++) {
         symbols[egl_symbols[i]] = (void*)+[]() {
