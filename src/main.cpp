@@ -175,6 +175,7 @@ void CreateIfNeededWindow() {
 #endif
         "bit alpha", 1280, 720, GraphicsApi::OPENGL_ES2);
         window->show();
+        MinecraftUtils::setupGLES2Symbols((void*(*)(const char *))GameWindowManager::getManager()->getProcAddrFunc());
     }
 }
 
