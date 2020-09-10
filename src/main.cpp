@@ -456,6 +456,7 @@ symbols["setpriority"] = (void*) +[]() {
     linker::load_library("libandroid.so", symbols);
     linker::load_library("libOpenSLES.so", { });
     (void)chdir((PathHelper::getGameDir() + "/assets").data());
+    linker::update_LD_LIBRARY_PATH((PathHelper::getGameDir() + "/lib/" ANDROID_ARCH).data());
     auto libcpp =  __loader_dlopen("../lib/" ANDROID_ARCH "/libc++_shared.so", 0, 0);
     if(!libcpp) {
         libcpp = __loader_dlopen("../lib/" ANDROID_ARCH "/libgnustl_shared.so", 0, 0);
