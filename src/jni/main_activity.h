@@ -104,13 +104,16 @@ public:
     }
 
 };
-
+#include <fstream>
 class MainActivity : public NativeActivity {
 
 private:
     bool ignoreNextHideKeyboard = false;
 
 public:
+    unsigned char* (*stbi_load_from_memory)(unsigned char const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
+    void (*stbi_image_free)(void *retval_from_stbi_load);
+
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", NativeActivity)
 
     std::string storageDirectory;
@@ -209,6 +212,8 @@ public:
     void pickImage(FakeJni::JLong callback);
 
     void initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
+
+    std::shared_ptr<FakeJni::JIntArray> getImageData(std::shared_ptr<FakeJni::JString> filename, jboolean b);
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {

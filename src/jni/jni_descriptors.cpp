@@ -93,6 +93,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::pickImage> {}, "pickImage"},
 {Function<&MainActivity::initializeXboxLive> {}, "initializeXboxLive"},
 {Function<&MainActivity::getSecureStorageKey> {}, "getSecureStorageKey"},
+{Function<&MainActivity::getImageData> {}, "getImageData"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(AccountManager)

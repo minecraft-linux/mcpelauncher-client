@@ -10,6 +10,7 @@
 #endif
 #include <file_picker_factory.h>
 #include <climits>
+#include <sstream>
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
 std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE = std::make_shared<FakeJni::JString>("AndroidX");
@@ -118,3 +119,24 @@ void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xbl
         FakeJni::LocalFrame frame;
         method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
 }
+
+std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<FakeJni::JString> filename, jboolean b) {
+    if(!stbi_load_from_memory || !stbi_image_free) return 0;
+    int width, height, channels;
+    std::ifstream f(filename->asStdString().data());
+    if(!f.is_open()) return 0;
+    std::stringstream s;
+    s << f.rdbuf();
+    auto buf = s.str();
+    auto image = stbi_load_from_memory((unsigned char*)buf.data(), buf.length(), &width, &height, &channels, 4);
+    if(!image) return 0;
+    auto ret = std::make_shared<FakeJni::JIntArray>(2 + width * height);
+    (*ret)[0] = width;
+    (*ret)[1] = height;
+
+    for(int x = 0; x < width * height; x++) {
+        (*ret)[2 + x] = (image[x * 4 + 2]) | (image[x * 4 + 1] << 8) | (image[x * 4 + 0] << 16) | (image[x * 4 + 3] << 24);
+    }
+    stbi_image_free(image);
+    return ret;
+} 
