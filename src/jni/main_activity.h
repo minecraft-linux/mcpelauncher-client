@@ -159,7 +159,20 @@ public:
     std::shared_ptr<FakeJni::JString> createUUID();
 
     std::shared_ptr<FakeJni::JByteArray> getFileDataBytes(std::shared_ptr<FakeJni::JString> path) {
-        return std::make_shared<FakeJni::JByteArray>();
+        std::ifstream file(path->asStdString(), std::ios::binary | std::ios::ate);
+        if(file.is_open()) {
+            auto length = file.tellg();
+            auto value = new jbyte[(size_t)length + 1];
+            file.seekg(0, std::ios::beg);
+            file.read((char*)value, length);
+            value[length] = 0;
+            return std::make_shared<FakeJni::JByteArray>(value, (size_t)length);
+        } else {
+            if(!path->compare(0, 20, "file:/android_asset/")) {
+                return getFileDataBytes(std::make_shared<FakeJni::JString>(path->data() + 20));
+            }
+            return std::make_shared<FakeJni::JByteArray>();
+        }
     }
 
     std::shared_ptr<FakeJni::JArray<FakeJni::JString>> getIPAddresses() {
