@@ -285,10 +285,18 @@ void InstallEGL(std::unordered_map<std::string, void *>& symbols) {
     });
 }
 #include "window_callbacks.h"
+#include <csignal>
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
     CrashHandler::registerCrashHandler();
+    // Ignore SIGTRAP of 1.16.100.51/4
+    {
+        struct sigaction act;
+        act.sa_handler = SIG_IGN;
+        sigemptyset(&act.sa_mask);
+        sigaction(SIGTRAP, &act, 0);
+    }
     MinecraftUtils::workaroundLocaleBug();
 
     argparser::arg_parser p;
