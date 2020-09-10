@@ -38,7 +38,8 @@
  #include <unistd.h>
 #include <minecraft/imported/egl_symbols.h>
 #include <minecraft/imported/libm_symbols.h>
-#include <minecraft/imported/fmod_symbols.h>
+#include <minecraft/imported/libz_symbols.h>
+#include <mcpelauncher/hybris_utils.h>
 #include <jnivm.h>
 
 static size_t base;
@@ -418,6 +419,13 @@ symbols["setpriority"] = (void*) +[]() {
     // symbols["pthread_create"] = (void*) my_pthread_create;
     linker::load_library("libc.so", symbols);
     linker::load_library("libc.so.6", symbols);
+    HybrisUtils::loadLibraryOS("libz.so", 
+#ifdef __APPLE__
+    "libz.dylib"
+#else
+    "libz.so.1"
+#endif
+    , libz_symbols);
     // linker::load_empty_library("libpthread.so.0");
     // symbols.clear();
     // auto h = dlopen("libm.so.6", RTLD_LAZY);
@@ -462,11 +470,6 @@ symbols["setpriority"] = (void*) +[]() {
         libcpp = __loader_dlopen("../lib/" ANDROID_ARCH "/libgnustl_shared.so", 0, 0);
     }
     symbols.clear();
-    for (size_t i = 0; fmod_symbols[i]; i++) {
-        symbols[fmod_symbols[i]] = (void*)+[]() {
-            
-        };
-    }
     linker::load_library("libstdc++.so", symbols);
     // auto libcrypro = __loader_dlopen("./libcrypto.so", 0, 0);
     // auto libssl = __loader_dlopen("./libssl.so", 0, 0);
