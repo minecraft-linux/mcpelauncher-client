@@ -61,6 +61,14 @@ EGLBoolean eglChooseConfig(EGLDisplay display, EGLint const *attrib_list, EGLCon
 }
 
 EGLBoolean eglGetConfigAttrib(EGLDisplay display, EGLConfig config, EGLint attribute, EGLint * value) {
+    if (attribute == EGL_NATIVE_VISUAL_ID) {
+        *value = 0;
+        return EGL_TRUE;
+    }
+    if (attribute == EGL_RED_SIZE || attribute == EGL_GREEN_SIZE || attribute == EGL_BLUE_SIZE || attribute == EGL_ALPHA_SIZE ||attribute == EGL_DEPTH_SIZE || attribute == EGL_STENCIL_SIZE) {
+        *value = 8;
+        return EGL_TRUE;
+    }
     Log::warn("FakeEGL", "eglGetConfigAttrib %x", attribute);
     return EGL_TRUE;
 }
