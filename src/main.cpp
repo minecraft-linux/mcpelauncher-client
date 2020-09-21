@@ -344,6 +344,14 @@ symbols["__cxa_guard_release"] = (void*) +[]() {
 symbols["setpriority"] = (void*) +[]() {
 
 };
+// symbols["fdatasync"] = (void*) +[]() {
+
+// };
+symbols["fdatasync"] = (void*)&fdatasync;
+symbols["pthread_setname_np"] = (void*) +[]() {
+
+};
+
     //  symbols["__libc_init"] = (void*)+ []() {
 
     //  };
@@ -534,6 +542,7 @@ symbols["setpriority"] = (void*) +[]() {
     });
     auto run_main = fut.get();
     SymbolsHelper::initSymbols(libmcpe);
+    XboxLiveHelper::getInstance().setJvm(&sup.vm);
     sup.activity = mainActivity;
     WindowCallbacks callbacksc(*window, sup, q);
     callbacksc.registerCallbacks();
