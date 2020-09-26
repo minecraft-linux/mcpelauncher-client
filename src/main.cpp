@@ -348,7 +348,7 @@ symbols["setpriority"] = (void*) +[]() {
 // symbols["fdatasync"] = (void*) +[]() {
 
 // };
-symbols["fdatasync"] = (void*)&fdatasync;
+// symbols["fdatasync"] = (void*)&fdatasync;
 symbols["pthread_setname_np"] = (void*) +[]() {
 
 };
