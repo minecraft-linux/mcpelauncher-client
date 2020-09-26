@@ -41,6 +41,7 @@
 #include <minecraft/imported/libz_symbols.h>
 #include <mcpelauncher/hybris_utils.h>
 #include <jnivm.h>
+#include <mcpelauncher/hook.h>
 
 static size_t base;
 LauncherOptions options;
@@ -435,6 +436,8 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     // symbols["pthread_create"] = (void*) my_pthread_create;
     linker::load_library("libc.so", symbols);
     linker::load_library("libc.so.6", symbols);
+    linker::load_library("libGLESv1_CM.so", {});
+
     HybrisUtils::loadLibraryOS("libz.so", 
 #ifdef __APPLE__
     "libz.dylib"
@@ -492,12 +495,19 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     // __loader_dlopen("../lib/" ANDROID_ARCH "/libfmod.so", 0, 0);
     MinecraftUtils::loadFMod();
     static void * libmcpe = __loader_dlopen("../lib/" ANDROID_ARCH "/libminecraftpe.so", 0, 0);
+    ModLoader modLoader;
+    modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
+    // HookManager::instance.addLibrary(libmcpe);
+    // void* org = 0;
+    // auto hi = HookManager::instance.createHook(libmcpe, "android_main", (void*)+[]() {
+    //     abort();
+    // }, &org);
+    // HookManager::instance.applyHooks();
     // if(!libmcpe) {
     //     std::cout << "Please change the current working directory to the assets folder.\nOn linux e.g \"cd ~/.local/share/mcpelauncher/versions/1.16.0.55/assets\"\n";
     //     return -1;
     // }.
     CorePatches::install(libmcpe);
-    linker::patch(libmcpe);
     CorePatches::setGameWindow(window);
     JniSupport sup;
     FakeInputQueue q;
