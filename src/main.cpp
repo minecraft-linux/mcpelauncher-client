@@ -493,7 +493,11 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     // auto libcrypro = __loader_dlopen("./libcrypto.so", 0, 0);
     // auto libssl = __loader_dlopen("./libssl.so", 0, 0);
     // __loader_dlopen("../lib/" ANDROID_ARCH "/libfmod.so", 0, 0);
-    MinecraftUtils::loadFMod();
+    if(!disableFmod) {
+        try {
+            MinecraftUtils::loadFMod();
+        } catch(...) {}
+    }
     static void * libmcpe = __loader_dlopen("../lib/" ANDROID_ARCH "/libminecraftpe.so", 0, 0);
     ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
