@@ -9,7 +9,7 @@
 WindowCallbacks::WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue) :
     window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
     useDirectMouseInput = true;
-    useDirectKeyboardInput = (Keyboard::_states && Keyboard::_inputs && Keyboard::_gameControllerId);
+    useDirectKeyboardInput = (Keyboard::_states && Keyboard::_inputs);
 }
 
 void WindowCallbacks::registerCallbacks() {
@@ -97,8 +97,17 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
         Keyboard::InputEvent evData {};
         evData.key = (unsigned int) key & 0xff;
         evData.event = (action == KeyAction::PRESS ? 1 : 0);
-        evData.controllerId = *Keyboard::_gameControllerId;
-        Keyboard::_inputs->push_back(evData);
+        evData.controllerId = Keyboard::_gameControllerId ? *Keyboard::_gameControllerId : 0;
+        struct LegacyInputEvent
+        {
+            int event;
+            unsigned int key;
+        };
+        if(Keyboard::_gameControllerId) {
+            Keyboard::_inputs->push_back(evData);
+        } else {
+            ((std::vector<LegacyInputEvent>*)Keyboard::_inputs)->push_back((LegacyInputEvent&)evData);
+        }
         Keyboard::_states[(int) key & 0xff] = evData.event;
         return;
     }
