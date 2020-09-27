@@ -287,6 +287,7 @@ void InstallEGL(std::unordered_map<std::string, void *>& symbols) {
 }
 #include "window_callbacks.h"
 #include <csignal>
+#include <fcntl.h>
 
 int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -348,7 +349,13 @@ symbols["setpriority"] = (void*) +[]() {
 // symbols["fdatasync"] = (void*) +[]() {
 
 // };
-// symbols["fdatasync"] = (void*)&fdatasync;
+#ifdef __APPLE__
+symbols["fdatasync"] = (void*)+[] (int fildes) -> int {
+    return fcntl(fildes, F_FULLFSYNC);
+}
+#else
+symbols["fdatasync"] = (void*)&fdatasync;
+#endif
 symbols["pthread_setname_np"] = (void*) +[]() {
 
 };
