@@ -352,7 +352,7 @@ symbols["setpriority"] = (void*) +[]() {
 #ifdef __APPLE__
 symbols["fdatasync"] = (void*)+[] (int fildes) -> int {
     return fcntl(fildes, F_FULLFSYNC);
-}
+};
 #else
 symbols["fdatasync"] = (void*)&fdatasync;
 #endif
