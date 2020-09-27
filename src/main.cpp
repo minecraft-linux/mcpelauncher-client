@@ -531,6 +531,7 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     auto MainActivity_ = vm->GetEnv()->GetClass("com/mojang/minecraftpe/MainActivity");
     mainActivity->clazz = MainActivity_;
     mainActivity->storageDirectory = PathHelper::getPrimaryDataDirectory();
+    shim::android_data_dir = PathHelper::getPrimaryDataDirectory();
     mainActivity->textInput = &sup.textInput;
     mainActivity->stbi_load_from_memory = (decltype(mainActivity->stbi_load_from_memory)) linker::dlsym(libmcpe, "stbi_load_from_memory");
     mainActivity->stbi_image_free = (decltype(mainActivity->stbi_image_free)) linker::dlsym(libmcpe, "stbi_image_free");
