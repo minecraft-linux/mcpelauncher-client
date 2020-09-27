@@ -499,6 +499,7 @@ symbols["pthread_setname_np"] = (void*) +[]() {
         } catch(...) {}
     }
     static void * libmcpe = __loader_dlopen("../lib/" ANDROID_ARCH "/libminecraftpe.so", 0, 0);
+    HookManager::instance.addLibrary(libmcpe);
     ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
     // HookManager::instance.addLibrary(libmcpe);
