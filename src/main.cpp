@@ -89,7 +89,8 @@ static void __android_log_write(int prio, const char *tag, const char *text) {
 
 #define hybris_hook(a, b) symbols[a] = b;
 
-std::shared_ptr<GameWindow> window;
+// std::shared_ptr<GameWindow> window;
+GameWindow* window;
 
 void InstallALooper(std::unordered_map<std::string, void *>& symbols) {
     struct Looper {
@@ -167,19 +168,19 @@ using EGLConfig = void*;
 using NativeWindowType = void*;
 using NativeDisplayType = void*;
 
-void CreateIfNeededWindow() {
-    if(!window) {
-        window = GameWindowManager::getManager()->createWindow("mcpelauncher "
-#ifdef _LP64
-"64"
-#else
-"32"
-#endif
-        "bit alpha", 1280, 720, GraphicsApi::OPENGL_ES2);
-        window->show();
-        MinecraftUtils::setupGLES2Symbols((void*(*)(const char *))GameWindowManager::getManager()->getProcAddrFunc());
-    }
-}
+// void CreateIfNeededWindow() {
+//     if(!window) {
+//         window = GameWindowManager::getManager()->createWindow("mcpelauncher "
+// #ifdef _LP64
+// "64"
+// #else
+// "32"
+// #endif
+//         "bit alpha", 1280, 720, GraphicsApi::OPENGL_ES2);
+//         window->show();
+//         MinecraftUtils::setupGLES2Symbols((void*(*)(const char *))GameWindowManager::getManager()->getProcAddrFunc());
+//     }
+// }
 
 
 #ifdef __i386__
@@ -309,12 +310,14 @@ int main(int argc, char *argv[]) {
     argparser::arg<int> windowWidth (p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
+    argparser::arg<std::string> classname (p, "--class", "-cn", "X11 class name of this Appication", "mcpelauncher");
     if (!p.parse(argc, (const char**) argv))
         return 1;
     if (printVersion) {
         printVersionInfo();
         return 0;
     }
+    windowManager->setClassInstanceName(classname);
     options.windowWidth = windowWidth;
     options.windowHeight = windowHeight;
     options.graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
@@ -325,7 +328,7 @@ int main(int argc, char *argv[]) {
         PathHelper::setDataDir(dataDir);
     if (!cacheDir.get().empty())
         PathHelper::setCacheDir(cacheDir);
-    CreateIfNeededWindow();
+    // CreateIfNeededWindow();
     linker::init();
     std::unordered_map<std::string, void *> symbols;
 
@@ -482,7 +485,9 @@ symbols["pthread_setname_np"] = (void*) +[]() {
             
         };
     }
-    InstallALooper(symbols);
+    // InstallALooper(symbols);
+    FakeLooper::initHybrisHooks(symbols);
+    FakeInputQueue::initHybrisHooks(symbols);
     symbols["ANativeActivity_finish"] = (void *)+[](ANativeActivity *activity) {
       Log::warn("Launcher", "Android %s called", "ANativeActivity_finish");
       _Exit(0);
@@ -511,8 +516,14 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
     // HookManager::instance.addLibrary(libmcpe);
     // void* org = 0;
-    // auto hi = HookManager::instance.createHook(libmcpe, "android_main", (void*)+[]() {
-    //     abort();
+    // struct path {
+    //         const char * n;
+    //         size_t len;
+    //         size_t unknown;
+    //     };
+    // void * emtyx = linker::dlsym(libmcpe, "_ZN4Core4Path5EMPTYE");
+    // auto hi = HookManager::instance.createHook(libmcpe, "_ZN18ExternalServerFileC1ERKN4Core4PathE", (void*)+[](void*,const path& th)-> void {
+    //     auto name = th.n;
     // }, &org);
     // HookManager::instance.applyHooks();
     // if(!libmcpe) {
@@ -520,9 +531,10 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     //     return -1;
     // }.
     CorePatches::install(libmcpe);
-    CorePatches::setGameWindow(window);
+    // CorePatches::setGameWindow(window);
     JniSupport sup;
-    FakeInputQueue q;
+    // FakeInputQueue q;
+    FakeLooper::setJniSupport(&sup);
     sup.registerMinecraftNatives([](const char* s) {
         return __loader_dlsym(libmcpe, s, nullptr);
     });
@@ -558,8 +570,9 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     std::thread starter([&]() {
         auto ANativeActivity_onCreate = (ANativeActivity_createFunc*)__loader_dlsym(libmcpe, "ANativeActivity_onCreate", 0);
         ANativeActivity_onCreate(&activity, nullptr, 0);
-        activity.callbacks->onInputQueueCreated(&activity, (AInputQueue *)1);
-        activity.callbacks->onNativeWindowCreated(&activity, (ANativeWindow *)window.get());
+        window = (GameWindow*)sup.window;
+        activity.callbacks->onNativeWindowCreated(&activity, (ANativeWindow *)sup.window);//window.get());
+        activity.callbacks->onInputQueueCreated(&activity, (AInputQueue *)sup.inputQueue);
         activity.callbacks->onStart(&activity);
         activity.callbacks->onResume(&activity);
     });
@@ -567,8 +580,8 @@ symbols["pthread_setname_np"] = (void*) +[]() {
     SymbolsHelper::initSymbols(libmcpe);
     XboxLiveHelper::getInstance().setJvm(&sup.vm);
     sup.activity = mainActivity;
-    WindowCallbacks callbacksc(*window, sup, q);
-    callbacksc.registerCallbacks();
+    // activity.callbacks->onInputQueueCreated(&activity, (AInputQueue *)1);
+    // WindowCallbacks callbacksc(*window, sup, q);
     // window->prepareRunLoop();
     run_main.first(run_main.second);
     return 0;

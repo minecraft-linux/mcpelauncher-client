@@ -22,8 +22,6 @@ private:
     ANativeActivity nativeActivity;
     jobject activityRef;
     std::unique_ptr<FakeAssetManager> assetManager;
-    ANativeWindow *window;
-    AInputQueue *inputQueue;
     std::condition_variable gameExitCond;
     std::mutex gameExitMutex;
     bool gameExitVal = false, looperRunning = false;
@@ -34,6 +32,8 @@ private:
                          void *(*symResolver)(const char *));
 
 public:
+    AInputQueue *inputQueue;
+    ANativeWindow *window;
     Baron::Jvm vm;
     std::shared_ptr<MainActivity> activity;
     TextInputHandler textInput;
