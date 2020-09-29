@@ -98,20 +98,24 @@ FakeJni::JLong MainActivity::getMemoryLimit() {
 FakeJni::JLong MainActivity::getAvailableMemory() {
     return getTotalMemory();
 }
-
+#include <thread>
 void MainActivity::pickImage(FakeJni::JLong callback) {
-    auto picker = FilePickerFactory::createFilePicker();
-    picker->setTitle("Select image");
-    picker->setFileNameFilters({ "*.png" });
-    if (picker->show()) {
-        auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
-        FakeJni::LocalFrame frame;
-        method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
-    } else {
-        auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
-        FakeJni::LocalFrame frame;
-        method->invoke(frame.getJniEnv(), this, callback);
-    }
+    auto&& vm = FakeJni::JniEnvContext().getJniEnv().getVM();
+    std::thread([vm=&vm, callback, this]() {
+        auto that = shared_from_this();
+        auto picker = FilePickerFactory::createFilePicker();
+        picker->setTitle("Select image");
+        picker->setFileNameFilters({ "*.png" });
+        if (picker->show()) {
+            auto method = MainActivity::getDescriptor()->getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
+            FakeJni::LocalFrame frame(*vm);
+            method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
+        } else {
+            auto method = MainActivity::getDescriptor()->getMethod("(J)V", "nativeOnPickImageCanceled");
+            FakeJni::LocalFrame frame(*vm);
+            method->invoke(frame.getJniEnv(), this, callback);
+        }
+    }).detach();
 }
 
 void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
