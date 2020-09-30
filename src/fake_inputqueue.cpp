@@ -73,11 +73,11 @@ int FakeInputQueue::getEvent(FakeInputEvent **event) {
 }
 
 void FakeInputQueue::finishEvent(FakeInputEvent *event) {
-    if (&keyEvents.front() == event) {
+    if (!keyEvents.empty() && &keyEvents.front() == event) {
         keyEvents.pop_front();
         return;
     }
-    if (&motionEvents.front() == event) {
+    if (!motionEvents.empty() && &motionEvents.front() == event) {
         motionEvents.pop_front();
         return;
     }
