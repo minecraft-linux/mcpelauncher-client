@@ -7,6 +7,9 @@
 #include "package_source.h"
 #include "../xbox_live_helper.h"
 #include "http_stub.h"
+#ifdef HAVE_PULSEAUDIO
+#include "pulseaudio.h"
+#endif
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -47,6 +50,10 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Header>();
     vm.registerClass<HTTPResponse>();
     vm.registerClass<HTTPRequest>();
+
+#ifdef HAVE_PULSEAUDIO
+    vm.registerClass<AudioDevice>();
+#endif
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
@@ -102,6 +109,7 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
 void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     FakeJni::LocalFrame frame (vm);
 
+    vm.attachLibrary("libfmod.so", "", {linker::dlopen, linker::dlsym, linker::dlclose_unlocked});
     vm.attachLibrary("libminecraftpe.so", "", {linker::dlopen, linker::dlsym, linker::dlclose_unlocked});
 
     auto clz = vm.findClass("android/os/Build$VERSION");

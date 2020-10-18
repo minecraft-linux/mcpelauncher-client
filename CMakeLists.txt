@@ -18,5 +18,13 @@ else()
     target_sources(mcpelauncher-client PRIVATE src/cpuid.cpp src/cpuid.h src/xbox_shutdown_patch.cpp src/xbox_shutdown_patch.h src/texel_aa_patch.cpp src/texel_aa_patch.h)
 endif()
 
+find_package(PulseAudio)
+
+if (PULSEAUDIO_FOUND AND PULSEAUDIOSIMPLE_FOUND)
+    target_sources(mcpelauncher-client PRIVATE src/jni/pulseaudio.cpp src/jni/pulseaudio.h)
+    target_link_libraries(mcpelauncher-client ${PULSEAUDIO_LIBRARIES} ${PULSEAUDIOSIMPLE_LIBRARIES})
+    target_compile_definitions(mcpelauncher-client PRIVATE HAVE_PULSEAUDIO)
+endif()
+
 install(TARGETS mcpelauncher-client RUNTIME COMPONENT mcpelauncher-client DESTINATION bin)
 include(CPackSettings.cmake)

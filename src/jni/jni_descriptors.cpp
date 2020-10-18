@@ -4,6 +4,9 @@
 #include "cert_manager.h"
 #include "package_source.h"
 #include "http_stub.h"
+#ifdef HAVE_PULSEAUDIO
+#include "pulseaudio.h"
+#endif
 
 using namespace FakeJni;
 
@@ -167,3 +170,12 @@ BEGIN_NATIVE_DESCRIPTOR(HTTPRequest)
 {Function<&HTTPRequest::abort> {}, "abort"},
 {Constructor<HTTPRequest> {}},
 END_NATIVE_DESCRIPTOR
+
+#ifdef HAVE_PULSEAUDIO
+BEGIN_NATIVE_DESCRIPTOR(AudioDevice)
+{Constructor<AudioDevice> {}},
+{Function<&AudioDevice::init> {}, "init"},
+{Function<&AudioDevice::write> {}, "write"},
+{Function<&AudioDevice::close> {}, "close"},
+END_NATIVE_DESCRIPTOR
+#endif
