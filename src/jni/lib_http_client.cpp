@@ -5,8 +5,6 @@
 
 using namespace std::placeholders;
 
-Ecdsa::Ecdsa() = default;
-
 HttpClientRequest::HttpClientRequest() {
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);

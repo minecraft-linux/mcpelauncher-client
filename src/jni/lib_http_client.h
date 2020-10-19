@@ -6,12 +6,6 @@
 
 #include <utility>
 
-class Ecdsa : public FakeJni::JObject {
-public:
-    DEFINE_CLASS_NAME("com/microsoft/xal/crypto/Ecdsa")
-    Ecdsa();
-};
-
 class ResponseHeader {
 public:
     ResponseHeader(std::string name, std::string value) : name(std::move(name)), value(std::move(value)) {}

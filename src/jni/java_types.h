@@ -1,8 +1,6 @@
 #pragma once
 
 #include <fake-jni/fake-jni.h>
-#include <locale>
-#include <uuid/uuid.h>
 
 class File : public FakeJni::JObject {
 
@@ -35,32 +33,5 @@ public:
         return std::const_pointer_cast<FakeJni::JClass>(
                 context.getJniEnv().getVM().findClass(str->asStdString().c_str()));
     }
-
-};
-
-class Locale : public FakeJni::JObject {
-
-public:
-    DEFINE_CLASS_NAME("java/util/Locale")
-
-    Locale(std::locale locale);
-    static std::shared_ptr<Locale> getDefault();
-    std::shared_ptr<FakeJni::JString> toString();
-
-private:
-    std::locale l;
-
-};
-
-class UUID : public FakeJni::JObject {
-public:
-    DEFINE_CLASS_NAME("java/util/UUID")
-
-    UUID(uuid_t *uuid);
-    static std::shared_ptr<UUID> randomUUID();
-    std::shared_ptr<FakeJni::JString> toString();
-
-private:
-    uuid_t uuid;
 
 };

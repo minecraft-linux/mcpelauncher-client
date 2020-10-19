@@ -12,6 +12,15 @@
 #include "pulseaudio.h"
 #endif
 #include "accounts.h"
+#include "ecdsa.h"
+#include "webview.h"
+#include "jbase64.h"
+#include "arrays.h"
+#include "locale.h"
+#include "signature.h"
+#include "uuid.h"
+#include "shahasher.h"
+#include "securerandom.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
@@ -40,6 +49,7 @@ void JniSupport::registerJniClasses() {
 
     vm.registerClass<XboxInterop>();
     vm.registerClass<Ecdsa>();
+    vm.registerClass<EcdsaPublicKey>();
     vm.registerClass<HttpClientRequest>();
     vm.registerClass<HttpClientResponse>();
 
@@ -62,6 +72,15 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<HTTPResponse>();
     vm.registerClass<HTTPRequest>();
 
+    vm.registerClass<ShaHasher>();
+    vm.registerClass<SecureRandom>();
+    vm.registerClass<WebView>();
+
+    vm.registerClass<JBase64>();
+    vm.registerClass<Arrays>();
+    vm.registerClass<Signature>();
+    vm.registerClass<PublicKey>();
+
 #ifdef HAVE_PULSEAUDIO
     vm.registerClass<AudioDevice>();
 #endif
@@ -78,7 +97,8 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
             {"nativeSetTextboxText", "(Ljava/lang/String;)V"},
             {"nativeReturnKeyPressed", "()V"},
             {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"},
-            {"nativeOnPickImageCanceled", "(J)V"}
+            {"nativeOnPickImageCanceled", "(J)V"},
+            {"nativeInitializeXboxLive", "(JJ)V"}
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
             {"onStoreInitialized", "(JZ)V"}
@@ -90,6 +110,9 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(HttpClientRequest::getDescriptor(), {
             {"OnRequestCompleted", "(JLcom/xbox/httpclient/HttpClientResponse;)V"},
             {"OnRequestFailed", "(JLjava/lang/String;)V"}
+    }, symResolver);
+    registerNatives(WebView::getDescriptor(), {
+            {"urlOperationSucceeded", "(JLjava/lang/String;ZLjava/lang/String;)V"},
     }, symResolver);
 }
 
@@ -155,7 +178,8 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
 
     Log::trace("JniSupport", "Invoking nativeRegisterThis\n");
     auto registerThis = activity->getClass().getMethod("()V", "nativeRegisterThis");
-    registerThis->invoke(frame.getJniEnv(), activity.get());
+    if(registerThis)
+        registerThis->invoke(frame.getJniEnv(), activity.get());
 
     Log::trace("JniSupport", "Invoking ANativeActivity_onCreate\n");
     activityOnCreate(&nativeActivity, nullptr, 0);

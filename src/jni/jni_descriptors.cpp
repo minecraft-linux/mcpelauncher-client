@@ -10,11 +10,21 @@
 #endif
 #include "java_types.h"
 #include "accounts.h"
+#include "ecdsa.h"
+#include "webview.h"
+#include "jbase64.h"
+#include "arrays.h"
+#include "locale.h"
+#include "signature.h"
+#include "uuid.h"
+#include "shahasher.h"
+#include "securerandom.h"
 
 using namespace FakeJni;
 
 BEGIN_NATIVE_DESCRIPTOR(BuildVersion)
 {Field<&BuildVersion::SDK_INT> {}, "SDK_INT"},
+{Field<&BuildVersion::RELEASE> {}, "RELEASE"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(PackageInfo)
@@ -59,6 +69,7 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(HardwareInfo)
 {Function<&HardwareInfo::getAndroidVersion> {}, "getAndroidVersion"},
+{Function<&HardwareInfo::getInstallerPackageName> {}, "getInstallerPackageName"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Activity)
@@ -90,6 +101,8 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getMemoryLimit> {}, "getMemoryLimit"},
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 {Function<&MainActivity::pickImage> {}, "pickImage"},
+{Function<&MainActivity::initializeXboxLive> {}, "initializeXboxLive"},
+// {Function<&MainActivity::getSecureStorageKey> {}, "getSecureStorageKey"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(AccountManager)
@@ -131,6 +144,16 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Ecdsa)
 {Constructor<Ecdsa> {}},
+{Function<&Ecdsa::sign> {}, "sign"},
+{Function<&Ecdsa::getPublicKey> {}, "getPublicKey"},
+{Function<&Ecdsa::generateKey> {}, "generateKey"},
+{Function<&Ecdsa::restoreKeyAndId> {}, "restoreKeyAndId"},
+{Function<&Ecdsa::getUniqueId> {}, "getUniqueId"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(EcdsaPublicKey)
+{Function<&EcdsaPublicKey::getBase64UrlX> {}, "getBase64UrlX"},
+{Function<&EcdsaPublicKey::getBase64UrlY> {}, "getBase64UrlY"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(HttpClientRequest)
@@ -232,3 +255,34 @@ BEGIN_NATIVE_DESCRIPTOR(AudioDevice)
 {Function<&AudioDevice::close> {}, "close"},
 END_NATIVE_DESCRIPTOR
 #endif
+
+BEGIN_NATIVE_DESCRIPTOR(ShaHasher)
+{Constructor<ShaHasher> {}},
+{Function<&ShaHasher::AddBytes> {}, "AddBytes"},
+{Function<&ShaHasher::SignHash> {}, "SignHash"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(SecureRandom)
+{Function<&SecureRandom::GenerateRandomBytes> {}, "GenerateRandomBytes"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(WebView)
+{Function<&WebView::showUrl> {}, "showUrl"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(JBase64)
+{Function<&JBase64::decode> {}, "decode"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Arrays)
+{Function<&Arrays::copyOfRange> {}, "copyOfRange"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(PublicKey)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Signature)
+{Function<&Signature::initVerify> {}, "initVerify"},
+{Function<&Signature::verify> {}, "verify"},
+{Function<&Signature::getInstance> {}, "getInstance"},
+END_NATIVE_DESCRIPTOR

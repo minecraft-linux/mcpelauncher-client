@@ -10,6 +10,7 @@ public:
     DEFINE_CLASS_NAME("android/os/Build$VERSION")
 
     static FakeJni::JInt SDK_INT;
+    static std::shared_ptr<FakeJni::JString> RELEASE;
 
 };
 
@@ -91,6 +92,10 @@ public:
 
     static std::shared_ptr<FakeJni::JString> getAndroidVersion() {
         return std::make_shared<FakeJni::JString>("Linux");
+    }
+
+    std::shared_ptr<FakeJni::JString> getInstallerPackageName() {
+        return std::make_shared<FakeJni::JString>("com.mojang.minecraftpe");
     }
 
 };
