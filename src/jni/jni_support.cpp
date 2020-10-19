@@ -198,7 +198,8 @@ void JniSupport::stopGame() {
     auto nativeStopThis = activity->getClass().getMethod("()V", "nativeStopThis");
     nativeStopThis->invoke(frame.getJniEnv(), activity.get());
     auto nativeUnregisterThis = activity->getClass().getMethod("()V", "nativeUnregisterThis");
-    nativeUnregisterThis->invoke(frame.getJniEnv(), activity.get());
+    if (nativeUnregisterThis)
+        nativeUnregisterThis->invoke(frame.getJniEnv(), activity.get());
     auto nativeOnDestroy = activity->getClass().getMethod("()V", "nativeOnDestroy");
     nativeOnDestroy->invoke(frame.getJniEnv(), activity.get());
     nativeActivityCallbacks.onPause(&nativeActivity);
