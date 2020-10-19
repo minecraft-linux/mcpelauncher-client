@@ -34,8 +34,18 @@ void HttpClientRequest::setHttpUrl(std::shared_ptr<FakeJni::JString> url) {
 void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> method,
                                              std::shared_ptr<FakeJni::JString> contentType,
                                              std::shared_ptr<FakeJni::JByteArray> body) {
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method->asStdString().c_str());
-    //Body and content Type not yet supported
+    this->method = method->asStdString();
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
+    this->body = body ? std::vector<char>((char*)body->getArray(), (char*)body->getArray() + body->getSize()) : std::vector<char>{};
+    if(this->body.size()) {
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, this->body.size());
+    }
+    auto conttype = contentType->asStdString();
+    if(conttype.length()) {
+        header = curl_slist_append(header, ("Content-Type: " + conttype).c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
+    }
 }
 
 void HttpClientRequest::setHttpHeader(std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> value) {

@@ -46,6 +46,8 @@ private:
     struct curl_slist * header = nullptr;
     std::vector<signed char> response;
     std::vector<ResponseHeader> headers;
+    std::vector<char> body;
+    std::string method;
 
     size_t write_callback(char *ptr, size_t size, size_t nmemb);
     size_t header_callback(char *buffer,   size_t size,   size_t nitems);
