@@ -2,6 +2,7 @@
 #include <EnvPathUtil.h>
 #include <array>
 #include <memory>
+#include <stdexcept>
 #include "util.h"
 
 std::string XalWebViewQt::findWebView() {
