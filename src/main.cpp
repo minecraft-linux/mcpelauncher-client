@@ -87,8 +87,13 @@ int main(int argc, char *argv[]) {
     linker::load_library("libc.so", libC);
     MinecraftUtils::loadLibM();
     MinecraftUtils::setupHybris();
-    if (!disableFmod)
-        MinecraftUtils::loadFMod();
+    if (!disableFmod) {
+        try {
+            MinecraftUtils::loadFMod();
+        } catch (std::exception& e) {
+            Log::warn("FMOD", "Failed to load host libfmod: '%s', use experimental pulseaudio backend if available", e.what());
+        }
+    }
     FakeEGL::setProcAddrFunction((void *(*)(const char*)) windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
     MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
