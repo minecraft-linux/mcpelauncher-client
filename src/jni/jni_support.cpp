@@ -275,7 +275,7 @@ void JniSupport::setGameControllerConnected(int devId, bool connected) {
 
     FakeJni::LocalFrame frame (vm);
     if (connected && addedMethod)
-        addedMethod->invoke(frame.getJniEnv(), nullptr, devId);
+        addedMethod->invoke(frame.getJniEnv(), JellyBeanDeviceManager::getDescriptor().get(), devId);
     else if (connected && removedMethod)
-        removedMethod->invoke(frame.getJniEnv(), nullptr, devId);
+        removedMethod->invoke(frame.getJniEnv(), JellyBeanDeviceManager::getDescriptor().get(), devId);
 }
