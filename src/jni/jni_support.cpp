@@ -23,8 +23,6 @@
 #include "securerandom.h"
 
 void JniSupport::registerJniClasses() {
-    vm.registerClass<FakeJni::JArray<FakeJni::JString>>();
-
     vm.registerClass<File>();
     vm.registerClass<ClassLoader>();
     vm.registerClass<Locale>();
