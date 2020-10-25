@@ -1,5 +1,6 @@
 #include "uuid.h"
 #include <random>
+#include <climits>
 
 UUID::UUID(std::shared_ptr<FakeJni::JString> uuid) : uuid(uuid) {
     
