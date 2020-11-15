@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Loading hybris libraries");
     linker::init();
+    // Fix saving to internal storage without write access to /data/*
+    shim::from_android_data_dir = "/data/data/com.mojang.minecraftpe";
+    shim::to_android_data_dir = PathHelper::getPrimaryDataDirectory();
     auto libC = MinecraftUtils::getLibCSymbols();
     ThreadMover::hookLibC(libC);
     linker::load_library("libc.so", libC);
