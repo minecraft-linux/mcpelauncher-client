@@ -14,9 +14,6 @@
 #include "shader_error_patch.h"
 #include "hbui_patch.h"
 #include "jni/jni_support.h"
-#ifdef USE_ARMHF_SUPPORT
-#include "armhf_support.h"
-#endif
 #if defined(__i386__) || defined(__x86_64__)
 #include "cpuid.h"
 #include "texel_aa_patch.h"
@@ -87,8 +84,22 @@ int main(int argc, char *argv[]) {
     shim::to_android_data_dir = PathHelper::getPrimaryDataDirectory();
     auto libC = MinecraftUtils::getLibCSymbols();
     ThreadMover::hookLibC(libC);
+#ifdef USE_ARMHF_SUPPORT
+    linker::load_library("ld-android.so", {});
+    android_dlextinfo extinfo;
+    std::vector<mcpelauncher_hook_t> hooks;
+    for (auto && entry : libC) {
+        hooks.emplace_back(mcpelauncher_hook_t{ entry.first.data(), entry.second });
+    }
+    hooks.emplace_back(mcpelauncher_hook_t{ nullptr, nullptr });
+    extinfo.flags = ANDROID_DLEXT_MCPELAUNCHER_HOOKS;
+    extinfo.mcpelauncher_hooks = hooks.data();
+    linker::dlopen_ext(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libc.so").c_str(), 0, &extinfo);
+    linker::dlopen(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libm.so").c_str(), 0);
+#else
     linker::load_library("libc.so", libC);
     MinecraftUtils::loadLibM();
+#endif
     MinecraftUtils::setupHybris();
     if (!disableFmod) {
         try {
@@ -109,9 +120,6 @@ int main(int argc, char *argv[]) {
         android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
     linker::load_library("libandroid.so", android_syms);
 
-#ifdef USE_ARMHF_SUPPORT
-    ArmhfSupport::install();
-#endif
     linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
 
     Log::trace("Launcher", "Loading Minecraft library");

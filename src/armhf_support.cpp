@@ -1,7 +1,6 @@
 #include "armhf_support.h"
 
 #include <game_window_manager.h>
-#include <hybris/hook.h>
 
 #define WRAP_DEF_ORIG(name, ...) static void (* name ## _orig)(__VA_ARGS__);
 #define WRAP_DEF_FUNC(name, ...) static void name ## _wrap(__VA_ARGS__)
@@ -20,9 +19,9 @@ WRAP2(glDepthRangef, int, int, float, float)
 
 #define WRAP_INSTALL_GL(name) \
     (void* (*&)()) name ## _orig = procFunc(#name); \
-    hybris_hook(#name, (void*) name ## _wrap);
+    overrides[#name] = (void*) name ## _wrap;
 
-void ArmhfSupport::install() {
+void ArmhfSupport::install(std::unordered_map<std::string, void *>& overrides) {
     auto procFunc = GameWindowManager::getManager()->getProcAddrFunc();
     WRAP_INSTALL_GL(glClearColor)
     WRAP_INSTALL_GL(glUniform1f)

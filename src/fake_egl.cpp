@@ -9,6 +9,9 @@
 #include <cstring>
 #include <game_window.h>
 #include <mcpelauncher/linker.h>
+#ifdef USE_ARMHF_SUPPORT
+#include "armhf_support.h"
+#endif
 
 namespace fake_egl {
 
@@ -153,6 +156,9 @@ void FakeEGL::installLibrary() {
 }
 
 void FakeEGL::setupGLOverrides() {
+#ifdef USE_ARMHF_SUPPORT
+    ArmhfSupport::install(fake_egl::hostProcOverrides);
+#endif
     fake_egl::hostProcOverrides["glInvalidateFramebuffer"] = (void *) +[]() {}; // Stub for a NVIDIA bug
     GLCorePatch::installGL(fake_egl::hostProcOverrides, fake_egl::eglGetProcAddress);
 }
