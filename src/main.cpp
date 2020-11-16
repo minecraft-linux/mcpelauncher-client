@@ -50,6 +50,8 @@ int main(int argc, char *argv[]) {
     argparser::arg<int> windowWidth (p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
+    argparser::arg<bool> forceEgl (p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
+
     if (!p.parse(argc, (const char**) argv))
         return 1;
     if (printVersion) {
@@ -58,7 +60,7 @@ int main(int argc, char *argv[]) {
     }
     options.windowWidth = windowWidth;
     options.windowHeight = windowHeight;
-    options.graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
+    options.graphicsApi = forceEgl.get() ? GraphicsApi::OPENGL_ES2 : GraphicsApi::OPENGL;
 
     if (!gameDir.get().empty())
         PathHelper::setGameDir(gameDir);
