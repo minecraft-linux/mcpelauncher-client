@@ -25,6 +25,9 @@ void GLCorePatch::install(void* handle) {
 #else
     void *ptr = nullptr;
 #endif
+    if (!ptr) {
+        ptr = linker::dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
+    }
     if (!ptr)
         throw std::runtime_error("Failed to find gl::supportsImmediateMode");
     unsigned char replace[6] = { 0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3 };
@@ -93,6 +96,6 @@ bool GLCorePatch::mustUseDesktopGL() {
 #ifdef __APPLE__
     return true;
 #else
-    return false;
+    return true;
 #endif
 }
