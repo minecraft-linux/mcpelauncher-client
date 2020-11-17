@@ -96,6 +96,6 @@ bool GLCorePatch::mustUseDesktopGL() {
 #ifdef __APPLE__
     return true;
 #else
-    return true;
+    return false;
 #endif
 }
