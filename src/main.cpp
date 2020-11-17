@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
     MinecraftUtils::loadLibM();
 #endif
     MinecraftUtils::setupHybris();
+    linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
     if (!disableFmod) {
         try {
             MinecraftUtils::loadFMod();
@@ -126,8 +127,6 @@ int main(int argc, char *argv[]) {
     for (auto s = android_symbols; *s; s++) // stub missing symbols
         android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
     linker::load_library("libandroid.so", android_syms);
-
-    linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib();
