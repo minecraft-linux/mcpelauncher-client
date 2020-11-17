@@ -146,8 +146,14 @@ int main(int argc, char *argv[]) {
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
 #endif
-    if (options.graphicsApi == GraphicsApi::OPENGL)
-        GLCorePatch::install(handle);
+    if (options.graphicsApi == GraphicsApi::OPENGL) {
+        try {
+            GLCorePatch::install(handle);
+        } catch (const std::exception& ex) {
+            Log::error("GLCOREPATCH", "Failed to apply glcorepatch: %s", ex.what());
+            options.graphicsApi = GraphicsApi::OPENGL_ES2;
+        }
+    }
 
     Log::info("Launcher", "Initializing JNI");
     JniSupport support;
