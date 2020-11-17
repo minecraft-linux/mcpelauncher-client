@@ -130,6 +130,7 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(StoreFactory)
 {Function<&StoreFactory::createGooglePlayStore> {}, "createGooglePlayStore"},
+{Function<&StoreFactory::createAmazonAppStore> {}, "createAmazonAppStore"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(XboxInterop)

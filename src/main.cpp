@@ -14,6 +14,7 @@
 #include "shader_error_patch.h"
 #include "hbui_patch.h"
 #include "jni/jni_support.h"
+#include "jni/store.h"
 #if defined(__i386__) || defined(__x86_64__)
 #include "cpuid.h"
 #include "texel_aa_patch.h"
@@ -51,6 +52,8 @@ int main(int argc, char *argv[]) {
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
     argparser::arg<bool> forceEgl (p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
+    argparser::arg<bool> forceGooglePlayStoreUnverified(p, "--force-google-play-store-unverified", "-fguv", "Force telling the game that the license isn't verified, Google Play Store version", false);
+    argparser::arg<bool> forceAmazonAppStoreUnverified(p, "--force-amazon-app-store-unverified", "-fauv", "Force telling the game that the license isn't verified, Amazon App Store version", false);
 
     if (!p.parse(argc, (const char**) argv))
         return 1;
@@ -84,6 +87,8 @@ int main(int argc, char *argv[]) {
     // Fix saving to internal storage without write access to /data/*
     shim::from_android_data_dir = "/data/data/com.mojang.minecraftpe";
     shim::to_android_data_dir = PathHelper::getPrimaryDataDirectory();
+    StoreFactory::hasVerifiedGooglePlayStoreLicense = !forceGooglePlayStoreUnverified.get();
+    StoreFactory::hasVerifiedAmazonAppStoreLicense = !forceAmazonAppStoreUnverified.get();
     auto libC = MinecraftUtils::getLibCSymbols();
     ThreadMover::hookLibC(libC);
 #ifdef USE_ARMHF_SUPPORT

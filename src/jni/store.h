@@ -15,33 +15,22 @@ public:
 
     FakeJni::JLong nativePtr;
 
-    NativeStoreListener(FakeJni::JLong nativePtr) : nativePtr(nativePtr) {
-    }
+    NativeStoreListener(FakeJni::JLong nativePtr);
 
-    void onStoreInitialized(bool available) {
-        auto method = getClass().getMethod("(JZ)V", "onStoreInitialized");
-        FakeJni::LocalFrame frame;
-        method->invoke(frame.getJniEnv(), this, nativePtr, true);
-    }
+    void onStoreInitialized(bool available);
 
 };
 
 class Store : public FakeJni::JObject {
-
+    bool _hasVerifiedLicense = false;
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/Store")
 
-    explicit Store(std::shared_ptr<NativeStoreListener> storeListener) {
-        storeListener->onStoreInitialized(true);
-    }
+    explicit Store(std::shared_ptr<NativeStoreListener> storeListener, bool _hasVerifiedLicense);
 
-    FakeJni::JBoolean receivedLicenseResponse() {
-        return true;
-    }
+    FakeJni::JBoolean receivedLicenseResponse();
 
-    FakeJni::JBoolean hasVerifiedLicense() {
-        return true;
-    }
+    FakeJni::JBoolean hasVerifiedLicense();
 
 };
 
@@ -50,8 +39,8 @@ class StoreFactory : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/StoreFactory")
 
-    static std::shared_ptr<Store> createGooglePlayStore(std::shared_ptr<FakeJni::JString> googlePlayLicenseKey, std::shared_ptr<StoreListener> storeListener) {
-        return std::make_shared<Store>(std::dynamic_pointer_cast<NativeStoreListener>(storeListener));
-    }
-
+    static bool hasVerifiedGooglePlayStoreLicense;
+    static bool hasVerifiedAmazonAppStoreLicense;
+    static std::shared_ptr<Store> createGooglePlayStore(std::shared_ptr<FakeJni::JString> googlePlayLicenseKey, std::shared_ptr<StoreListener> storeListener);
+    static std::shared_ptr<Store> createAmazonAppStore(std::shared_ptr<StoreListener> storeListener);
 };
