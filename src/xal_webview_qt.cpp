@@ -33,7 +33,7 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix) {
     if (webview_path.empty()) {
         throw std::runtime_error("mcpelauncher-webview not found");
     }
-    auto result = exec_get_stdout((webview_path + " \"" + starturl + "\" \"" + endurlprefix + "\"").c_str());
+    auto result = exec_get_stdout(("\"" + webview_path + "\"" + " \"" + starturl + "\" \"" + endurlprefix + "\"").c_str());
     trim(result);
     return result;
 }
