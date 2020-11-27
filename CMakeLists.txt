@@ -43,6 +43,11 @@ option(XAL_WEBVIEW_QT_PATH "Additional paths in which the mcpelauncher-webview s
 if (XAL_WEBVIEW_QT_PATH)
     target_compile_definitions(mcpelauncher-client PRIVATE -DMCPELAUNCHER_WEBVIEW_PATH="${XAL_WEBVIEW_QT_PATH}")
 endif()
+option(ENABLE_ERROR_WINDOW "Use an errorwindow to host certain errormessages" TRUE)
+if (ENABLE_ERROR_WINDOW)
+    target_link_libraries(mcpelauncher-client mcpelauncher-errorwindow)
+    target_compile_definitions(mcpelauncher-client PRIVATE MCPELAUNCHER_ENABLE_ERROR_WINDOW)
+endif()
 
 install(TARGETS mcpelauncher-client RUNTIME COMPONENT mcpelauncher-client DESTINATION bin)
 include(CPackSettings.cmake)

@@ -10,6 +10,9 @@
 
 #include <game_window_manager.h>
 #include <log.h>
+#ifdef MCPELAUNCHER_ENABLE_ERROR_WINDOW
+#include <errorwindow.h>
+#endif
 
 JniSupport *FakeLooper::jniSupport;
 thread_local std::unique_ptr<FakeLooper> FakeLooper::currentLooper;
@@ -44,6 +47,9 @@ void FakeLooper::prepare() {
 
     Log::info("Launcher", "Loading gamepad mappings");
     WindowCallbacks::loadGamepadMappings();
+#ifdef MCPELAUNCHER_ENABLE_ERROR_WINDOW
+    GameWindowManager::getManager()->setErrorHandler(std::make_shared<ErrorWindow>());
+#endif
 
     Log::info("Launcher", "Creating window");
     associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
