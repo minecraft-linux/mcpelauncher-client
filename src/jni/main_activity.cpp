@@ -8,6 +8,7 @@
 #include <mach/mach.h>
 #endif
 #include <file_picker_factory.h>
+#include <game_window_manager.h>
 #include "uuid.h"
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
@@ -86,14 +87,21 @@ FakeJni::JLong MainActivity::getAvailableMemory() {
 }
 
 void MainActivity::pickImage(FakeJni::JLong callback) {
-    auto picker = FilePickerFactory::createFilePicker();
-    picker->setTitle("Select image");
-    picker->setFileNameFilters({ "*.png" });
-    if (picker->show()) {
-        auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
-        FakeJni::LocalFrame frame;
-        method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
-    } else {
+    try {
+        auto picker = FilePickerFactory::createFilePicker();
+        picker->setTitle("Select image");
+        picker->setFileNameFilters({ "*.png" });
+        if (picker->show()) {
+            auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
+            FakeJni::LocalFrame frame;
+            method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
+        } else {
+            auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
+            FakeJni::LocalFrame frame;
+            method->invoke(frame.getJniEnv(), this, callback);
+        }
+    } catch(const std::exception& e) {
+        GameWindowManager::getManager()->getErrorHandler()->onError("FilePickerFactory", std::string("Failed to open the file-picker details: ") + e.what());
         auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
         FakeJni::LocalFrame frame;
         method->invoke(frame.getJniEnv(), this, callback);
