@@ -3,6 +3,7 @@
 #include <array>
 #include <memory>
 #include <stdexcept>
+#include <game_window_manager.h>
 #include "util.h"
 
 std::string XalWebViewQt::findWebView() {
@@ -35,5 +36,8 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix) {
     }
     auto result = exec_get_stdout(("\"" + webview_path + "\"" + " \"" + starturl + "\" \"" + endurlprefix + "\"").c_str());
     trim(result);
+    if (result.rfind(endurlprefix, 0) != 0) {
+        GameWindowManager::getManager()->getErrorHandler()->onError("XalWebViewQt", "Failed to open Xboxlive login Window. Please look into the gamelog for more Information");
+    }
     return result;
 }
