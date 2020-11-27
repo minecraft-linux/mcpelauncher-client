@@ -1,6 +1,7 @@
 #include "pulseaudio.h"
 #include <pulse/simple.h>
 #include <pulse/error.h>
+#include <game_window_manager.h>
 
 AudioDevice::AudioDevice() {
     s = nullptr;
@@ -8,7 +9,7 @@ AudioDevice::AudioDevice() {
 
 FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt samplerate, FakeJni::JInt c, FakeJni::JInt d) {
     if (s != NULL) {
-        throw std::runtime_error("Illegal State, pulseaudio already initialized");
+        GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", "pulseaudio already initialized");
     }
     pa_sample_spec ss;
     ss.format = PA_SAMPLE_S16NE;
@@ -33,7 +34,8 @@ FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt sample
                     );
     if (s == NULL) {
         auto errormsg = pa_strerror(error);
-        throw std::runtime_error(std::string("Illegal State, pulseaudio pa_simple_new failed: ") + (errormsg ? errormsg : "No message from pulseaudio"));
+        GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", std::string("pulseaudio pa_simple_new failed, audio will be unavailable: ") + (errormsg ? errormsg : "No message from pulseaudio"));
+        return false;
     }
     return true;
 }
@@ -42,7 +44,7 @@ void AudioDevice::write(std::shared_ptr<FakeJni::JByteArray> data, FakeJni::JInt
     int error = 0;
     if (pa_simple_write(s, data->getArray(), length, &error)) {
         auto errormsg = pa_strerror(error);
-        throw std::runtime_error(std::string("Illegal State, pulseaudio pa_simple_write failed: ") + (errormsg ? errormsg : "No message from pulseaudio"));
+        GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", std::string("pulseaudio pa_simple_write failed: ") + (errormsg ? errormsg : "No message from pulseaudio"));
     }
 }
 
@@ -50,7 +52,7 @@ void AudioDevice::close() {
     int error = 0;
     if (pa_simple_flush(s, &error)) {
         auto errormsg = pa_strerror(error);
-        throw std::runtime_error(std::string("Illegal State, pulseaudio pa_simple_flush failed: ") + (errormsg ? errormsg : "No message from pulseaudio"));
+        GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", std::string("pulseaudio pa_simple_flush failed: ") + (errormsg ? errormsg : "No message from pulseaudio"));
     }
     pa_simple_free(s);
     s = nullptr;
