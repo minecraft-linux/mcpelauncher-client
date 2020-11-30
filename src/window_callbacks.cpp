@@ -41,8 +41,12 @@ void WindowCallbacks::onClose() {
 }
 
 void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
-    if (btn < 1 || btn > 3)
+    if (btn < 1)
         return;
+    if (btn > 3) {
+        // Seems to get recognized same as regular Mousebuttons as Button4 or higher, but ignored from mouse
+        return onKeyboard((KeyCode) btn, action == MouseButtonAction::PRESS ? KeyAction::PRESS : KeyAction::RELEASE);
+    }
     if (useDirectMouseInput)
         Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
     else if (action == MouseButtonAction::PRESS)
