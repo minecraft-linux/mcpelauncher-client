@@ -90,12 +90,21 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix) {
         }
         auto result = exec_get_stdout(webview_path, starturl, endurlprefix);
         trim(result);
-        if (result.rfind(endurlprefix, 0) != 0 && !result.empty()) {
+        // valid character list took from https://developers.google.com/maps/documentation/urls/url-encoding#special-characters
+        auto validUrlChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~!*'();:@&=+$,/?%#[]";
+        if ((result.rfind(endurlprefix, 0) != 0 || result.find_first_not_of(validUrlChars, 0) != std::string::npos) && !result.empty()) {
+            auto iurl = result.find(endurlprefix);
+            if (iurl != std::string::npos) {
+                auto eurl = result.find_first_not_of(validUrlChars, iurl);
+                auto url = result.substr(iurl, eurl);
+                GameWindowManager::getManager()->getErrorHandler()->onError("XalWebViewQt", "The Launcher might failed to open the Xboxlive login Window successfully, please report if Minecraft tells you that sign in failed. Please look into the gamelog for more Information: Process returned stdout:`" + result + "`, but expected an url starting with:`" + endurlprefix + "`. Try returning `" + url + "` as endurl. We track this issue here https://github.com/minecraft-linux/mcpelauncher-manifest/issues/444");
+                return url;
+            }
             throw std::runtime_error("Process returned stdout:`" + result + "`, but expected an url starting with:`" + endurlprefix + "`");
         }
         return result;
     } catch (const std::exception& ex) {
-        GameWindowManager::getManager()->getErrorHandler()->onError("XalWebViewQt", std::string("Failed to open Xboxlive login Window. Please look into the gamelog for more Information") + ex.what());
+        GameWindowManager::getManager()->getErrorHandler()->onError("XalWebViewQt", std::string("Failed to open Xboxlive login Window. Please look into the gamelog for more Information: ") + ex.what());
         return "";
     }
 }
