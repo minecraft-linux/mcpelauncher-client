@@ -78,7 +78,7 @@ std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, s
             throw std::runtime_error("Process exited with status=" + std::to_string(status) + " stdout:`" + outputStdOut + "` stderr:`" + outputStdErr + "`");
         }
     } else {
-        throw std::runtime_error("Fork failed);
+        throw std::runtime_error("Fork failed");
     }
 }
 
