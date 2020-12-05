@@ -77,6 +77,8 @@ std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, s
         } else {
             throw std::runtime_error("Process exited with status=" + std::to_string(status) + " stdout:`" + outputStdOut + "` stderr:`" + outputStdErr + "`");
         }
+    } else {
+        throw std::runtime_error("Fork failed);
     }
 }
 
@@ -100,15 +102,7 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix) {
 
 std::vector<std::string> XalWebViewQt::buildCommandLine(std::string path, std::string title, std::string description) {
     std::vector<std::string> cmd;
-    std::string path;
-    if (EnvPathUtil::findInPath("mcpelauncher-error", path, ".", EnvPathUtil::getAppDir().c_str())) {
-        cmd.emplace_back(path);
-    } else if (EnvPathUtil::findInPath("mcpelauncher-error", path)) {
-        cmd.emplace_back(path);
-    } else {
-        printf("Failed to find mcpelauncher-error add it into PATH to get UI errors\n");
-        _exit(1);
-    }
+    cmd.emplace_back(path);
     cmd.emplace_back(title);
     cmd.emplace_back(description);
     return std::move(cmd);
