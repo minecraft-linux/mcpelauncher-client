@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
     linker::load_library("libandroid.so", android_syms);
 
     Log::trace("Launcher", "Loading Minecraft library");
-    static void* handle = MinecraftUtils::loadMinecraftLib();
+    static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
     if (!handle) {
       Log::error("Launcher", "Failed to load Minecraft library, please reinstall or wait for an update to support the new release");
       return 51;
@@ -145,7 +145,6 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Applying patches");
     SymbolsHelper::initSymbols(handle);
-    CorePatches::install(handle);
 #ifdef __i386__
     TexelAAPatch::install(handle);
     HbuiPatch::install(handle);
