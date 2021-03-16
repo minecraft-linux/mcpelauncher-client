@@ -145,6 +145,7 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Applying patches");
     SymbolsHelper::initSymbols(handle);
+    CorePatches::install(handle);
 #ifdef __i386__
     TexelAAPatch::install(handle);
     HbuiPatch::install(handle);

@@ -9,6 +9,8 @@ private:
     static std::shared_ptr<GameWindow> currentGameWindow;
 
 public:
+    static void install(void *handle);
+
     static void showMousePointer();
 
     static void hideMousePointer();
