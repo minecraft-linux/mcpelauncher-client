@@ -11,6 +11,10 @@ private:
 public:
     static void install(void *handle);
 
+    static void showMousePointer();
+
+    static void hideMousePointer();
+
     static void setGameWindow(std::shared_ptr<GameWindow> gameWindow);
 
 };

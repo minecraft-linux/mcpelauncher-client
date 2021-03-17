@@ -14,15 +14,19 @@ void CorePatches::install(void *handle) {
     if(appPlatform) {
         void** vta = &((void**) appPlatform)[2];
         PatchUtils::VtableReplaceHelper vtr (handle, vta, vta);
-        vtr.replace("_ZN11AppPlatform16hideMousePointerEv", +[]() {
-            currentGameWindow->setCursorDisabled(true);
-        });
-        vtr.replace("_ZN11AppPlatform16showMousePointerEv", +[]() {
-            currentGameWindow->setCursorDisabled(false);
-        });
+        vtr.replace("_ZN11AppPlatform16hideMousePointerEv", &hideMousePointer);
+        vtr.replace("_ZN11AppPlatform16showMousePointerEv", &showMousePointer);
     } else {
-        Log::error("CorePatches", "Failed to patch vtable _ZTV21AppPlatform_android23 not found");
+        Log::debug("CorePatches", "Failed to patch, vtable _ZTV21AppPlatform_android23 not found");
     }
+}
+
+void CorePatches::showMousePointer() {
+    currentGameWindow->setCursorDisabled(false);
+}
+
+void CorePatches::hideMousePointer() {
+    currentGameWindow->setCursorDisabled(true);
 }
 
 void CorePatches::setGameWindow(std::shared_ptr<GameWindow> gameWindow) {
