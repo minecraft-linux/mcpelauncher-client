@@ -42,9 +42,11 @@ FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt sample
 
 void AudioDevice::write(std::shared_ptr<FakeJni::JByteArray> data, FakeJni::JInt length) {
     int error = 0;
-    if (pa_simple_write(s, data->getArray(), length, &error)) {
+    if (s && pa_simple_write(s, data->getArray(), length, &error)) {
+        pa_simple_free(s);
+        s = nullptr;
         auto errormsg = pa_strerror(error);
-        GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", std::string("pulseaudio pa_simple_write failed: ") + (errormsg ? errormsg : "No message from pulseaudio"));
+        GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", std::string("pulseaudio pa_simple_write failed, please reopen the Launcher to reconnect: ") + (errormsg ? errormsg : "No message from pulseaudio"));
     }
 }
 
