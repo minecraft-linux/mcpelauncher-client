@@ -41,6 +41,7 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(ClassLoader)
 {Function<&ClassLoader::loadClass> {}, "loadClass"},
+{Function<&ClassLoader::loadClass> {}, "findClass"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Locale)
@@ -103,6 +104,8 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::pickImage> {}, "pickImage"},
 {Function<&MainActivity::initializeXboxLive> {}, "initializeXboxLive"},
 // {Function<&MainActivity::getSecureStorageKey> {}, "getSecureStorageKey"},
+{Function<&MainActivity::lockCursor> {}, "lockCursor"},
+{Function<&MainActivity::unlockCursor> {}, "unlockCursor"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(AccountManager)

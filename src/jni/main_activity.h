@@ -111,6 +111,7 @@ public:
     std::string storageDirectory;
     TextInputHandler *textInput = nullptr;
     std::function<void ()> quitCallback;
+    GameWindow* window;
 
     int getAndroidVersion() {
         return 27;
@@ -189,6 +190,14 @@ public:
         if (textInput)
             return textInput->getCursorPosition();
         return 0;
+    }
+
+    void lockCursor() {
+        window->setCursorDisabled(true);
+    }
+
+    void unlockCursor() {
+        window->setCursorDisabled(false);
     }
 
     FakeJni::JLong getUsedMemory();

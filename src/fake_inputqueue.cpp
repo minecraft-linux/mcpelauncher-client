@@ -39,6 +39,9 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void*> &sym
     syms["AMotionEvent_getPointerCount"] = (void *) +[](const AInputEvent *event) {
         return 1;
     };
+    syms["AMotionEvent_getButtonState"] = (void *) +[](const AInputEvent *event) {
+        return 0;
+    };
     syms["AMotionEvent_getPointerId"] = (void *) +[](const AInputEvent *event) {
         return ((const FakeMotionEvent *) (const void *) event)->pointerId;
     };

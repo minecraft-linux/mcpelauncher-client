@@ -236,6 +236,7 @@ void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue)
     // initialized; the thread initialization code runs ALooper_prepare before signaling it's ready.
     this->window = window;
     this->inputQueue = inputQueue;
+    activity->window = (GameWindow*)window;
 }
 
 void JniSupport::onWindowClosed() {
