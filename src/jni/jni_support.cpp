@@ -72,7 +72,10 @@ void JniSupport::registerJniClasses() {
 
     vm.registerClass<ShaHasher>();
     vm.registerClass<SecureRandom>();
+    // Minecraft 1.16.20-210
     vm.registerClass<WebView>();
+    // Minecraft 1.16.220+
+    vm.registerClass<BrowserLaunchActivity>();
 
     vm.registerClass<JBase64>();
     vm.registerClass<Arrays>();
@@ -110,6 +113,9 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
             {"OnRequestFailed", "(JLjava/lang/String;)V"}
     }, symResolver);
     registerNatives(WebView::getDescriptor(), {
+            {"urlOperationSucceeded", "(JLjava/lang/String;ZLjava/lang/String;)V"},
+    }, symResolver);
+    registerNatives(BrowserLaunchActivity::getDescriptor(), {
             {"urlOperationSucceeded", "(JLjava/lang/String;ZLjava/lang/String;)V"},
     }, symResolver);
 }

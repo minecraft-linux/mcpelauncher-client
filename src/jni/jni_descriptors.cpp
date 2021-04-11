@@ -274,6 +274,10 @@ BEGIN_NATIVE_DESCRIPTOR(WebView)
 {Function<&WebView::showUrl> {}, "showUrl"},
 END_NATIVE_DESCRIPTOR
 
+BEGIN_NATIVE_DESCRIPTOR(BrowserLaunchActivity)
+{Function<&BrowserLaunchActivity::showUrl> {}, "showUrl"},
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(JBase64)
 {Function<&JBase64::decode> {}, "decode"},
 END_NATIVE_DESCRIPTOR
