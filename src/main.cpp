@@ -32,6 +32,8 @@
 #include "symbols.h"
 #include "core_patches.h"
 #include "thread_mover.h"
+// For getpid
+#include <unistd.h>
 
 static size_t base;
 LauncherOptions options;
@@ -85,7 +87,8 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Loading hybris libraries");
     linker::init();
     // Fix saving to internal storage without write access to /data/*
-    shim::from_android_data_dir = "/data/data/com.mojang.minecraftpe";
+    auto pid = getpid();
+    shim::from_android_data_dir = { "/data/data/com.mojang.minecraftpe", std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) + "/proc/" + std::to_string(pid) + "/cmdline" };
     shim::to_android_data_dir = PathHelper::getPrimaryDataDirectory();
     StoreFactory::hasVerifiedGooglePlayStoreLicense = !forceGooglePlayStoreUnverified.get();
     StoreFactory::hasVerifiedAmazonAppStoreLicense = !forceAmazonAppStoreUnverified.get();
