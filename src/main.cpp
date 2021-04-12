@@ -87,9 +87,24 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Loading hybris libraries");
     linker::init();
     // Fix saving to internal storage without write access to /data/*
+    // TODO research how this path is constructed
     auto pid = getpid();
-    shim::from_android_data_dir = { "/data/data/com.mojang.minecraftpe", std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) + "/proc/" + std::to_string(pid) + "/cmdline" };
+    shim::from_android_data_dir = { 
+        // Minecraft 1.16.210 or older
+        "/data/data/com.mojang.minecraftpe", 
+        // Minecraft 1.16.210 or later, absolute path on linux (source build ubuntu 20.04)
+        std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) + "/proc/" + std::to_string(pid) + "/cmdline"
+    };
+    if(argc >= 1 && argv != nullptr && argv[0] != nullptr && argv[0][0] != '\0') {
+        // Minecraft 1.16.210 or later, relative path on linux (source build ubuntu 20.04) or every path AppImage / flatpak
+        shim::from_android_data_dir.emplace_back(argv[0][0] == '/' ? std::string("/data/data") + argv[0] : std::string("/data/data/") + argv[0]);
+    }
+    // Minecraft 1.16.210 or later, macOS
+    shim::from_android_data_dir.emplace_back("/data/data");
     shim::to_android_data_dir = PathHelper::getPrimaryDataDirectory();
+    for(auto&& redir : shim::from_android_data_dir) {
+        Log::trace("REDIRECT", "%s to %s", redir.data(), shim::to_android_data_dir.data());
+    }
     StoreFactory::hasVerifiedGooglePlayStoreLicense = !forceGooglePlayStoreUnverified.get();
     StoreFactory::hasVerifiedAmazonAppStoreLicense = !forceAmazonAppStoreUnverified.get();
     auto libC = MinecraftUtils::getLibCSymbols();
