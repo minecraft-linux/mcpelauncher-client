@@ -148,7 +148,8 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
         throw std::runtime_error("RegisterNatives failed");
 }
 
-void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
+void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
+        void *stbiLoadFromMemory, void *stbiImageFree) {
     FakeJni::LocalFrame frame (vm);
 
     vm.attachLibrary("libfmod.so", "", {linker::dlopen, linker::dlsym, linker::dlclose_unlocked});
@@ -167,6 +168,9 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate) {
     activity->textInput = &textInput;
     activity->quitCallback = [this]() { requestExitGame(); };
     activity->storageDirectory = PathHelper::getPrimaryDataDirectory();
+    activity->stbi_load_from_memory = (decltype(activity->stbi_load_from_memory)) stbiLoadFromMemory;
+    activity->stbi_image_free = (decltype(activity->stbi_image_free)) stbiImageFree;
+
     assetManager = std::make_unique<FakeAssetManager>(PathHelper::getGameDir() + "/assets");
 
     XboxLiveHelper::getInstance().setJvm(&vm);

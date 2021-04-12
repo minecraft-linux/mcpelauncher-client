@@ -106,6 +106,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 // {Function<&MainActivity::getSecureStorageKey> {}, "getSecureStorageKey"},
 {Function<&MainActivity::lockCursor> {}, "lockCursor"},
 {Function<&MainActivity::unlockCursor> {}, "unlockCursor"},
+{Function<&MainActivity::getImageData> {}, "getImageData"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(AccountManager)

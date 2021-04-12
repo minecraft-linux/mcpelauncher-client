@@ -186,7 +186,9 @@ int main(int argc, char *argv[]) {
         return linker::dlsym(handle, sym);
     });
     std::thread startThread([&support]() {
-        support.startGame((ANativeActivity_createFunc *) linker::dlsym(handle, "ANativeActivity_onCreate"));
+        support.startGame((ANativeActivity_createFunc *) linker::dlsym(handle, "ANativeActivity_onCreate"),
+            linker::dlsym(handle, "stbi_load_from_memory"),
+            linker::dlsym(handle, "stbi_image_free"));
         linker::dlclose(handle);
     });
     startThread.detach();
