@@ -160,5 +160,39 @@ void FakeEGL::setupGLOverrides() {
     ArmhfSupport::install(fake_egl::hostProcOverrides);
 #endif
     fake_egl::hostProcOverrides["glInvalidateFramebuffer"] = (void *) +[]() {}; // Stub for a NVIDIA bug
+    // Minecraft Intel/Amd Texture Bug 1.16.210-1.17.0.52 and beyond
+    // This patch reduces the visual glitch of blocks, does not work with high resolution textures
+    // TODO improve Bugdetection
+    fake_egl::hostProcOverrides["glTexSubImage2D"] = (void *) +[](unsigned int target,
+ 	int level,
+ 	int xoffset,
+ 	int yoffset,
+ 	int width,
+ 	int height,
+ 	unsigned int format,
+ 	unsigned int type,
+ 	const void * data) {
+            if(width == 1024 && height == 1024) {
+                if(*((int32_t*)data + 989) == *((int32_t*)data + 990) && *((int32_t*)data + 990) != *((int32_t*)data + 991)) {
+                    for(long long y = 0; y < 32; ++y) {
+                        memmove((char*)data + y * width * 4 + 32 * 4, (char*)data + y * width * 4 + 31 * 4, width * 4 - 32 * 4);
+                    }
+                    for(long long y = height - 2; y >= 31; --y) {
+                        memcpy((char*)data + (y + 1) * width * 4 + 32 * 4, (char*)data + y * width * 4 + 31 * 4, width * 4 - 32 * 4);
+                    }
+                }
+            }
+            ((void(*)(unsigned int target,
+                int level,
+                int xoffset,
+                int yoffset,
+                int width,
+                int height,
+                unsigned int format,
+                unsigned int type,
+                const void * data))(fake_egl::hostProcAddrFn("glTexSubImage2D"))) (target, level, xoffset, yoffset, width, height, format, type, data);
+    };
+
+
     GLCorePatch::installGL(fake_egl::hostProcOverrides, fake_egl::eglGetProcAddress);
 }
