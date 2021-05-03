@@ -173,12 +173,82 @@ void FakeEGL::setupGLOverrides() {
  	unsigned int type,
  	const void * data) {
             if(width == 1024 && height == 1024) {
-                if(*((int32_t*)data + 989) == *((int32_t*)data + 990) && *((int32_t*)data + 990) != *((int32_t*)data + 991)) {
+                size_t z = 0;
+                for(long long y = 0; y < height; ++y) {
+                    if(*((int32_t*)data + 987 + y * width) == *((int32_t*)data + 988 + y * width) && *((int32_t*)data + 988 + y * width) == *((int32_t*)data + 989 + y * width) && *((int32_t*)data + 989 + y * width) == *((int32_t*)data + 990 + y * width) && *((int32_t*)data + 990 + y * width) != *((int32_t*)data + 991 + y * width)) {
+                        z++;
+                    }
+                }
+                if(z >= 64)
+                {
                     for(long long y = 0; y < 32; ++y) {
                         memmove((char*)data + y * width * 4 + 32 * 4, (char*)data + y * width * 4 + 31 * 4, width * 4 - 32 * 4);
                     }
                     for(long long y = height - 2; y >= 31; --y) {
                         memcpy((char*)data + (y + 1) * width * 4 + 32 * 4, (char*)data + y * width * 4 + 31 * 4, width * 4 - 32 * 4);
+                        memcpy((char*)data + (y + 1) * width * 4, (char*)data + y * width * 4, 32 * 4);
+                    }
+                }
+            }
+            if(width == 2048 && height == 1024) {
+                if(*((int32_t*)data + 989 + 1024) == *((int32_t*)data + 990 + 1024) && *((int32_t*)data + 990 + 1024) != *((int32_t*)data + 991 + 1024)) {
+                    for(long long y = 0; y < 32; ++y) {
+                        memmove((char*)data + y * width * 4 + 32 * 4, (char*)data + y * width * 4 + 31 * 4, width * 4 - 32 * 4);
+                    }
+                    for(long long y = height - 2; y >= 31; --y) {
+                        memcpy((char*)data + (y + 1) * width * 4 + 32 * 4, (char*)data + y * width * 4 + 31 * 4, width * 4 - 32 * 4);
+                        memcpy((char*)data + (y + 1) * width * 4, (char*)data + y * width * 4, 32 * 4);
+                    }
+                }
+            }
+
+            if(width == 512 && height == 512) {
+                size_t uscore = 0;
+                size_t itemscorea = 0, itemscoreb = 0, itemscorec = 0, itemscored = 0;
+                for(int y = 0; y < height; ++y) {
+                    if(*((uint32_t*)data + y * width + 511 - 14) != 0) {
+                        ++itemscorea;
+                    }
+                    if(*((uint32_t*)data + y * width + 511 - 13) != 0) {
+                        ++itemscoreb;
+                    }
+                    if(*((uint32_t*)data + y * width + 511 - 12) != 0) {
+                        ++itemscorec;
+                    }
+                    if(*((uint32_t*)data + y * width + 511 - 11) == 0) {
+                        ++itemscored;
+                    }
+                }
+                for(int x = 0; x < width; ++x) {
+                    if(*((uint32_t*)data + 1 * width + x) != 0) {
+                        ++uscore;
+                    }
+                }
+                size_t z = 0;
+                for(long long y = 0; y < height; ++y) {
+                    if(*((int32_t*)data + 511 - 20 + y * width) == *((int32_t*)data + 511 - 19 + y * width) && *((int32_t*)data + 511 - 19 + y * width) == *((int32_t*)data + 511 - 18 + y * width) && *((int32_t*)data + 511 - 18 + y * width) == *((int32_t*)data + 511 - 17 + y * width) && *((int32_t*)data + 511 - 17 + y * width) != *((int32_t*)data + 511 - 16 + y * width)) {
+                        z++;
+                    }
+                }
+                if(z >= 64 || (itemscorea > 64 && itemscoreb > 64 && itemscorec > 64 && itemscored > 64)) {
+                    if(z >= 64 || uscore < 16) {
+                        for(long long y = 0; y < 16; ++y) {
+                            memmove((char*)data + y * width * 4 + 16 * 4, (char*)data + y * width * 4 + 15 * 4, width * 4 - 16 * 4);
+                        }
+                    } else {
+                        for(long long y = 15; y >= 0; --y) {
+                            memcpy((char*)data + (y + 1) * width * 4 + 16 * 4, (char*)data + y * width * 4 + 15 * 4, width * 4 - 16 * 4);
+                        }
+                    }
+                    if(z >= 64) {
+                        for(long long y = height - 2; y >= 16; --y) {
+                            memcpy((char*)data + (y + 1) * width * 4 + 16 * 4, (char*)data + y * width * 4 + 15 * 4, width * 4 - 16 * 4);
+                            memcpy((char*)data + (y + 1) * width * 4, (char*)data + y * width * 4, 16 * 4);
+                        }
+                    } else {
+                        for(long long y = height - 2; y >= 16; --y) {
+                            memcpy((char*)data + (y + 1) * width * 4 + 4, (char*)data + y * width * 4 + 0, width * 4 - 4);
+                        }
                     }
                 }
             }
