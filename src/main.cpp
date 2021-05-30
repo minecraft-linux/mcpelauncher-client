@@ -145,6 +145,8 @@ int main(int argc, char *argv[]) {
     for (auto s = android_symbols; *s; s++) // stub missing symbols
         android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
     linker::load_library("libandroid.so", android_syms);
+    ModLoader modLoader;
+    modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
@@ -156,7 +158,6 @@ int main(int argc, char *argv[]) {
     Log::debug("Launcher", "Minecraft is at offset 0x%p", (void *) MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
 
-    ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
 
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
