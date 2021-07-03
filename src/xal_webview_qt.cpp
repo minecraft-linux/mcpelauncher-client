@@ -91,7 +91,8 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix) {
         auto result = exec_get_stdout(webview_path, starturl, endurlprefix);
         trim(result);
         // valid character list took from https://developers.google.com/maps/documentation/urls/url-encoding#special-characters
-        auto validUrlChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~!*'();:@&=+$,/?%#[]";
+        // added space, because it isn't url encoded on account creation
+        auto validUrlChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~!*'();:@&=+$,/?%#[] ";
         if ((result.rfind(endurlprefix, 0) != 0 || result.find_first_not_of(validUrlChars, 0) != std::string::npos) && !result.empty()) {
             auto iurl = result.find(endurlprefix);
             if (iurl != std::string::npos) {
