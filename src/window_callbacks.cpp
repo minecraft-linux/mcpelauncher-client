@@ -128,7 +128,8 @@ void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
         gamepads.insert({gamepad, GamepadData()});
     else
         gamepads.erase(gamepad);
-    jniSupport.setGameControllerConnected(gamepad, connected);
+    // This crashs the game 1.16.210+ during init, but works after loading, disable for now
+    // jniSupport.setGameControllerConnected(gamepad, connected);
 }
 
 void WindowCallbacks::queueGamepadAxisInputIfNeeded(int gamepad) {
