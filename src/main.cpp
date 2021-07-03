@@ -56,6 +56,13 @@ int main(int argc, char *argv[]) {
     argparser::arg<bool> forceEgl (p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
     argparser::arg<bool> forceGooglePlayStoreUnverified(p, "--force-google-play-store-unverified", "-fguv", "Force telling the game that the license isn't verified, Google Play Store version", false);
     argparser::arg<bool> forceAmazonAppStoreUnverified(p, "--force-amazon-app-store-unverified", "-fauv", "Force telling the game that the license isn't verified, Amazon App Store version", false);
+    argparser::arg<bool> texturePatch(p, "--texturepatch", "-tp", "Rewrite textures of the game for Minecraft 1.16.210-1.17.2", 
+#if defined(__i386__) || defined(__x86_64__)
+    true
+#else
+    false
+#endif
+    );
 
     if (!p.parse(argc, (const char**) argv))
         return 1;
@@ -67,6 +74,7 @@ int main(int argc, char *argv[]) {
     options.windowHeight = windowHeight;
     options.graphicsApi = forceEgl.get() ? GraphicsApi::OPENGL_ES2 : GraphicsApi::OPENGL;
 
+    FakeEGL::enableTexturePatch = texturePatch.get();
     if (!gameDir.get().empty())
         PathHelper::setGameDir(gameDir);
     if (!dataDir.get().empty())

@@ -14,4 +14,6 @@ struct FakeEGL {
 
     static void setupGLOverrides();
 
+    static bool enableTexturePatch;
+
 };
