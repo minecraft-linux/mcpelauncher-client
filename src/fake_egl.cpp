@@ -154,12 +154,19 @@ void FakeEGL::installLibrary() {
     syms["eglSwapInterval"] = (void *) fake_egl::eglSwapInterval;
     syms["eglQuerySurface"] = (void *) fake_egl::eglQuerySurface;
     syms["eglGetProcAddress"] = (void *) fake_egl::eglGetProcAddress;
+    linker::load_library("libEGL.so", syms);
+}
 
+void FakeEGL::setupGLOverrides() {
+#ifdef USE_ARMHF_SUPPORT
+    ArmhfSupport::install(fake_egl::hostProcOverrides);
+#endif
+    fake_egl::hostProcOverrides["glInvalidateFramebuffer"] = (void *) +[]() {}; // Stub for a NVIDIA bug
     if (FakeEGL::enableTexturePatch) {
         // Minecraft Intel/Amd Texture Bug 1.16.210-1.17.2 and beyond
         // This patch reduces the visual glitch of blocks, does not work with high resolution textures
         // TODO improve Bugdetection
-        syms["glTexSubImage2D"] = (void *) +[](unsigned int target, int level, int xoffset, int yoffset, int width, int height, unsigned int format, unsigned int type, const void * data) {
+        fake_egl::hostProcOverrides["glTexSubImage2D"] = (void *) +[](unsigned int target, int level, int xoffset, int yoffset, int width, int height, unsigned int format, unsigned int type, const void * data) {
             if (width == 1024 && height == 1024) {
                 size_t z = 0;
                 for (long long y = 0; y < height; ++y) {
@@ -243,14 +250,5 @@ void FakeEGL::installLibrary() {
             ((void(*)(unsigned int target, int level, int xoffset, int yoffset, int width, int height, unsigned int format, unsigned int type, const void * data))(fake_egl::hostProcAddrFn("glTexSubImage2D"))) (target, level, xoffset, yoffset, width, height, format, type, data);
         };
     }
-    linker::load_library("libEGL.so", syms);
-}
-
-void FakeEGL::setupGLOverrides() {
-#ifdef USE_ARMHF_SUPPORT
-    ArmhfSupport::install(fake_egl::hostProcOverrides);
-#endif
-    fake_egl::hostProcOverrides["glInvalidateFramebuffer"] = (void *) +[]() {}; // Stub for a NVIDIA bug
-
     GLCorePatch::installGL(fake_egl::hostProcOverrides, fake_egl::eglGetProcAddress);
 }

@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     argparser::arg<bool> forceEgl (p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
     argparser::arg<bool> forceGooglePlayStoreUnverified(p, "--force-google-play-store-unverified", "-fguv", "Force telling the game that the license isn't verified, Google Play Store version", false);
     argparser::arg<bool> forceAmazonAppStoreUnverified(p, "--force-amazon-app-store-unverified", "-fauv", "Force telling the game that the license isn't verified, Amazon App Store version", false);
-    argparser::arg<bool> texturePatch(p, "--texturepatch", "-tp", "Rewrite textures of the game for Minecraft 1.16.210-1.17.2", 
+    argparser::arg<bool> texturePatch(p, "--texture-patch", "-tp", "Rewrite textures of the game for Minecraft 1.16.210-1.17.2", 
 #if defined(__i386__) || defined(__x86_64__)
     true
 #else
