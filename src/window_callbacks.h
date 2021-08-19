@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "jni/jni_support.h"
 #include "fake_inputqueue.h"
+#include <chrono>
 
 class WindowCallbacks {
 
@@ -23,6 +24,15 @@ private:
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
     bool fullscreen = false;
+    enum class InputMode {
+        Touch,
+        Mouse,
+        Gamepad,
+        Unknown,
+    };
+    InputMode inputMode = InputMode::Unknown;
+    std::chrono::high_resolution_clock::time_point lastUpdated;
+    bool hasInputMode(InputMode want = InputMode::Unknown, bool changeMode = true);
 
     void queueGamepadAxisInputIfNeeded(int gamepad);
 

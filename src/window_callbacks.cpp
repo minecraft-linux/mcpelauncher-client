@@ -40,78 +40,115 @@ void WindowCallbacks::onClose() {
     jniSupport.onWindowClosed();
 }
 
-void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
-    if (btn < 1)
-        return;
-    if (btn > 3) {
-        // Seems to get recognized same as regular Mousebuttons as Button4 or higher, but ignored from mouse
-        return onKeyboard((KeyCode) btn, action == MouseButtonAction::PRESS ? KeyAction::PRESS : KeyAction::RELEASE);
+bool WindowCallbacks::hasInputMode(WindowCallbacks::InputMode want, bool changeMode) {
+    auto now = std::chrono::high_resolution_clock::now();
+    if(inputMode == want || changeMode && ((int)want < (int)inputMode || (now - lastUpdated) > std::chrono::seconds(2))) {
+        if(inputMode != want) {
+#ifndef NDEBUG
+            printf("Input Mode changed to %d\n", (int)want);
+#endif
+            if(want == InputMode::Mouse) {
+                window.setCursorDisabled(false);
+            } else {
+                window.setCursorDisabled(true);
+            }
+        }
+        inputMode = want;
+        lastUpdated = now;
+        return true;
     }
-    if (useDirectMouseInput)
-        Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
-    else if (action == MouseButtonAction::PRESS)
-        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, 0, x, y));
-    else if (action == MouseButtonAction::RELEASE)
-        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, 0, x, y));
+    return false;
+}
+
+void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonAction action) {
+    if(hasInputMode(InputMode::Mouse)) {
+        if (btn < 1)
+            return;
+        if (btn > 3) {
+            // Seems to get recognized same as regular Mousebuttons as Button4 or higher, but ignored from mouse
+            return onKeyboard((KeyCode) btn, action == MouseButtonAction::PRESS ? KeyAction::PRESS : KeyAction::RELEASE);
+        }
+        if (useDirectMouseInput)
+            Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
+        else if (action == MouseButtonAction::PRESS)
+            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, 0, x, y));
+        else if (action == MouseButtonAction::RELEASE)
+            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, 0, x, y));
+    }
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
-    if (useDirectMouseInput)
-        Mouse::feed(0, 0, (short) x, (short) y, 0, 0);
-    else
-        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
+    if(hasInputMode(InputMode::Mouse)) {
+        if (useDirectMouseInput)
+            Mouse::feed(0, 0, (short) x, (short) y, 0, 0);
+        else
+            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
+    }
 }
 void WindowCallbacks::onMouseRelativePosition(double x, double y) {
-    if (useDirectMouseInput)
-        Mouse::feed(0, 0, 0, 0, (short) x, (short) y);
-    else
-        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
+    if(hasInputMode(InputMode::Mouse, std::abs(x) > 10 || std::abs(y) > 10)) {
+        if (useDirectMouseInput)
+            Mouse::feed(0, 0, 0, 0, (short) x, (short) y);
+        else
+            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
+    }
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
-    char cdy = (char) std::max(std::min(dy * 127.0, 127.0), -127.0);
-    if (useDirectMouseInput)
-        Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
+    if(hasInputMode(InputMode::Mouse)) {
+        signed char cdy = (signed char)std::max(std::min(dy * 127.0, 127.0), -127.0);
+        if (useDirectMouseInput)
+            Mouse::feed(4, (char&)cdy, 0, 0, (short) x, (short) y);
+    }
 }
 void WindowCallbacks::onTouchStart(int id, double x, double y) {
-    inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, id, x, y));
+    if(hasInputMode(InputMode::Touch)) {
+        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, id, x, y));
+    }
 }
 void WindowCallbacks::onTouchUpdate(int id, double x, double y) {
-    inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, id, x, y));
+    if(hasInputMode(InputMode::Touch)) {
+        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, id, x, y));
+    }
 }
 void WindowCallbacks::onTouchEnd(int id, double x, double y) {
-    inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, id, x, y));
+    if(hasInputMode(InputMode::Touch)) {
+        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, id, x, y));
+    }
 }
 void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
-#ifdef __APPLE__
-    if (key == KeyCode::LEFT_SUPER || key == KeyCode::RIGHT_SUPER)
-#else
-    if (key == KeyCode::LEFT_CTRL || key == KeyCode::RIGHT_CTRL)
-#endif
-        modCTRL = (action != KeyAction::RELEASE);
+    if(hasInputMode(InputMode::Mouse)) {
+        // return onKeyboard((KeyCode) 4, KeyAction::PRESS);
+        // key = (KeyCode) 0x21;
+    #ifdef __APPLE__
+        if (key == KeyCode::LEFT_SUPER || key == KeyCode::RIGHT_SUPER)
+    #else
+        if (key == KeyCode::LEFT_CTRL || key == KeyCode::RIGHT_CTRL)
+    #endif
+            modCTRL = (action != KeyAction::RELEASE);
 
-    if (modCTRL && key == KeyCode::C) {
-        window.setClipboardText(jniSupport.getTextInputHandler().getCopyText());
-    } else {
-        jniSupport.getTextInputHandler().onKeyPressed(key, action);
+        if (modCTRL && key == KeyCode::C) {
+            window.setClipboardText(jniSupport.getTextInputHandler().getCopyText());
+        } else {
+            jniSupport.getTextInputHandler().onKeyPressed(key, action);
+        }
+
+        if (key == KeyCode::FN11 && action == KeyAction::PRESS)
+            window.setFullscreen(fullscreen = !fullscreen);
+
+        if (useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
+            Keyboard::InputEvent evData {};
+            evData.key = (unsigned int) key & 0xff;
+            evData.event = (action == KeyAction::PRESS ? 1 : 0);
+            evData.controllerId = *Keyboard::_gameControllerId;
+            Keyboard::_inputs->push_back(evData);
+            Keyboard::_states[(int) key & 0xff] = evData.event;
+            return;
+        }
+
+        if (action == KeyAction::PRESS)
+            inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(key)));
+        else if (action == KeyAction::RELEASE)
+            inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, mapMinecraftToAndroidKey(key)));
     }
-
-    if (key == KeyCode::FN11 && action == KeyAction::PRESS)
-        window.setFullscreen(fullscreen = !fullscreen);
-
-    if (useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
-        Keyboard::InputEvent evData {};
-        evData.key = (unsigned int) key & 0xff;
-        evData.event = (action == KeyAction::PRESS ? 1 : 0);
-        evData.controllerId = *Keyboard::_gameControllerId;
-        Keyboard::_inputs->push_back(evData);
-        Keyboard::_states[(int) key & 0xff] = evData.event;
-        return;
-    }
-
-    if (action == KeyAction::PRESS)
-        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(key)));
-    else if (action == KeyAction::RELEASE)
-        inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, mapMinecraftToAndroidKey(key)));
-
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
     if (c == "\n" && !jniSupport.getTextInputHandler().isMultiline())
@@ -167,36 +204,40 @@ void WindowCallbacks::queueGamepadAxisInputIfNeeded(int gamepad) {
 }
 
 void WindowCallbacks::onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed) {
-    auto gpi = gamepads.find(gamepad);
-    if (gpi == gamepads.end())
-        return;
-    auto& gp = gpi->second;
-    if ((int) btn < 0 || (int) btn >= 15)
-        throw std::runtime_error("bad button id");
-    if (gp.button[(int) btn] == pressed)
-        return;
-    gp.button[(int) btn] = pressed;
+    if(hasInputMode(InputMode::Gamepad)) {
+        auto gpi = gamepads.find(gamepad);
+        if (gpi == gamepads.end())
+            return;
+        auto& gp = gpi->second;
+        if ((int) btn < 0 || (int) btn >= 15)
+            throw std::runtime_error("bad button id");
+        if (gp.button[(int) btn] == pressed)
+            return;
+        gp.button[(int) btn] = pressed;
 
-    if (btn == GamepadButtonId::DPAD_UP || btn == GamepadButtonId::DPAD_DOWN || btn == GamepadButtonId::DPAD_LEFT || btn == GamepadButtonId::DPAD_RIGHT) {
-        queueGamepadAxisInputIfNeeded(gamepad);
-        return;
+        if (btn == GamepadButtonId::DPAD_UP || btn == GamepadButtonId::DPAD_DOWN || btn == GamepadButtonId::DPAD_LEFT || btn == GamepadButtonId::DPAD_RIGHT) {
+            queueGamepadAxisInputIfNeeded(gamepad);
+            return;
+        }
+
+        if (pressed)
+            inputQueue.addEvent(FakeKeyEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AKEY_EVENT_ACTION_DOWN, mapGamepadToAndroidKey(btn)));
+        else
+            inputQueue.addEvent(FakeKeyEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AKEY_EVENT_ACTION_UP, mapGamepadToAndroidKey(btn)));
     }
-
-    if (pressed)
-        inputQueue.addEvent(FakeKeyEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AKEY_EVENT_ACTION_DOWN, mapGamepadToAndroidKey(btn)));
-    else
-        inputQueue.addEvent(FakeKeyEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AKEY_EVENT_ACTION_UP, mapGamepadToAndroidKey(btn)));
 }
 
 void WindowCallbacks::onGamepadAxis(int gamepad, GamepadAxisId ax, float value) {
-    auto gpi = gamepads.find(gamepad);
-    if (gpi == gamepads.end())
-        return;
-    auto& gp = gpi->second;
-    if ((int) ax < 0 || (int) ax >= 6)
-        throw std::runtime_error("bad axis id");
-    gp.axis[(int) ax] = value;
-    queueGamepadAxisInputIfNeeded(gamepad);
+    if(hasInputMode(InputMode::Gamepad, std::abs(value) > 0.4f )) {
+        auto gpi = gamepads.find(gamepad);
+        if (gpi == gamepads.end())
+            return;
+        auto& gp = gpi->second;
+        if ((int) ax < 0 || (int) ax >= 6)
+            throw std::runtime_error("bad axis id");
+        gp.axis[(int) ax] = value;
+        queueGamepadAxisInputIfNeeded(gamepad);
+    }
 }
 
 void WindowCallbacks::loadGamepadMappings() {
