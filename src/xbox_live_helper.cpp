@@ -124,8 +124,8 @@ void XboxLiveHelper::setJvm(FakeJni::Jvm *vm) {
 }
 
 std::string XboxLiveHelper::getCllXToken(bool refresh) {
+    FakeJni::LocalFrame env (*vm);
     if (auto callback = XboxInterop::getDescriptor()->getMethod("(Z)Ljava/lang/String;", "get_uploader_x_token_callback")) {
-        FakeJni::LocalFrame env (*vm);
         if (auto xtokenRef = callback->invoke(env.getJniEnv(), XboxInterop::getDescriptor().get(), (jboolean)refresh).l) {
             if (auto xtoken = std::dynamic_pointer_cast<FakeJni::JString>(env.getJniEnv().resolveReference(xtokenRef))) {
                 return xtoken->asStdString();
@@ -136,8 +136,8 @@ std::string XboxLiveHelper::getCllXToken(bool refresh) {
 }
 
 std::string XboxLiveHelper::getCllXTicket(std::string const& xuid) {
+    FakeJni::LocalFrame env (*vm);
     if (auto callback = XboxInterop::getDescriptor()->getMethod("(Ljava/lang/String;)Ljava/lang/String;", "get_supporting_x_token_callback")) {
-        FakeJni::LocalFrame env (*vm);
         auto xuidRef = env.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(xuid));
         if (auto xticketRef = callback->invoke(env.getJniEnv(), XboxInterop::getDescriptor().get(), xuidRef).l) {
             if (auto xticket = std::dynamic_pointer_cast<FakeJni::JString>(env.getJniEnv().resolveReference(xticketRef))) {
