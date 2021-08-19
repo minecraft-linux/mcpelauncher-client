@@ -15,7 +15,7 @@ public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/packagesource/PackageSourceListener")
 };
 
-class NativePackageSourceListener : public FakeJni::JObject {
+class NativePackageSourceListener : public PackageSourceListener {
 
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/packagesource/NativePackageSourceListener", PackageSourceListener)
