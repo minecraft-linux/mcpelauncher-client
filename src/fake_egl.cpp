@@ -55,7 +55,7 @@ EGLDisplay eglGetCurrentDisplay() {
 }
 
 EGLContext eglGetCurrentContext() {
-    return (EGLContext *) (currentDrawSurface ? 1 : 0);
+    return currentDrawSurface ? (EGLContext *) 1 : (EGLContext *) 0;
 }
 
 EGLBoolean eglChooseConfig(EGLDisplay display, EGLint const *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
