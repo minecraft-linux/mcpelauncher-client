@@ -155,6 +155,7 @@ void FakeEGL::installLibrary() {
     syms["eglQuerySurface"] = (void *) fake_egl::eglQuerySurface;
     syms["eglGetProcAddress"] = (void *) fake_egl::eglGetProcAddress;
     linker::load_library("libEGL.so", syms);
+    FakeEGL::setupGLOverrides();
 }
 
 void FakeEGL::setupGLOverrides() {

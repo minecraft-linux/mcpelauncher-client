@@ -144,7 +144,6 @@ int main(int argc, char *argv[]) {
     }
     FakeEGL::setProcAddrFunction((void *(*)(const char*)) windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
-    MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
 
     std::unordered_map<std::string, void*> android_syms;
     FakeAssetManager::initHybrisHooks(android_syms);
@@ -153,6 +152,8 @@ int main(int argc, char *argv[]) {
     for (auto s = android_symbols; *s; s++) // stub missing symbols
         android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
     linker::load_library("libandroid.so", android_syms);
+    MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
+    
     ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
 
