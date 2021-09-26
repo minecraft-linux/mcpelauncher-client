@@ -246,6 +246,8 @@ void WindowCallbacks::loadGamepadMappings() {
     PathHelper::findAllDataFiles("gamecontrollerdb.txt", [&controllerDbPaths](std::string const &path) {
         controllerDbPaths.push_back(path);
     });
+    // Bugfix: allow users to change internal gamepad layouts
+    std::reverse(controllerDbPaths.begin(), controllerDbPaths.end());
     for (std::string const& path : controllerDbPaths) {
         Log::trace("Launcher", "Loading gamepad mappings: %s", path.c_str());
         windowManager->addGamepadMappingFile(path);
