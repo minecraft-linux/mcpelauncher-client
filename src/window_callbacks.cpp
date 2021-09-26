@@ -182,8 +182,8 @@ void WindowCallbacks::queueGamepadAxisInputIfNeeded(int gamepad) {
                 if (axis == AMOTION_EVENT_AXIS_Y) return gp.axis[(int) GamepadAxisId::LEFT_Y];
                 if (axis == AMOTION_EVENT_AXIS_RX) return gp.axis[(int) GamepadAxisId::RIGHT_X];
                 if (axis == AMOTION_EVENT_AXIS_RY) return gp.axis[(int) GamepadAxisId::RIGHT_Y];
-                if (axis == AMOTION_EVENT_AXIS_GAS) return gp.axis[(int) GamepadAxisId::LEFT_TRIGGER];
-                if (axis == AMOTION_EVENT_AXIS_BRAKE) return gp.axis[(int) GamepadAxisId::RIGHT_TRIGGER];
+                if (axis == AMOTION_EVENT_AXIS_BRAKE) return gp.axis[(int) GamepadAxisId::LEFT_TRIGGER];
+                if (axis == AMOTION_EVENT_AXIS_GAS) return gp.axis[(int) GamepadAxisId::RIGHT_TRIGGER];
                 if (axis == AMOTION_EVENT_AXIS_HAT_X) {
                     if (gp.button[(int) GamepadButtonId::DPAD_LEFT])
                         return -1.f;
