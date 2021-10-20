@@ -1,6 +1,19 @@
 #include "fake_inputqueue.h"
 
 #include <stdexcept>
+#include "armhfrewrite.h"
+
+static float _AMotionEvent_getX(const AInputEvent *event, size_t pointerIndex) {
+    return ((const FakeMotionEvent *) (const void *) event)->x;
+}
+
+static float _AMotionEvent_getY(const AInputEvent *event, size_t pointerIndex) {
+    return ((const FakeMotionEvent *) (const void *) event)->y;
+}
+
+static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, size_t pointerIndex) {
+    return ((const FakeMotionEvent *) (const void *) event)->axisFunction(axis);
+}
 
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void*> &syms) {
     syms["AInputQueue_getEvent"] = (void *) +[](AInputQueue *queue, AInputEvent **outEvent) {
@@ -45,21 +58,11 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void*> &sym
     syms["AMotionEvent_getPointerId"] = (void *) +[](const AInputEvent *event) {
         return ((const FakeMotionEvent *) (const void *) event)->pointerId;
     };
-    syms["AMotionEvent_getX"] = (void *) +[](const AInputEvent *event, size_t pointerIndex) {
-        return ((const FakeMotionEvent *) (const void *) event)->x;
-    };
-    syms["AMotionEvent_getY"] = (void *) +[](const AInputEvent *event, size_t pointerIndex) {
-        return ((const FakeMotionEvent *) (const void *) event)->y;
-    };
-    syms["AMotionEvent_getRawX"] = (void *) +[](const AInputEvent *event, size_t pointerIndex) {
-        return ((const FakeMotionEvent *) (const void *) event)->x;
-    };
-    syms["AMotionEvent_getRawY"] = (void *) +[](const AInputEvent *event, size_t pointerIndex) {
-        return ((const FakeMotionEvent *) (const void *) event)->y;
-    };
-    syms["AMotionEvent_getAxisValue"] = (void *) +[](const AInputEvent *event, int32_t axis, size_t pointerIndex) {
-        return ((const FakeMotionEvent *) (const void *) event)->axisFunction(axis);
-    };
+    syms["AMotionEvent_getX"] = reinterpret_cast<void*>(ARMHFREWRITE(_AMotionEvent_getX));
+    syms["AMotionEvent_getY"] = reinterpret_cast<void*>(ARMHFREWRITE(_AMotionEvent_getY));
+    syms["AMotionEvent_getRawX"] = reinterpret_cast<void*>(ARMHFREWRITE(_AMotionEvent_getX));
+    syms["AMotionEvent_getRawY"] = reinterpret_cast<void*>(ARMHFREWRITE(_AMotionEvent_getY));
+    syms["AMotionEvent_getAxisValue"] = reinterpret_cast<void*>(ARMHFREWRITE(_AMotionEvent_getAxisValue));
 }
 
 
