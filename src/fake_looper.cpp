@@ -62,6 +62,7 @@ void FakeLooper::prepare() {
     CorePatches::setGameWindow(associatedWindow);
 
     associatedWindow->show();
+    FakeEGL::setupGLOverrides();
     SplitscreenPatch::onGLContextCreated();
     ShaderErrorPatch::onGLContextCreated();
 }
