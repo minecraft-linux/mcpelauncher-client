@@ -154,10 +154,6 @@ int main(int argc, char *argv[]) {
         android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
     linker::load_library("libandroid.so", android_syms);
     ModLoader modLoader;
-    auto MCPELAUNCHER_ALLOW_PROPRIETARY_EXTENSIONS = getenv("MCPELAUNCHER_ALLOW_PROPRIETARY_EXTENSIONS");
-    if(MCPELAUNCHER_ALLOW_PROPRIETARY_EXTENSIONS && MCPELAUNCHER_ALLOW_PROPRIETARY_EXTENSIONS == std::string("1")) {
-        modLoader.loadModsFromDirectory(PathHelper::findDataFile(std::string("mcpelauncher-updates-bin/") + PathHelper::getAbiDir()) + "/", true);
-    }
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
 
     Log::trace("Launcher", "Loading Minecraft library");
@@ -170,9 +166,6 @@ int main(int argc, char *argv[]) {
     Log::debug("Launcher", "Minecraft is at offset 0x%p", (void *) MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
 
-    if(MCPELAUNCHER_ALLOW_PROPRIETARY_EXTENSIONS && MCPELAUNCHER_ALLOW_PROPRIETARY_EXTENSIONS == std::string("1")) {
-        modLoader.loadModsFromDirectory(PathHelper::findDataFile(std::string("mcpelauncher-updates-bin/") + PathHelper::getAbiDir()) + "/");
-    }
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
 
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
