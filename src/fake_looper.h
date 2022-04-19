@@ -33,10 +33,11 @@ private:
     EventEntry inputEntry;
     FakeInputQueue fakeInputQueue;
 
-    std::shared_ptr<GameWindow> associatedWindow;
     std::shared_ptr<WindowCallbacks> associatedWindowCallbacks;
 
 public:
+    static std::shared_ptr<GameWindow> associatedWindow;
+
     static void setJniSupport(JniSupport *support) {
         jniSupport = support;
     }

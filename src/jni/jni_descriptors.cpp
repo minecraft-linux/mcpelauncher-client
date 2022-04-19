@@ -125,11 +125,33 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(NativeStoreListener)
 {Constructor<NativeStoreListener, JLong> {}},
+// {FakeJni::Function<&NativeStoreListener::onPurchaseFailed>{}, "onPurchaseFailed", FakeJni::JMethodID::PUBLIC },
+// {FakeJni::Function<&NativeStoreListener::onQueryProductsSuccess>{}, "onQueryProductsSuccess", FakeJni::JMethodID::PUBLIC },
+// {FakeJni::Function<&NativeStoreListener::onQueryPurchasesSuccess>{}, "onQueryPurchasesSuccess", FakeJni::JMethodID::PUBLIC },
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Purchase)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Product)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(NotificationListenerService)
+{FakeJni::Function<&NotificationListenerService::getDeviceRegistrationToken>{}, "getDeviceRegistrationToken", FakeJni::JMethodID::PUBLIC | FakeJni::JMethodID::STATIC},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Store)
-{Function<&Store::receivedLicenseResponse> {}, "receivedLicenseResponse"},
-{Function<&Store::hasVerifiedLicense> {}, "hasVerifiedLicense"},
+{FakeJni::Function<&Store::receivedLicenseResponse>{}, "receivedLicenseResponse", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::hasVerifiedLicense>{}, "hasVerifiedLicense", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::getStoreId>{}, "getStoreId", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::getProductSkuPrefix>{}, "getProductSkuPrefix", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::getRealmsSkuPrefix>{}, "getRealmsSkuPrefix", FakeJni::JMethodID::PUBLIC },
+// {FakeJni::Function<&Store::getExtraLicenseData>{}, "getExtraLicenseData", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::queryProducts>{}, "queryProducts", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::purchase>{}, "purchase", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::acknowledgePurchase>{}, "acknowledgePurchase", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::queryPurchases>{}, "queryPurchases", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::destructor>{}, "destructor", FakeJni::JMethodID::PUBLIC },
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(StoreFactory)

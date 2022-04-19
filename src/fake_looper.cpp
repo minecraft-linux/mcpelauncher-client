@@ -41,7 +41,7 @@ void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void*> &syms) {
         activity->quitCallback();
     };
 }
-
+std::shared_ptr<GameWindow> FakeLooper::associatedWindow;
 void FakeLooper::prepare() {
     jniSupport->setLooperRunning(true);
 
@@ -52,8 +52,7 @@ void FakeLooper::prepare() {
 #endif
 
     Log::info("Launcher", "Creating window");
-    associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
-            options.windowWidth, options.windowHeight, options.graphicsApi);
+    
     jniSupport->onWindowCreated((ANativeWindow *) (void *) associatedWindow.get(),
             (AInputQueue *) (void *) &fakeInputQueue);
     associatedWindowCallbacks = std::make_shared<WindowCallbacks>(*associatedWindow, *jniSupport, fakeInputQueue);

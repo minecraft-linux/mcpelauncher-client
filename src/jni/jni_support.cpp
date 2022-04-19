@@ -81,6 +81,9 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Arrays>();
     vm.registerClass<Signature>();
     vm.registerClass<PublicKey>();
+    vm.registerClass<Product>();
+    vm.registerClass<Purchase>();
+    vm.registerClass<NotificationListenerService>();
 
 #ifdef HAVE_PULSEAUDIO
     vm.registerClass<AudioDevice>();
@@ -90,6 +93,8 @@ void JniSupport::registerJniClasses() {
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(), {
             {"nativeRegisterThis", "()V"},
+            {"nativeWaitCrashManagementSetupComplete", "()V"},
+            {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"},
             {"nativeShutdown", "()V"},
             {"nativeUnregisterThis", "()V"},
             {"nativeStopThis", "()V"},
@@ -102,7 +107,10 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
             {"nativeInitializeXboxLive", "(JJ)V"}
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
-            {"onStoreInitialized", "(JZ)V"}
+            {"onStoreInitialized", "(JZ)V"},
+            {"onPurchaseFailed", "(JLjava/lang/String;)V"},
+            {"onQueryProductsSuccess", "(J[Lcom/mojang/minecraftpe/store/Product;)V"},
+            {"onQueryPurchasesSuccess", "(J[Lcom/mojang/minecraftpe/store/Purchase;)V"},
     }, symResolver);
     registerNatives(JellyBeanDeviceManager::getDescriptor(), {
             {"onInputDeviceAddedNative", "(I)V"},
@@ -189,17 +197,29 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
     if(registerThis)
         registerThis->invoke(frame.getJniEnv(), activity.get());
 
+
+    Log::trace("JniSupport", "Invoking start activity callbacks\n");
+    
+    // auto nativeWaitCrashManagementSetupComplete = activity->getClass().getMethod("()V", "nativeWaitCrashManagementSetupComplete");
+    // if(nativeWaitCrashManagementSetupComplete)
+    //     nativeWaitCrashManagementSetupComplete->invoke(frame.getJniEnv(), activity.get());
+    auto nativeInitializeWithApplicationContext = activity->getClass().getMethod("(Landroid/content/Context;)V", "nativeInitializeWithApplicationContext");
+    if(nativeInitializeWithApplicationContext)
+        nativeInitializeWithApplicationContext->invoke(frame.getJniEnv(), activity.get(), activityRef);
+    
     Log::trace("JniSupport", "Invoking ANativeActivity_onCreate\n");
     activityOnCreate(&nativeActivity, nullptr, 0);
 
-    Log::trace("JniSupport", "Invoking start activity callbacks\n");
+    nativeActivityCallbacks.onStart(&nativeActivity);
     nativeActivityCallbacks.onInputQueueCreated(&nativeActivity, inputQueue);
     nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, window);
-    nativeActivityCallbacks.onStart(&nativeActivity);
+    nativeActivityCallbacks.onWindowFocusChanged(&nativeActivity, 1);
     nativeActivityCallbacks.onResume(&nativeActivity);
+
 }
 
 void JniSupport::stopGame() {
+    vm.printStatistics();
     FakeJni::LocalFrame frame (vm);
 
     Log::trace("JniSupport", "Invoking stop activity callbacks\n");
@@ -256,10 +276,10 @@ void JniSupport::onWindowClosed() {
 }
 
 void JniSupport::onWindowResized(int newWidth, int newHeight) {
-    FakeJni::LocalFrame frame (vm);
-    auto resize = activity->getClass().getMethod("(II)V", "nativeResize");
-    if (resize)
-        resize->invoke(frame.getJniEnv(), activity.get(), newWidth, newHeight);
+    // FakeJni::LocalFrame frame (vm);
+    // auto resize = activity->getClass().getMethod("(II)V", "nativeResize");
+    // if (resize)
+    //     resize->invoke(frame.getJniEnv(), activity.get(), newWidth, newHeight);
 }
 
 void JniSupport::onSetTextboxText(std::string const &text) {
