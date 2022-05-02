@@ -126,6 +126,12 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(BrowserLaunchActivity::getDescriptor(), {
             {"urlOperationSucceeded", "(JLjava/lang/String;ZLjava/lang/String;)V"},
     }, symResolver);
+    registerNatives(NativeInputStream::getDescriptor(), {
+            {"nativeRead", "(JJ[BJJ)I"},
+    }, symResolver);
+    registerNatives(NativeOutputStream::getDescriptor(), {
+            {"nativeWrite", "(J[BII)V"},
+    }, symResolver);
 }
 
 JniSupport::JniSupport() : textInput([this](std::string const &str) { return onSetTextboxText(str); }) {

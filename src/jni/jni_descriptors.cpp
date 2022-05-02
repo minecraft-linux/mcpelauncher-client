@@ -193,6 +193,7 @@ BEGIN_NATIVE_DESCRIPTOR(HttpClientRequest)
 {Function<&HttpClientRequest::createClientRequest> {}, "createClientRequest"},
 {Function<&HttpClientRequest::setHttpUrl> {}, "setHttpUrl"},
 {Function<&HttpClientRequest::setHttpMethodAndBody> {}, "setHttpMethodAndBody"},
+{Function<&HttpClientRequest::setHttpMethodAndBody2> {}, "setHttpMethodAndBody"},
 {Function<&HttpClientRequest::setHttpHeader> {}, "setHttpHeader"},
 {Function<&HttpClientRequest::doRequestAsync> {}, "doRequestAsync"},
 END_NATIVE_DESCRIPTOR
@@ -202,7 +203,13 @@ BEGIN_NATIVE_DESCRIPTOR(HttpClientResponse)
 {Function<&HttpClientResponse::getHeaderNameAtIndex> {}, "getHeaderNameAtIndex"},
 {Function<&HttpClientResponse::getHeaderValueAtIndex> {}, "getHeaderValueAtIndex"},
 {Function<&HttpClientResponse::getResponseBodyBytes> {}, "getResponseBodyBytes"},
+{Function<&HttpClientResponse::getResponseBodyBytes2> {}, "getResponseBodyBytes"},
 {Function<&HttpClientResponse::getResponseCode> {}, "getResponseCode"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(NativeOutputStream)
+END_NATIVE_DESCRIPTOR
+BEGIN_NATIVE_DESCRIPTOR(NativeInputStream)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(XboxLoginCallback)
