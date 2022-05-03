@@ -46,6 +46,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<StoreFactory>();
 
     vm.registerClass<XboxInterop>();
+    vm.registerClass<XboxLocalStorage>();
     vm.registerClass<Ecdsa>();
     vm.registerClass<EcdsaPublicKey>();
     vm.registerClass<HttpClientRequest>();
@@ -185,7 +186,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
     activity->stbi_load_from_memory = (decltype(activity->stbi_load_from_memory)) stbiLoadFromMemory;
     activity->stbi_image_free = (decltype(activity->stbi_image_free)) stbiImageFree;
 
-    assetManager = std::make_unique<FakeAssetManager>(PathHelper::getGameDir() + "/assets");
+    assetManager = std::make_unique<FakeAssetManager>(PathHelper::getGameDir() + "assets");
 
     XboxLiveHelper::getInstance().setJvm(&vm);
 

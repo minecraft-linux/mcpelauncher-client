@@ -71,3 +71,11 @@ public:
     void onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message);
 
 };
+
+class XboxLocalStorage : public FakeJni::JObject {
+
+public:
+    DEFINE_CLASS_NAME("com/microsoft/xboxlive/LocalStorage")
+
+    static std::shared_ptr<FakeJni::JString> getPath(std::shared_ptr<Context> context);
+};

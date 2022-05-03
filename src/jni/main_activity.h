@@ -172,6 +172,10 @@ public:
         return getExternalStoragePath();
     }
 
+    std::shared_ptr<FakeJni::JString> getLegacyExternalStoragePath(std::shared_ptr<FakeJni::JString> gameFolder) {
+        return std::make_shared<FakeJni::JString>("");
+    }
+
     FakeJni::JBoolean hasWriteExternalStoragePermission() {
         return true;
     }
@@ -220,7 +224,7 @@ public:
         ignoreNextHideKeyboard = false;
         if (textInput)
             return textInput->getCursorPosition();
-        return 0;
+        return -1;
     }
 
     void lockCursor() {

@@ -27,6 +27,9 @@ namespace fake_assetmanager {
 
 AAsset *AAssetManager_open(FakeAssetManager *amgr, const char* filename, int mode) {
     std::string fullPath = amgr->rootDir + filename;
+    if(filename[0] == '/') {
+        fullPath = filename;
+    }
 #ifndef NDEBUG
     Log::trace("AAssetManager", "AAssetManager_open %s\n", fullPath.c_str());
 #endif

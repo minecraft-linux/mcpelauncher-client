@@ -123,3 +123,6 @@ void XboxLoginCallback::onError(int httpStatus, int status, std::shared_ptr<Fake
     XboxInterop::authFlowCallback(jvm, userPtr, XboxInterop::AUTH_FLOW_ERROR, "");
 }
 
+std::shared_ptr<FakeJni::JString> XboxLocalStorage::getPath(std::shared_ptr<Context> context) {
+    return XboxInterop::getLocalStoragePath(context);
+}

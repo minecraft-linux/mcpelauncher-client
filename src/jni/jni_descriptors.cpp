@@ -91,6 +91,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getDeviceModel> {}, "getDeviceModel"},
 {Function<&MainActivity::getExternalStoragePath> {}, "getExternalStoragePath"},
 {Function<&MainActivity::getInternalStoragePath> {}, "getInternalStoragePath"},
+{Function<&MainActivity::getLegacyExternalStoragePath>{}, "getLegacyExternalStoragePath"},
 {Function<&MainActivity::hasWriteExternalStoragePermission> {}, "hasWriteExternalStoragePermission"},
 {Function<&MainActivity::getHardwareInfo> {}, "getHardwareInfo"},
 {Function<&MainActivity::createUUID> {}, "createUUID"},
@@ -172,6 +173,10 @@ BEGIN_NATIVE_DESCRIPTOR(XboxInterop)
 {Function<&XboxInterop::invokeAuthFlow> {}, "InvokeAuthFlow"},
 {Function<&XboxInterop::initCLL> {}, "InitCLL"},
 {Function<&XboxInterop::logCLL> {}, "LogCLL"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(XboxLocalStorage)
+{Function<&XboxLocalStorage::getPath>{}, "getPath" },
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Ecdsa)
