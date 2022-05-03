@@ -90,6 +90,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getLocale> {}, "getLocale"},
 {Function<&MainActivity::getDeviceModel> {}, "getDeviceModel"},
 {Function<&MainActivity::getExternalStoragePath> {}, "getExternalStoragePath"},
+{Function<&MainActivity::getInternalStoragePath> {}, "getInternalStoragePath"},
 {Function<&MainActivity::hasWriteExternalStoragePermission> {}, "hasWriteExternalStoragePermission"},
 {Function<&MainActivity::getHardwareInfo> {}, "getHardwareInfo"},
 {Function<&MainActivity::createUUID> {}, "createUUID"},

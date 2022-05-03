@@ -168,6 +168,10 @@ public:
         return std::make_shared<FakeJni::JString>(storageDirectory);
     }
 
+    std::shared_ptr<FakeJni::JString> getInternalStoragePath() {
+        return getExternalStoragePath();
+    }
+
     FakeJni::JBoolean hasWriteExternalStoragePermission() {
         return true;
     }
