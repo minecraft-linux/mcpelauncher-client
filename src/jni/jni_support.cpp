@@ -44,6 +44,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<NativeStoreListener>();
     vm.registerClass<Store>();
     vm.registerClass<StoreFactory>();
+    vm.registerClass<ExtraLicenseResponseData>();
 
     vm.registerClass<XboxInterop>();
     vm.registerClass<XboxLocalStorage>();

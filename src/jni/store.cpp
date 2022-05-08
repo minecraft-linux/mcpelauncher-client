@@ -53,9 +53,9 @@ std::shared_ptr<FakeJni::JString> Store::getRealmsSkuPrefix() {
     return {};
 }
 
-// std::shared_ptr<ExtraLicenseResponseData> Store::getExtraLicenseData() {
-//     return {};
-// }
+std::shared_ptr<ExtraLicenseResponseData> Store::getExtraLicenseData() {
+    return std::make_shared<ExtraLicenseResponseData>();
+}
 
 void Store::queryProducts(std::shared_ptr<FakeJni::JArray<FakeJni::JString>> arg0) {
     this->storeListener->onQueryProductsSuccess(std::make_shared<FakeJni::JArray<Product>>(arg0->getSize()));

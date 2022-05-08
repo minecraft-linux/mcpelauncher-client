@@ -144,8 +144,14 @@ public:
         return height;
     }
 
+    void tick() { }
+
     FakeJni::JBoolean isNetworkEnabled(FakeJni::JBoolean wifi) {
         return true;
+    }
+
+    FakeJni::JBoolean isChromebook() {
+        return false;
     }
 
     std::shared_ptr<FakeJni::JString> getLocale() {
@@ -184,11 +190,14 @@ public:
         return std::make_shared<HardwareInfo>();
     }
 
+    FakeJni::JFloat getPixelsPerMillimeter() {
+        // assume 96 DPI for now
+        return 96 / 25.4f;
+    }
+
     std::shared_ptr<FakeJni::JString> createUUID();
 
-    std::shared_ptr<FakeJni::JByteArray> getFileDataBytes(std::shared_ptr<FakeJni::JString> path) {
-        return std::make_shared<FakeJni::JByteArray>();
-    }
+    std::shared_ptr<FakeJni::JByteArray> getFileDataBytes(std::shared_ptr<FakeJni::JString> path);
 
     std::shared_ptr<FakeJni::JArray<FakeJni::JString>> getIPAddresses() {
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();

@@ -87,6 +87,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getDisplayHeight> {}, "getDisplayHeight"},
 {Function<&MainActivity::getDisplayWidth> {}, "getDisplayWidth"},
 {Function<&MainActivity::isNetworkEnabled> {}, "isNetworkEnabled"},
+{Function<&MainActivity::isChromebook> {}, "isChromebook"},
 {Function<&MainActivity::getLocale> {}, "getLocale"},
 {Function<&MainActivity::getDeviceModel> {}, "getDeviceModel"},
 {Function<&MainActivity::getExternalStoragePath> {}, "getExternalStoragePath"},
@@ -113,6 +114,8 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::lockCursor> {}, "lockCursor"},
 {Function<&MainActivity::unlockCursor> {}, "unlockCursor"},
 {Function<&MainActivity::getImageData> {}, "getImageData"},
+{Function<&MainActivity::tick>{}, "tick"},
+{Function<&MainActivity::getPixelsPerMillimeter>{}, "getPixelsPerMillimeter"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(AccountManager)
@@ -137,9 +140,16 @@ BEGIN_NATIVE_DESCRIPTOR(NativeStoreListener)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Purchase)
+// {FakeJni::Field<&Purchase::mProductId>{}, "mProductId", FakeJni::JFieldID::PUBLIC },
+// {FakeJni::Field<&Purchase::mReceipt>{}, "mReceipt", FakeJni::JFieldID::PUBLIC },
+// {FakeJni::Field<&Purchase::mPurchaseActive>{}, "mPurchaseActive", FakeJni::JFieldID::PUBLIC },
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Product)
+// {FakeJni::Field<&Product::mId>{}, "mId", FakeJni::JFieldID::PUBLIC },
+// {FakeJni::Field<&Product::mPrice>{}, "mPrice", FakeJni::JFieldID::PUBLIC },
+// {FakeJni::Field<&Product::mCurrencyCode>{}, "mCurrencyCode", FakeJni::JFieldID::PUBLIC },
+// {FakeJni::Field<&Product::mUnformattedPrice>{}, "mUnformattedPrice", FakeJni::JFieldID::PUBLIC },
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(NotificationListenerService)
@@ -152,12 +162,18 @@ BEGIN_NATIVE_DESCRIPTOR(Store)
 {FakeJni::Function<&Store::getStoreId>{}, "getStoreId", FakeJni::JMethodID::PUBLIC },
 {FakeJni::Function<&Store::getProductSkuPrefix>{}, "getProductSkuPrefix", FakeJni::JMethodID::PUBLIC },
 {FakeJni::Function<&Store::getRealmsSkuPrefix>{}, "getRealmsSkuPrefix", FakeJni::JMethodID::PUBLIC },
-// {FakeJni::Function<&Store::getExtraLicenseData>{}, "getExtraLicenseData", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&Store::getExtraLicenseData>{}, "getExtraLicenseData", FakeJni::JMethodID::PUBLIC },
 {FakeJni::Function<&Store::queryProducts>{}, "queryProducts", FakeJni::JMethodID::PUBLIC },
 {FakeJni::Function<&Store::purchase>{}, "purchase", FakeJni::JMethodID::PUBLIC },
 {FakeJni::Function<&Store::acknowledgePurchase>{}, "acknowledgePurchase", FakeJni::JMethodID::PUBLIC },
 {FakeJni::Function<&Store::queryPurchases>{}, "queryPurchases", FakeJni::JMethodID::PUBLIC },
 {FakeJni::Function<&Store::destructor>{}, "destructor", FakeJni::JMethodID::PUBLIC },
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(ExtraLicenseResponseData)
+{FakeJni::Function<&ExtraLicenseResponseData::getValidationTime>{}, "getValidationTime", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&ExtraLicenseResponseData::getRetryUntilTime>{}, "getRetryUntilTime", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&ExtraLicenseResponseData::getRetryAttempts>{}, "getRetryAttempts", FakeJni::JMethodID::PUBLIC },
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(StoreFactory)

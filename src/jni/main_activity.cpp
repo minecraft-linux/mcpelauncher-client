@@ -13,6 +13,8 @@
 #include <climits>
 #include <sstream>
 
+#include <log.h>
+
 FakeJni::JInt BuildVersion::SDK_INT = 27;
 std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE = std::make_shared<FakeJni::JString>("AndroidX");
 
@@ -135,4 +137,8 @@ std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<F
     }
     stbi_image_free(image);
     return ret;
-} 
+}
+
+std::shared_ptr<FakeJni::JByteArray> MainActivity::getFileDataBytes(std::shared_ptr<FakeJni::JString> path) {
+    return std::make_shared<FakeJni::JByteArray>();
+}

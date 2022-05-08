@@ -11,12 +11,50 @@ public:
 class Product : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/Product")
+
+    Product() {
+        mId = std::make_shared<FakeJni::JString>("");
+        mPrice = std::make_shared<FakeJni::JString>("");
+        mCurrencyCode = std::make_shared<FakeJni::JString>("");
+        mUnformattedPrice = std::make_shared<FakeJni::JString>("");
+    }
+
+    std::shared_ptr<FakeJni::JString> mId;
+    std::shared_ptr<FakeJni::JString> mPrice;
+    std::shared_ptr<FakeJni::JString> mCurrencyCode;
+    std::shared_ptr<FakeJni::JString> mUnformattedPrice;
 };
 
 class Purchase : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/Purchase")
+
+    Purchase() {
+        mProductId = std::make_shared<FakeJni::JString>("");
+        mReceipt = std::make_shared<FakeJni::JString>("");
+        mPurchaseActive = true;
+    }
+
+    std::shared_ptr<FakeJni::JString> mProductId;
+    std::shared_ptr<FakeJni::JString> mReceipt;
+    FakeJni::JBoolean mPurchaseActive;
 };
+
+class ExtraLicenseResponseData : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/ExtraLicenseResponseData")
+
+    FakeJni::JLong getValidationTime() {
+        return 60000;
+    }
+    FakeJni::JLong getRetryUntilTime() {
+        return 0;
+    }
+    FakeJni::JLong getRetryAttempts() {
+        return 0;
+    }
+};
+
 
 class NativeStoreListener : public StoreListener {
 
@@ -51,7 +89,7 @@ public:
     std::shared_ptr<FakeJni::JString> getStoreId();
     std::shared_ptr<FakeJni::JString> getProductSkuPrefix();
     std::shared_ptr<FakeJni::JString> getRealmsSkuPrefix();
-    // std::shared_ptr<jnivm::com::mojang::minecraftpe::store::ExtraLicenseResponseData> getExtraLicenseData();
+    std::shared_ptr<ExtraLicenseResponseData> getExtraLicenseData();
     void queryProducts(std::shared_ptr<FakeJni::JArray<FakeJni::JString>>);
     void purchase(std::shared_ptr<FakeJni::JString>, FakeJni::JBoolean, std::shared_ptr<FakeJni::JString>);
     void acknowledgePurchase(std::shared_ptr<FakeJni::JString>, std::shared_ptr<FakeJni::JString>);
