@@ -258,6 +258,10 @@ public:
 
     void initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
 
+    FakeJni::JLong initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
+
+    FakeJni::JLong initializeLibHttpClient(FakeJni::JLong init);
+
     std::shared_ptr<FakeJni::JIntArray> getImageData(std::shared_ptr<FakeJni::JString> filename);
 };
 

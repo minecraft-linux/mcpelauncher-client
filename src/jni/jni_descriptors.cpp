@@ -110,6 +110,8 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity)
 {Function<&MainActivity::getAvailableMemory> {}, "getAvailableMemory"},
 {Function<&MainActivity::pickImage> {}, "pickImage"},
 {Function<&MainActivity::initializeXboxLive> {}, "initializeXboxLive"},
+{Function<&MainActivity::initializeXboxLive2> {}, "initializeXboxLive"},
+{Function<&MainActivity::initializeLibHttpClient> {}, "initializeLibHttpClient"},
 // {Function<&MainActivity::getSecureStorageKey> {}, "getSecureStorageKey"},
 {Function<&MainActivity::lockCursor> {}, "lockCursor"},
 {Function<&MainActivity::unlockCursor> {}, "unlockCursor"},
@@ -332,6 +334,7 @@ END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(BrowserLaunchActivity)
 {Function<&BrowserLaunchActivity::showUrl> {}, "showUrl"},
+{Function<&BrowserLaunchActivity::showUrl2> {}, "showUrl"},
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(JBase64)

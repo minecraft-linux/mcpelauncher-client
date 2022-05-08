@@ -106,7 +106,8 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
             {"nativeReturnKeyPressed", "()V"},
             {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"},
             {"nativeOnPickImageCanceled", "(J)V"},
-            {"nativeInitializeXboxLive", "(JJ)V"}
+            {"nativeInitializeXboxLive", "(JJ)V"},
+            {"nativeinitializeLibHttpClient", "(J)J"}
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
             {"onStoreInitialized", "(JZ)V"},
