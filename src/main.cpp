@@ -111,6 +111,7 @@ int main(int argc, char *argv[]) {
     StoreFactory::hasVerifiedAmazonAppStoreLicense = !forceAmazonAppStoreUnverified.get();
     auto libC = MinecraftUtils::getLibCSymbols();
     ThreadMover::hookLibC(libC);
+
 #ifdef USE_ARMHF_SUPPORT
     linker::load_library("ld-android.so", {});
     android_dlextinfo extinfo;
@@ -157,7 +158,7 @@ int main(int argc, char *argv[]) {
       return 51;
     }
     Log::info("Launcher", "Loaded Minecraft library");
-    Log::debug("Launcher", "Minecraft is at offset 0x%p", (void *) MinecraftUtils::getLibraryBase(handle));
+    Log::debug("Launcher", "Minecraft is at offset 0x%" PRIXPTR, (uintptr_t) MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
 
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
