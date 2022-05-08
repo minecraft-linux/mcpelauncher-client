@@ -5,12 +5,13 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <log.h>
+#include <libc_shim.h>
 #include <android/compat.h>
 #include "fake_assetmanager.h"
 
 struct AAsset {
     std::string buffer;
-    size_t offset = 0;
+    off64_t offset = 0;
 };
 struct AAssetDir {
     DIR *dir;
@@ -25,13 +26,37 @@ FakeAssetManager::FakeAssetManager(std::string rootDir) {
 
 namespace fake_assetmanager {
 
-AAsset *AAssetManager_open(FakeAssetManager *amgr, const char* filename, int mode) {
-    std::string fullPath = amgr->rootDir + filename;
-    if(filename[0] == '/') {
-        fullPath = filename;
+// implement a rewrite function here so we don't need to call shim::open
+// Some calls to AssetManager_open use full paths instead of relative paths
+// I don't know why.
+std::string rewrite_path(std::string path) {
+    for(auto&& from : shim::from_android_data_dir) {
+        // check if path starts with 'from' and 'to' does not
+        if(path.rfind(from,0) == 0 && shim::to_android_data_dir.rfind(from.data(), 0) != 0 ) {
+            return shim::to_android_data_dir + path.substr(from.length());
+        }
     }
+    return path;
+}
+
+AAsset *AAssetManager_open(FakeAssetManager *amgr, const char* filename, int mode) {
+    std::string fullPath;
+    if(filename == NULL) {
 #ifndef NDEBUG
-    Log::trace("AAssetManager", "AAssetManager_open %s\n", fullPath.c_str());
+        Log::trace("AAssetManager", "Opening file NULLPTR failed.\n");
+#endif
+        return nullptr;
+    }
+
+    if(filename[0] != '/') {
+        fullPath = amgr->rootDir + filename;
+    } else {
+        fullPath = rewrite_path(filename);
+    }
+
+
+#ifndef NDEBUG
+    Log::trace("AAssetManager", "Opening file '%s' as '%s'\n", filename, fullPath.c_str());
 #endif
 
     std::string content;
@@ -44,9 +69,22 @@ AAsset *AAssetManager_open(FakeAssetManager *amgr, const char* filename, int mod
 }
 
 AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname) {
-    std::string fullPath = amgr->rootDir + dirname;
+    if(dirname == NULL) {
 #ifndef NDEBUG
-    Log::trace("AAssetManager", "AAssetManager_openDir %s\n", fullPath.c_str());
+        Log::trace("AAssetManager", "Opening directory NULLPTR failed.\n");
+#endif
+        return nullptr;
+    }
+
+    std::string fullPath;
+    if(dirname[0] != '/') {
+        fullPath = amgr->rootDir + dirname;
+    } else {
+        fullPath = rewrite_path(dirname);
+    }
+
+#ifndef NDEBUG
+    Log::trace("AAssetManager", "Opening directory '%s' as '%s'\n", dirname, fullPath.c_str());
 #endif
 
     DIR *d = opendir(fullPath.c_str());
@@ -67,27 +105,38 @@ int AAsset_isAllocated(AAsset *asset) {
     return true;
 }
 
-int AAsset_read(AAsset *asset, void* buf, size_t count) {
-    if (asset->offset > asset->buffer.size())
+ssize_t AAsset_read(AAsset *asset, void* buf, size_t count) {
+    if (asset->offset > asset->buffer.size()) {
         return 0;
-    count = std::min(count, asset->buffer.size() - asset->offset);
+    }
+    size_t max_len = asset->buffer.size() - asset->offset;
+    if(count > max_len) {
+        count = max_len;
+    }
+    if(count == 0) {
+        return 0;
+    }
     memcpy(buf, &asset->buffer[asset->offset], count);
     asset->offset += count;
-    return (int) count;
+    return (ssize_t)count;
 }
 
 off64_t AAsset_seek64(AAsset *asset, off64_t offset, int whence) {
-    size_t newOffset = 0;
+    off64_t cur_pos = asset->offset;
+    off64_t max_pos = asset->buffer.size();
+    off64_t new_offset;
+
     if (whence == SEEK_SET) {
-        newOffset = (size_t) offset;
+        new_offset = offset;
     } else if (whence == SEEK_CUR) {
-        newOffset = (size_t) (asset->offset + offset);
+        new_offset = cur_pos + offset;
     } else if (whence == SEEK_END) {
-        newOffset = asset->buffer.size() - offset;
+        new_offset = max_pos + offset;
     }
-    if ((ssize_t) newOffset < 0)
-        return -EINVAL;
-    return (off64_t) newOffset;
+    if (new_offset < 0 || new_offset > max_pos)
+        return -1;
+    asset->offset = new_offset;
+    return new_offset;
 }
 
 off_t AAsset_seek(AAsset *asset, off_t offset, int whence) {
