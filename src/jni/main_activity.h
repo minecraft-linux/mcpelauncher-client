@@ -191,8 +191,8 @@ public:
     }
 
     FakeJni::JFloat getPixelsPerMillimeter() {
-        // assume 96 DPI for now
-        return 96 / 25.4f;
+        // assume 96 DPI for now with GUI scale of 2
+        return (96 / 25.4f)*2;
     }
 
     std::shared_ptr<FakeJni::JString> createUUID();
