@@ -27,6 +27,7 @@
 #include <minecraft/imported/android_symbols.h>
 #include "main.h"
 #include "fake_looper.h"
+#include "fake_window.h"
 #include "fake_assetmanager.h"
 #include "fake_egl.h"
 #include "symbols.h"
@@ -151,6 +152,7 @@ int main(int argc, char *argv[]) {
     FakeAssetManager::initHybrisHooks(android_syms);
     FakeInputQueue::initHybrisHooks(android_syms);
     FakeLooper::initHybrisHooks(android_syms);
+    FakeWindow::initHybrisHooks(android_syms);
     for (auto s = android_symbols; *s; s++) // stub missing symbols
         android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
     linker::load_library("libandroid.so", android_syms);

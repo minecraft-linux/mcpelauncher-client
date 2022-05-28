@@ -93,6 +93,11 @@ EGLBoolean eglDestroyContext(EGLDisplay display, EGLContext context) {
 }
 
 EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context) {
+    if(draw != nullptr) {
+        ((GameWindow *) draw)->makeCurrent(true);
+    } else {
+        ((GameWindow *) currentDrawSurface)->makeCurrent(false);
+    }
     currentDrawSurface = draw;
     return EGL_TRUE;
 }

@@ -54,6 +54,7 @@ void FakeLooper::prepare() {
     Log::info("Launcher", "Creating window");
     associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
             options.windowWidth, options.windowHeight, options.graphicsApi);
+    associatedWindow->makeCurrent(false);
     jniSupport->onWindowCreated((ANativeWindow *) (void *) associatedWindow.get(),
             (AInputQueue *) (void *) &fakeInputQueue);
     associatedWindowCallbacks = std::make_shared<WindowCallbacks>(*associatedWindow, *jniSupport, fakeInputQueue);
