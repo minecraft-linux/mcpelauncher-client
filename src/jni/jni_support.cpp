@@ -81,6 +81,9 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Arrays>();
     vm.registerClass<Signature>();
     vm.registerClass<PublicKey>();
+    vm.registerClass<Product>();
+    vm.registerClass<Purchase>();
+    vm.registerClass<NotificationListenerService>();
 
 #ifdef HAVE_PULSEAUDIO
     vm.registerClass<AudioDevice>();
@@ -90,6 +93,8 @@ void JniSupport::registerJniClasses() {
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(), {
             {"nativeRegisterThis", "()V"},
+            {"nativeWaitCrashManagementSetupComplete", "()V"},
+            {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"},
             {"nativeShutdown", "()V"},
             {"nativeUnregisterThis", "()V"},
             {"nativeStopThis", "()V"},
@@ -102,7 +107,10 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
             {"nativeInitializeXboxLive", "(JJ)V"}
     }, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
-            {"onStoreInitialized", "(JZ)V"}
+            {"onStoreInitialized", "(JZ)V"},
+            {"onPurchaseFailed", "(JLjava/lang/String;)V"},
+            {"onQueryProductsSuccess", "(J[Lcom/mojang/minecraftpe/store/Product;)V"},
+            {"onQueryPurchasesSuccess", "(J[Lcom/mojang/minecraftpe/store/Purchase;)V"},
     }, symResolver);
     registerNatives(JellyBeanDeviceManager::getDescriptor(), {
             {"onInputDeviceAddedNative", "(I)V"},

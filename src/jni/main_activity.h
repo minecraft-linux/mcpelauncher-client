@@ -120,6 +120,30 @@ public:
         return 27;
     }
 
+    int getScreenWidth() {
+        int width, height;
+        window->getWindowSize(width, height);
+        return width;
+    }
+
+    int getScreenHeight() {
+        int width, height;
+        window->getWindowSize(width, height);
+        return height;
+    }
+
+    int getDisplayWidth() {
+        int width, height;
+        window->getWindowSize(width, height);
+        return width;
+    }
+
+    int getDisplayHeight() {
+        int width, height;
+        window->getWindowSize(width, height);
+        return height;
+    }
+
     FakeJni::JBoolean isNetworkEnabled(FakeJni::JBoolean wifi) {
         return true;
     }

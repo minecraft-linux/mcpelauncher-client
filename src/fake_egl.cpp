@@ -32,7 +32,7 @@ EGLBoolean eglTerminate(EGLDisplay display) {
 }
 
 EGLint eglGetError() {
-    return 0;
+    return EGL_SUCCESS;
 }
 
 char const * eglQueryString(EGLDisplay display, EGLint name) {
@@ -154,6 +154,9 @@ void FakeEGL::installLibrary() {
     syms["eglSwapInterval"] = (void *) fake_egl::eglSwapInterval;
     syms["eglQuerySurface"] = (void *) fake_egl::eglQuerySurface;
     syms["eglGetProcAddress"] = (void *) fake_egl::eglGetProcAddress;
+    syms["eglWaitClient"] = (void *) +[]() -> EGLBoolean {
+        return EGL_TRUE;
+    };
     linker::load_library("libEGL.so", syms);
 }
 
