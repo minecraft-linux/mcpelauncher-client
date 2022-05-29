@@ -129,6 +129,12 @@ int main(int argc, char *argv[]) {
     MinecraftUtils::loadLibM();
 #endif
     MinecraftUtils::setupHybris();
+    try {
+        PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi() + "/libminecraftpe.so");
+    } catch (std::exception& e) {
+        Log::error("LAUNCHER", "Could not find the game, use the -dg flag to fix this error. Original Error: %s", e.what());
+        return 1;
+    }
     linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
     if (!disableFmod) {
         try {
