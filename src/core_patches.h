@@ -3,17 +3,17 @@
 #include <game_window.h>
 #include <memory>
 
-class CorePatches {
+class CorePatches
+{
+   private:
+    static std::shared_ptr<GameWindow> currentGameWindow;
 
-private:
-  static std::shared_ptr<GameWindow> currentGameWindow;
+   public:
+    static void install(void *handle);
 
-public:
-  static void install(void *handle);
+    static void showMousePointer();
 
-  static void showMousePointer();
+    static void hideMousePointer();
 
-  static void hideMousePointer();
-
-  static void setGameWindow(std::shared_ptr<GameWindow> gameWindow);
+    static void setGameWindow(std::shared_ptr<GameWindow> gameWindow);
 };

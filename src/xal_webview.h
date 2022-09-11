@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 
-class XalWebView {
+class XalWebView
+{
+   public:
+    virtual ~XalWebView() {}
 
-public:
-  virtual ~XalWebView() {}
-
-  virtual std::string show(std::string starturl, std::string endurlprefix) = 0;
+    virtual std::string show(std::string starturl, std::string endurlprefix) = 0;
 };

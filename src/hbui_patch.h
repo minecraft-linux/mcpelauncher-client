@@ -2,14 +2,13 @@
 
 #include <cstddef>
 
-class HbuiPatch {
+class HbuiPatch
+{
+   private:
+    static bool returnTrue() { return true; }
 
-private:
-  static bool returnTrue() { return true; }
+    static void writeLog(void *th, int level, const char *what, unsigned int length);
 
-  static void writeLog(void *th, int level, const char *what,
-                       unsigned int length);
-
-public:
-  static void install(void *handle);
+   public:
+    static void install(void *handle);
 };
