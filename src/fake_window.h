@@ -4,5 +4,5 @@
 
 class FakeWindow {
 public:
-    static void initHybrisHooks(std::unordered_map<std::string, void*> &syms);
+  static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);
 };

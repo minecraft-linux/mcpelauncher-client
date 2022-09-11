@@ -2,18 +2,17 @@
 
 namespace fake_egl {
 
-    void *eglGetProcAddress(const char *name);
+void *eglGetProcAddress(const char *name);
 
 }
 
 struct FakeEGL {
 
-    static void setProcAddrFunction(void *(*fn)(const char *));
+  static void setProcAddrFunction(void *(*fn)(const char *));
 
-    static void installLibrary();
+  static void installLibrary();
 
-    static void setupGLOverrides();
+  static void setupGLOverrides();
 
-    static bool enableTexturePatch;
-
+  static bool enableTexturePatch;
 };

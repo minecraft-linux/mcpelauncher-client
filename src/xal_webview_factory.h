@@ -1,12 +1,10 @@
 #pragma once
 
-#include <memory>
 #include "xal_webview.h"
+#include <memory>
 
 class XalWebViewFactory {
 
 public:
-
-    static std::unique_ptr<XalWebView> createXalWebView();
-
+  static std::unique_ptr<XalWebView> createXalWebView();
 };

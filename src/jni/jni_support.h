@@ -1,69 +1,69 @@
 #pragma once
 
+#include "../fake_assetmanager.h"
+#include "../text_input_handler.h"
 #include "main_activity.h"
 #include "store.h"
-#include "../fake_assetmanager.h"
-#include <baron/baron.h>
 #include <android/native_activity.h>
-#include <game_window.h>
+#include <baron/baron.h>
 #include <condition_variable>
+#include <game_window.h>
 #include <mutex>
-#include "../text_input_handler.h"
 
 struct JniSupport {
 
 private:
-    struct NativeEntry {
-        const char *name;
-        const char *sig;
-    };
+  struct NativeEntry {
+    const char *name;
+    const char *sig;
+  };
 
-    Baron::Jvm vm;
-    ANativeActivityCallbacks nativeActivityCallbacks;
-    ANativeActivity nativeActivity;
-    std::shared_ptr<MainActivity> activity;
-    jobject activityRef;
-    std::unique_ptr<FakeAssetManager> assetManager;
-    ANativeWindow *window;
-    AInputQueue *inputQueue;
-    std::condition_variable gameExitCond;
-    std::mutex gameExitMutex;
-    bool gameExitVal = false, looperRunning = false;
-    TextInputHandler textInput;
+  Baron::Jvm vm;
+  ANativeActivityCallbacks nativeActivityCallbacks;
+  ANativeActivity nativeActivity;
+  std::shared_ptr<MainActivity> activity;
+  jobject activityRef;
+  std::unique_ptr<FakeAssetManager> assetManager;
+  ANativeWindow *window;
+  AInputQueue *inputQueue;
+  std::condition_variable gameExitCond;
+  std::mutex gameExitMutex;
+  bool gameExitVal = false, looperRunning = false;
+  TextInputHandler textInput;
 
-    void registerJniClasses();
+  void registerJniClasses();
 
-    void registerNatives(std::shared_ptr<FakeJni::JClass const> clazz, std::vector<NativeEntry> entries,
-                         void *(*symResolver)(const char *));
+  void registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
+                       std::vector<NativeEntry> entries,
+                       void *(*symResolver)(const char *));
 
 public:
-    JniSupport();
+  JniSupport();
 
-    void registerMinecraftNatives(void *(*symResolver)(const char *));
+  void registerMinecraftNatives(void *(*symResolver)(const char *));
 
-    void startGame(ANativeActivity_createFunc *activityOnCreate,
-        void *stbiLoadFromMemory, void *stbiImageFree);
+  void startGame(ANativeActivity_createFunc *activityOnCreate,
+                 void *stbiLoadFromMemory, void *stbiImageFree);
 
-    void stopGame();
+  void stopGame();
 
-    void waitForGameExit();
+  void waitForGameExit();
 
-    void requestExitGame();
+  void requestExitGame();
 
-    void setLooperRunning(bool running);
+  void setLooperRunning(bool running);
 
-    void onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue);
+  void onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue);
 
-    void onWindowClosed();
+  void onWindowClosed();
 
-    void onWindowResized(int newWidth, int newHeight);
+  void onWindowResized(int newWidth, int newHeight);
 
-    void onSetTextboxText(std::string const &text);
+  void onSetTextboxText(std::string const &text);
 
-    void onReturnKeyPressed();
+  void onReturnKeyPressed();
 
-    void setGameControllerConnected(int devId, bool connected);
+  void setGameControllerConnected(int devId, bool connected);
 
-    TextInputHandler &getTextInputHandler() { return textInput; }
-
+  TextInputHandler &getTextInputHandler() { return textInput; }
 };

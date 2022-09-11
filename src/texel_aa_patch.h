@@ -3,6 +3,5 @@
 class TexelAAPatch {
 
 public:
-    static void install(void* handle);
-
+  static void install(void *handle);
 };
