@@ -2,15 +2,12 @@
 
 #include <vector>
 
-struct Mouse
-{
+struct Mouse {
     static void (*feed)(char, char, short, short, short, short);
 };
 
-struct Keyboard
-{
-    struct InputEvent
-    {
+struct Keyboard {
+    struct InputEvent {
         int event;
         unsigned int key;  // it's actually an unsigned char, but the asm code does suspicious
                            // stuff with the padding so use an int so it gets zeroed out
@@ -22,7 +19,6 @@ struct Keyboard
     static int *_gameControllerId;
 };
 
-struct SymbolsHelper
-{
+struct SymbolsHelper {
     static void initSymbols(void *handle);
 };

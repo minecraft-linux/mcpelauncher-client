@@ -20,8 +20,7 @@ std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE = std::make_shared<FakeJ
 
 std::shared_ptr<FakeJni::JString> MainActivity::createUUID() { return UUID::randomUUID()->toString(); }
 
-FakeJni::JLong MainActivity::getUsedMemory()
-{
+FakeJni::JLong MainActivity::getUsedMemory() {
 #ifdef __APPLE__
     uint64_t page_size;
     size_t len = sizeof(page_size);
@@ -45,8 +44,7 @@ FakeJni::JLong MainActivity::getUsedMemory()
 #endif
 }
 
-FakeJni::JLong MainActivity::getFreeMemory()
-{
+FakeJni::JLong MainActivity::getFreeMemory() {
 #ifdef __APPLE__
     uint64_t page_size;
     size_t len = sizeof(page_size);
@@ -67,8 +65,7 @@ FakeJni::JLong MainActivity::getFreeMemory()
 #endif
 }
 
-FakeJni::JLong MainActivity::getTotalMemory()
-{
+FakeJni::JLong MainActivity::getTotalMemory() {
 #ifdef __APPLE__
     uint64_t memsize;
     size_t len = sizeof(memsize);
@@ -87,30 +84,23 @@ FakeJni::JLong MainActivity::getMemoryLimit() { return getTotalMemory(); }
 
 FakeJni::JLong MainActivity::getAvailableMemory() { return getTotalMemory(); }
 
-void MainActivity::pickImage(FakeJni::JLong callback)
-{
-    try
-    {
+void MainActivity::pickImage(FakeJni::JLong callback) {
+    try {
         auto picker = FilePickerFactory::createFilePicker();
         picker->setTitle("Select image");
         picker->setFileNameFilters({"*.png"});
-        if (picker->show())
-        {
+        if (picker->show()) {
             auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
             FakeJni::LocalFrame frame;
             method->invoke(
                 frame.getJniEnv(), this, callback,
                 frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
-        }
-        else
-        {
+        } else {
             auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
             FakeJni::LocalFrame frame;
             method->invoke(frame.getJniEnv(), this, callback);
         }
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         GameWindowManager::getManager()->getErrorHandler()->onError(
             "FilePickerFactory", std::string("Failed to open the file-picker details: ") + e.what());
         auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
@@ -119,31 +109,27 @@ void MainActivity::pickImage(FakeJni::JLong callback)
     }
 }
 
-void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit)
-{
+void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
     auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
     FakeJni::LocalFrame frame;
     method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
 }
 
-FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit)
-{
+FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
     auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
     FakeJni::LocalFrame frame;
     auto ret = method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
     return ret.j;
 }
 
-FakeJni::JLong MainActivity::initializeLibHttpClient(FakeJni::JLong init)
-{
+FakeJni::JLong MainActivity::initializeLibHttpClient(FakeJni::JLong init) {
     auto method = getClass().getMethod("(J)J", "nativeinitializeLibHttpClient");
     FakeJni::LocalFrame frame;
     auto ret = method->invoke(frame.getJniEnv(), this, init);
     return ret.j;
 }
 
-std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<FakeJni::JString> filename)
-{
+std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<FakeJni::JString> filename) {
     if (!stbi_load_from_memory || !stbi_image_free)
         return 0;
     int width, height, channels;
@@ -160,8 +146,7 @@ std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<F
     (*ret)[0] = width;
     (*ret)[1] = height;
 
-    for (int x = 0; x < width * height; x++)
-    {
+    for (int x = 0; x < width * height; x++) {
         (*ret)[2 + x] =
             (image[x * 4 + 2]) | (image[x * 4 + 1] << 8) | (image[x * 4 + 0] << 16) | (image[x * 4 + 3] << 24);
     }
@@ -169,7 +154,6 @@ std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<F
     return ret;
 }
 
-std::shared_ptr<FakeJni::JByteArray> MainActivity::getFileDataBytes(std::shared_ptr<FakeJni::JString> path)
-{
+std::shared_ptr<FakeJni::JByteArray> MainActivity::getFileDataBytes(std::shared_ptr<FakeJni::JString> path) {
     return std::make_shared<FakeJni::JByteArray>();
 }

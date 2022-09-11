@@ -2,8 +2,7 @@
 #include <fake-jni/fake-jni.h>
 #include <locale>
 
-class Locale : public FakeJni::JObject
-{
+class Locale : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("java/util/Locale")
 

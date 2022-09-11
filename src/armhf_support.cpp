@@ -28,8 +28,7 @@ WRAP2(glDepthRangef, int, int, float, float)
     (void *(*&)()) name##_orig = procFunc(#name); \
     overrides[#name] = (void *)name##_wrap;
 
-void ArmhfSupport::install(std::unordered_map<std::string, void *> &overrides)
-{
+void ArmhfSupport::install(std::unordered_map<std::string, void *> &overrides) {
     auto procFunc = GameWindowManager::getManager()->getProcAddrFunc();
     WRAP_INSTALL_GL(glClearColor)
     WRAP_INSTALL_GL(glUniform1f)

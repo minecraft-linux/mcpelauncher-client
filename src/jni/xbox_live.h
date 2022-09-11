@@ -5,8 +5,7 @@
 
 class XboxLoginCallback;
 
-class XboxInterop : public FakeJni::JObject
-{
+class XboxInterop : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/microsoft/xbox/idp/interop/Interop")
 
@@ -52,8 +51,7 @@ class XboxInterop : public FakeJni::JObject
                                           std::shared_ptr<XboxLoginCallback> callback);
 };
 
-class XboxLoginCallback : public FakeJni::JObject
-{
+class XboxLoginCallback : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/microsoft/xbox/idp/interop/Interop$XBLoginCallback")
 
@@ -62,9 +60,7 @@ class XboxLoginCallback : public FakeJni::JObject
     std::string cid, ticket;
 
     XboxLoginCallback(FakeJni::Jvm const &jvm, FakeJni::JLong userPtr, std::string cid, std::string ticket)
-        : jvm(jvm), userPtr(userPtr), cid(std::move(cid)), ticket(std::move(ticket))
-    {
-    }
+        : jvm(jvm), userPtr(userPtr), cid(std::move(cid)), ticket(std::move(ticket)) {}
 
     void onLogin(FakeJni::JLong nativePtr, FakeJni::JBoolean newAccount);
 
@@ -73,8 +69,7 @@ class XboxLoginCallback : public FakeJni::JObject
     void onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message);
 };
 
-class XboxLocalStorage : public FakeJni::JObject
-{
+class XboxLocalStorage : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/microsoft/xboxlive/LocalStorage")
 

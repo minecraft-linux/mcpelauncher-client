@@ -2,8 +2,7 @@
 #include <fake-jni/fake-jni.h>
 #include <openssl/evp.h>
 
-class ShaHasher : public FakeJni::JObject
-{
+class ShaHasher : public FakeJni::JObject {
     EVP_MD_CTX *mdctx = NULL;
 
    public:

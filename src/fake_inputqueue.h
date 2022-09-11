@@ -6,32 +6,24 @@
 #include <string>
 #include <unordered_map>
 
-struct FakeInputEvent
-{
+struct FakeInputEvent {
     int32_t source, type;
     int32_t deviceId = 0;
 
-    FakeInputEvent(int32_t source, int32_t type, int32_t deviceId = 0) : source(source), type(type), deviceId(deviceId)
-    {
-    }
+    FakeInputEvent(int32_t source, int32_t type, int32_t deviceId = 0)
+        : source(source), type(type), deviceId(deviceId) {}
 };
 
-struct FakeKeyEvent : FakeInputEvent
-{
+struct FakeKeyEvent : FakeInputEvent {
     int32_t action, keyCode;
 
     FakeKeyEvent(int32_t action, int32_t keyCode)
-        : FakeInputEvent(AINPUT_SOURCE_KEYBOARD, AINPUT_EVENT_TYPE_KEY), action(action), keyCode(keyCode)
-    {
-    }
+        : FakeInputEvent(AINPUT_SOURCE_KEYBOARD, AINPUT_EVENT_TYPE_KEY), action(action), keyCode(keyCode) {}
     FakeKeyEvent(int32_t source, int32_t deviceId, int32_t action, int32_t keyCode)
-        : FakeInputEvent(source, AINPUT_EVENT_TYPE_KEY, deviceId), action(action), keyCode(keyCode)
-    {
-    }
+        : FakeInputEvent(source, AINPUT_EVENT_TYPE_KEY, deviceId), action(action), keyCode(keyCode) {}
 };
 
-struct FakeMotionEvent : FakeInputEvent
-{
+struct FakeMotionEvent : FakeInputEvent {
     int32_t action;
     int32_t pointerId;
     float x, y;
@@ -42,9 +34,7 @@ struct FakeMotionEvent : FakeInputEvent
           action(action),
           pointerId(pointerId),
           x(x),
-          y(y)
-    {
-    }
+          y(y) {}
     FakeMotionEvent(int32_t source, int32_t deviceId, int32_t action, int32_t pointerId, float x, float y,
                     std::function<float(int32_t axis)> axisFunction)
         : FakeInputEvent(source, AINPUT_EVENT_TYPE_MOTION, deviceId),
@@ -52,13 +42,10 @@ struct FakeMotionEvent : FakeInputEvent
           pointerId(pointerId),
           x(x),
           y(y),
-          axisFunction(std::move(axisFunction))
-    {
-    }
+          axisFunction(std::move(axisFunction)) {}
 };
 
-class FakeInputQueue
-{
+class FakeInputQueue {
    private:
     std::deque<FakeKeyEvent> keyEvents;
     std::deque<FakeMotionEvent> motionEvents;

@@ -41,8 +41,7 @@ LauncherOptions options;
 
 void printVersionInfo();
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     auto windowManager = GameWindowManager::getManager();
     CrashHandler::registerCrashHandler();
     MinecraftUtils::workaroundLocaleBug();
@@ -74,8 +73,7 @@ int main(int argc, char *argv[])
 
     if (!p.parse(argc, (const char **)argv))
         return 1;
-    if (printVersion)
-    {
+    if (printVersion) {
         printVersionInfo();
         return 0;
     }
@@ -112,8 +110,7 @@ int main(int argc, char *argv[])
                                    // ubuntu 20.04)
                                    std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) +
                                        "/proc/" + std::to_string(pid) + "/cmdline"};
-    if (argc >= 1 && argv != nullptr && argv[0] != nullptr && argv[0][0] != '\0')
-    {
+    if (argc >= 1 && argv != nullptr && argv[0] != nullptr && argv[0][0] != '\0') {
         // Minecraft 1.16.210 or later, relative path on linux (source build
         // ubuntu 20.04) or every path AppImage / flatpak
         shim::from_android_data_dir.emplace_back(argv[0][0] == '/' ? std::string("/data/data") + argv[0]
@@ -122,8 +119,7 @@ int main(int argc, char *argv[])
     // Minecraft 1.16.210 or later, macOS
     shim::from_android_data_dir.emplace_back("/data/data");
     shim::to_android_data_dir = PathHelper::getPrimaryDataDirectory();
-    for (auto &&redir : shim::from_android_data_dir)
-    {
+    for (auto &&redir : shim::from_android_data_dir) {
         Log::trace("REDIRECT", "%s to %s", redir.data(), shim::to_android_data_dir.data());
     }
     StoreFactory::hasVerifiedGooglePlayStoreLicense = !forceGooglePlayStoreUnverified.get();
@@ -135,8 +131,7 @@ int main(int argc, char *argv[])
     linker::load_library("ld-android.so", {});
     android_dlextinfo extinfo;
     std::vector<mcpelauncher_hook_t> hooks;
-    for (auto &&entry : libC)
-    {
+    for (auto &&entry : libC) {
         hooks.emplace_back(mcpelauncher_hook_t{entry.first.data(), entry.second});
     }
     hooks.emplace_back(mcpelauncher_hook_t{nullptr, nullptr});
@@ -150,12 +145,9 @@ int main(int argc, char *argv[])
     MinecraftUtils::loadLibM();
 #endif
     MinecraftUtils::setupHybris();
-    try
-    {
+    try {
         PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi() + "/libminecraftpe.so");
-    }
-    catch (std::exception &e)
-    {
+    } catch (std::exception &e) {
         Log::error("LAUNCHER",
                    "Could not find the game, use the -dg flag to fix this error. "
                    "Original Error: %s",
@@ -164,14 +156,10 @@ int main(int argc, char *argv[])
     }
     linker::update_LD_LIBRARY_PATH(
         PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
-    if (!disableFmod)
-    {
-        try
-        {
+    if (!disableFmod) {
+        try {
             MinecraftUtils::loadFMod();
-        }
-        catch (std::exception &e)
-        {
+        } catch (std::exception &e) {
             Log::warn("FMOD",
                       "Failed to load host libfmod: '%s', use experimental "
                       "pulseaudio backend if available",
@@ -182,8 +170,7 @@ int main(int argc, char *argv[])
     FakeEGL::installLibrary();
 
     std::unordered_map<std::string, void *> android_syms;
-    struct ___data
-    {
+    struct ___data {
         size_t arena;
 
         size_t ordblks;
@@ -220,8 +207,7 @@ int main(int argc, char *argv[])
     Log::trace("Launcher", "Loading Minecraft library");
     static void *handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void *>(&CorePatches::showMousePointer),
                                                            reinterpret_cast<void *>(&CorePatches::hideMousePointer));
-    if (!handle)
-    {
+    if (!handle) {
         Log::error("Launcher",
                    "Failed to load Minecraft library, please reinstall "
                    "or wait for an update to support the new release");
@@ -244,14 +230,10 @@ int main(int argc, char *argv[])
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
 #endif
-    if (options.graphicsApi == GraphicsApi::OPENGL)
-    {
-        try
-        {
+    if (options.graphicsApi == GraphicsApi::OPENGL) {
+        try {
             GLCorePatch::install(handle);
-        }
-        catch (const std::exception &ex)
-        {
+        } catch (const std::exception &ex) {
             Log::error("GLCOREPATCH", "Failed to apply glcorepatch: %s", ex.what());
             options.graphicsApi = GraphicsApi::OPENGL_ES2;
         }
@@ -261,13 +243,11 @@ int main(int argc, char *argv[])
     JniSupport support;
     FakeLooper::setJniSupport(&support);
     support.registerMinecraftNatives(+[](const char *sym) { return linker::dlsym(handle, sym); });
-    std::thread startThread(
-        [&support]()
-        {
-            support.startGame((ANativeActivity_createFunc *)linker::dlsym(handle, "ANativeActivity_onCreate"),
-                              linker::dlsym(handle, "stbi_load_from_memory"), linker::dlsym(handle, "stbi_image_free"));
-            linker::dlclose(handle);
-        });
+    std::thread startThread([&support]() {
+        support.startGame((ANativeActivity_createFunc *)linker::dlsym(handle, "ANativeActivity_onCreate"),
+                          linker::dlsym(handle, "stbi_load_from_memory"), linker::dlsym(handle, "stbi_image_free"));
+        linker::dlclose(handle);
+    });
     startThread.detach();
 
     Log::info("Launcher", "Executing main thread");
@@ -281,8 +261,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void printVersionInfo()
-{
+void printVersionInfo() {
     printf("mcpelauncher-client %s / manifest %s\n", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
 #if defined(__i386__) || defined(__x86_64__)
     CpuId cpuid;

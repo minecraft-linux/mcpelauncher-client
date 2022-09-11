@@ -1,7 +1,6 @@
 #pragma once
 
-class CpuId
-{
+class CpuId {
    private:
     unsigned int hiLeaf;
     unsigned int hiExtLeaf;
@@ -16,10 +15,7 @@ class CpuId
     void queryFeatureFlags();
 
    public:
-    enum class FeatureFlag : unsigned char
-    {
-        SSSE3 = 9
-    };
+    enum class FeatureFlag : unsigned char { SSSE3 = 9 };
 
     CpuId();
 

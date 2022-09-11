@@ -4,8 +4,7 @@
 #include <condition_variable>
 #include <mutex>
 
-class XboxShutdownPatch
-{
+class XboxShutdownPatch {
    private:
     static std::condition_variable cv;
     static std::mutex mutex;

@@ -1,7 +1,6 @@
 #pragma once
 
-class TexelAAPatch
-{
+class TexelAAPatch {
    public:
     static void install(void *handle);
 };

@@ -22,8 +22,7 @@
 #include "uuid.h"
 #include "webview.h"
 
-void JniSupport::registerJniClasses()
-{
+void JniSupport::registerJniClasses() {
     vm.registerClass<File>();
     vm.registerClass<ClassLoader>();
     vm.registerClass<Locale>();
@@ -93,8 +92,7 @@ void JniSupport::registerJniClasses()
 #endif
 }
 
-void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *))
-{
+void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(),
                     {{"nativeRegisterThis", "()V"},
                      {"nativeWaitCrashManagementSetupComplete", "()V"},
@@ -147,26 +145,22 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *))
                     symResolver);
 }
 
-JniSupport::JniSupport() : textInput([this](std::string const &str) { return onSetTextboxText(str); })
-{
+JniSupport::JniSupport() : textInput([this](std::string const &str) { return onSetTextboxText(str); }) {
     registerJniClasses();
 }
 
 void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
-                                 std::vector<JniSupport::NativeEntry> entries, void *(*symResolver)(const char *))
-{
+                                 std::vector<JniSupport::NativeEntry> entries, void *(*symResolver)(const char *)) {
     FakeJni::LocalFrame frame(vm);
 
     std::string cppClassName = clazz->getName();
     std::replace(cppClassName.begin(), cppClassName.end(), '/', '_');
 
     std::vector<JNINativeMethod> javaEntries;
-    for (auto const &ent : entries)
-    {
+    for (auto const &ent : entries) {
         auto cppSymName = std::string("Java_") + cppClassName + "_" + ent.name;
         auto cppSym = symResolver(cppSymName.c_str());
-        if (cppSym == nullptr)
-        {
+        if (cppSym == nullptr) {
             Log::error("JniSupport", "Missing native symbol: %s", cppSymName.c_str());
             continue;
         }
@@ -179,8 +173,8 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
         throw std::runtime_error("RegisterNatives failed");
 }
 
-void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, void *stbiLoadFromMemory, void *stbiImageFree)
-{
+void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, void *stbiLoadFromMemory,
+                           void *stbiImageFree) {
     FakeJni::LocalFrame frame(vm);
 
     vm.attachLibrary("libfmod.so", "", {linker::dlopen, linker::dlsym, linker::dlclose_unlocked});
@@ -230,8 +224,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, void *s
     nativeActivityCallbacks.onResume(&nativeActivity);
 }
 
-void JniSupport::stopGame()
-{
+void JniSupport::stopGame() {
     FakeJni::LocalFrame frame(vm);
 
     Log::trace("JniSupport", "Invoking stop activity callbacks\n");
@@ -252,30 +245,26 @@ void JniSupport::stopGame()
     Log::trace("JniSupport", "exited\n");
 }
 
-void JniSupport::waitForGameExit()
-{
+void JniSupport::waitForGameExit() {
     std::unique_lock<std::mutex> lock(gameExitMutex);
     gameExitCond.wait(lock, [this] { return gameExitVal; });
 }
 
-void JniSupport::requestExitGame()
-{
+void JniSupport::requestExitGame() {
     std::unique_lock<std::mutex> lock(gameExitMutex);
     gameExitVal = true;
     gameExitCond.notify_all();
     std::thread([this]() { JniSupport::stopGame(); }).detach();
 }
 
-void JniSupport::setLooperRunning(bool running)
-{
+void JniSupport::setLooperRunning(bool running) {
     std::unique_lock<std::mutex> lock(gameExitMutex);
     looperRunning = running;
     if (!running)
         gameExitCond.notify_all();
 }
 
-void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue)
-{
+void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue) {
     // Note on thread safety: This code is fine thread-wise because
     // ANativeActivity_onCreate locks until the thread is initialized; the thread
     // initialization code runs ALooper_prepare before signaling it's ready.
@@ -284,42 +273,36 @@ void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue)
     activity->window = (GameWindow *)window;
 }
 
-void JniSupport::onWindowClosed()
-{
+void JniSupport::onWindowClosed() {
     FakeJni::LocalFrame frame(vm);
     auto shutdown = activity->getClass().getMethod("()V", "nativeShutdown");
     shutdown->invoke(frame.getJniEnv(), activity.get());
 }
 
-void JniSupport::onWindowResized(int newWidth, int newHeight)
-{
+void JniSupport::onWindowResized(int newWidth, int newHeight) {
     FakeJni::LocalFrame frame(vm);
     auto resize = activity->getClass().getMethod("(II)V", "nativeResize");
     if (resize)
         resize->invoke(frame.getJniEnv(), activity.get(), newWidth, newHeight);
 }
 
-void JniSupport::onSetTextboxText(std::string const &text)
-{
+void JniSupport::onSetTextboxText(std::string const &text) {
     FakeJni::LocalFrame frame(vm);
     auto setText = activity->getClass().getMethod("(Ljava/lang/String;)V", "nativeSetTextboxText");
-    if (setText)
-    {
+    if (setText) {
         auto str = std::make_shared<FakeJni::JString>(text);
         setText->invoke(frame.getJniEnv(), activity.get(), frame.getJniEnv().createLocalReference(str));
     }
 }
 
-void JniSupport::onReturnKeyPressed()
-{
+void JniSupport::onReturnKeyPressed() {
     FakeJni::LocalFrame frame(vm);
     auto returnPressed = activity->getClass().getMethod("()V", "nativeReturnKeyPressed");
     if (returnPressed)
         returnPressed->invoke(frame.getJniEnv(), activity.get());
 }
 
-void JniSupport::setGameControllerConnected(int devId, bool connected)
-{
+void JniSupport::setGameControllerConnected(int devId, bool connected) {
     static auto addedMethod = JellyBeanDeviceManager::getDescriptor()->getMethod("(I)V", "onInputDeviceAddedNative");
     static auto removedMethod =
         JellyBeanDeviceManager::getDescriptor()->getMethod("(I)V", "onInputDeviceRemovedNative");

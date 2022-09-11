@@ -7,8 +7,7 @@
 #include <memory>
 #include "cll_upload_auth_step.h"
 
-class XboxLiveHelper
-{
+class XboxLiveHelper {
    private:
     static std::string const MSA_CLIENT_ID;
     static std::string const MSA_COBRAND_ID;
@@ -35,8 +34,7 @@ class XboxLiveHelper
 
     XboxLiveHelper();
 
-    void shutdown()
-    {
+    void shutdown() {
         cll.reset();
         client.reset();
     }

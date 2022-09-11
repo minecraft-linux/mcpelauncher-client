@@ -2,7 +2,7 @@ BasedOnStyle: Google
 Standard: Cpp11
 UseTab: Never
 IndentWidth: 4
-BreakBeforeBraces: Allman
+BreakBeforeBraces: Attach
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 ColumnLimit: 120

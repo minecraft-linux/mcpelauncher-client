@@ -5,10 +5,9 @@
 
 AudioDevice::AudioDevice() { s = nullptr; }
 
-FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt samplerate, FakeJni::JInt c, FakeJni::JInt d)
-{
-    if (s != NULL)
-    {
+FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt samplerate, FakeJni::JInt c,
+                                    FakeJni::JInt d) {
+    if (s != NULL) {
         GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed",
                                                                     "pulseaudio already initialized");
     }
@@ -33,8 +32,7 @@ FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt sample
                       &b,       // buffering attributes.
                       &error    // error code.
     );
-    if (s == NULL)
-    {
+    if (s == NULL) {
         auto errormsg = pa_strerror(error);
         GameWindowManager::getManager()->getErrorHandler()->onError(
             "Pulseaudio failed", std::string("pulseaudio pa_simple_new failed, audio will be unavailable: ") +
@@ -44,11 +42,9 @@ FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt sample
     return true;
 }
 
-void AudioDevice::write(std::shared_ptr<FakeJni::JByteArray> data, FakeJni::JInt length)
-{
+void AudioDevice::write(std::shared_ptr<FakeJni::JByteArray> data, FakeJni::JInt length) {
     int error = 0;
-    if (s && pa_simple_write(s, data->getArray(), length, &error))
-    {
+    if (s && pa_simple_write(s, data->getArray(), length, &error)) {
         pa_simple_free(s);
         s = nullptr;
         auto errormsg = pa_strerror(error);
@@ -59,11 +55,9 @@ void AudioDevice::write(std::shared_ptr<FakeJni::JByteArray> data, FakeJni::JInt
     }
 }
 
-void AudioDevice::close()
-{
+void AudioDevice::close() {
     int error = 0;
-    if (pa_simple_flush(s, &error))
-    {
+    if (pa_simple_flush(s, &error)) {
         auto errormsg = pa_strerror(error);
         GameWindowManager::getManager()->getErrorHandler()->onError(
             "Pulseaudio failed",

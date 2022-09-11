@@ -2,19 +2,16 @@
 
 #include <fake-jni/fake-jni.h>
 
-class StoreListener : public FakeJni::JObject
-{
+class StoreListener : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/StoreListener")
 };
 
-class Product : public FakeJni::JObject
-{
+class Product : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/Product")
 
-    Product()
-    {
+    Product() {
         mId = std::make_shared<FakeJni::JString>("");
         mPrice = std::make_shared<FakeJni::JString>("");
         mCurrencyCode = std::make_shared<FakeJni::JString>("");
@@ -27,13 +24,11 @@ class Product : public FakeJni::JObject
     std::shared_ptr<FakeJni::JString> mUnformattedPrice;
 };
 
-class Purchase : public FakeJni::JObject
-{
+class Purchase : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/Purchase")
 
-    Purchase()
-    {
+    Purchase() {
         mProductId = std::make_shared<FakeJni::JString>("");
         mReceipt = std::make_shared<FakeJni::JString>("");
         mPurchaseActive = true;
@@ -44,8 +39,7 @@ class Purchase : public FakeJni::JObject
     FakeJni::JBoolean mPurchaseActive;
 };
 
-class ExtraLicenseResponseData : public FakeJni::JObject
-{
+class ExtraLicenseResponseData : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/ExtraLicenseResponseData")
 
@@ -54,8 +48,7 @@ class ExtraLicenseResponseData : public FakeJni::JObject
     FakeJni::JLong getRetryAttempts() { return 0; }
 };
 
-class NativeStoreListener : public StoreListener
-{
+class NativeStoreListener : public StoreListener {
    public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/NativeStoreListener", StoreListener)
 
@@ -72,8 +65,7 @@ class NativeStoreListener : public StoreListener
     void onQueryPurchasesSuccess(std::shared_ptr<FakeJni::JArray<Purchase>> purchases);
 };
 
-class Store : public FakeJni::JObject
-{
+class Store : public FakeJni::JObject {
     bool _hasVerifiedLicense = false;
     std::shared_ptr<NativeStoreListener> storeListener;
 
@@ -97,18 +89,15 @@ class Store : public FakeJni::JObject
     void destructor();
 };
 
-class NotificationListenerService : public FakeJni::JObject
-{
+class NotificationListenerService : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/NotificationListenerService")
-    static std::shared_ptr<FakeJni::JString> getDeviceRegistrationToken()
-    {
+    static std::shared_ptr<FakeJni::JString> getDeviceRegistrationToken() {
         return std::make_shared<FakeJni::JString>("ebe97d6c-5b83-11ec-9193-9fbef390d94b");
     }
 };
 
-class StoreFactory : public FakeJni::JObject
-{
+class StoreFactory : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/StoreFactory")
 

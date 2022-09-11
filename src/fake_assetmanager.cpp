@@ -9,60 +9,48 @@
 #include <cstdio>
 #include <cstring>
 
-struct AAsset
-{
+struct AAsset {
     std::string buffer;
     off64_t offset = 0;
 };
-struct AAssetDir
-{
+struct AAssetDir {
     DIR *dir;
     dirent *ent;
 };
 
-FakeAssetManager::FakeAssetManager(std::string rootDir)
-{
+FakeAssetManager::FakeAssetManager(std::string rootDir) {
     if (!rootDir.empty() && *rootDir.rbegin() != '/')
         rootDir += '/';
     this->rootDir = std::move(rootDir);
 }
 
-namespace fake_assetmanager
-{
+namespace fake_assetmanager {
 
 // implement a rewrite function here so we don't need to call shim::open
 // Some calls to AssetManager_open use full paths instead of relative paths
 // I don't know why.
-std::string rewrite_path(std::string path)
-{
-    for (auto &&from : shim::from_android_data_dir)
-    {
+std::string rewrite_path(std::string path) {
+    for (auto &&from : shim::from_android_data_dir) {
         // check if path starts with 'from' and 'to' does not
-        if (path.rfind(from, 0) == 0 && shim::to_android_data_dir.rfind(from.data(), 0) != 0)
-        {
+        if (path.rfind(from, 0) == 0 && shim::to_android_data_dir.rfind(from.data(), 0) != 0) {
             return shim::to_android_data_dir + path.substr(from.length());
         }
     }
     return path;
 }
 
-AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mode)
-{
+AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mode) {
     std::string fullPath;
-    if (filename == NULL)
-    {
+    if (filename == NULL) {
 #ifndef NDEBUG
         Log::trace("AAssetManager", "Opening file NULLPTR failed.\n");
 #endif
         return nullptr;
     }
 
-    if (filename[0] != '/')
-    {
+    if (filename[0] != '/') {
         fullPath = amgr->rootDir + filename;
-    }
-    else
-    {
+    } else {
         fullPath = rewrite_path(filename);
     }
 
@@ -79,10 +67,8 @@ AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mod
     return ret;
 }
 
-AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname)
-{
-    if (dirname == NULL)
-    {
+AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname) {
+    if (dirname == NULL) {
 #ifndef NDEBUG
         Log::trace("AAssetManager", "Opening directory NULLPTR failed.\n");
 #endif
@@ -90,12 +76,9 @@ AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname)
     }
 
     std::string fullPath;
-    if (dirname[0] != '/')
-    {
+    if (dirname[0] != '/') {
         fullPath = amgr->rootDir + dirname;
-    }
-    else
-    {
+    } else {
         fullPath = rewrite_path(dirname);
     }
 
@@ -117,19 +100,15 @@ void AAsset_close(AAsset *asset) { delete asset; }
 
 int AAsset_isAllocated(AAsset *asset) { return true; }
 
-ssize_t AAsset_read(AAsset *asset, void *buf, size_t count)
-{
-    if (asset->offset > asset->buffer.size())
-    {
+ssize_t AAsset_read(AAsset *asset, void *buf, size_t count) {
+    if (asset->offset > asset->buffer.size()) {
         return 0;
     }
     size_t max_len = asset->buffer.size() - asset->offset;
-    if (count > max_len)
-    {
+    if (count > max_len) {
         count = max_len;
     }
-    if (count == 0)
-    {
+    if (count == 0) {
         return 0;
     }
     memcpy(buf, &asset->buffer[asset->offset], count);
@@ -137,22 +116,16 @@ ssize_t AAsset_read(AAsset *asset, void *buf, size_t count)
     return (ssize_t)count;
 }
 
-off64_t AAsset_seek64(AAsset *asset, off64_t offset, int whence)
-{
+off64_t AAsset_seek64(AAsset *asset, off64_t offset, int whence) {
     off64_t cur_pos = asset->offset;
     off64_t max_pos = asset->buffer.size();
     off64_t new_offset;
 
-    if (whence == SEEK_SET)
-    {
+    if (whence == SEEK_SET) {
         new_offset = offset;
-    }
-    else if (whence == SEEK_CUR)
-    {
+    } else if (whence == SEEK_CUR) {
         new_offset = cur_pos + offset;
-    }
-    else if (whence == SEEK_END)
-    {
+    } else if (whence == SEEK_END) {
         new_offset = max_pos + offset;
     }
     if (new_offset < 0 || new_offset > max_pos)
@@ -173,8 +146,7 @@ off_t AAsset_getRemainingLength(AAsset *asset) { return (off_t)(asset->buffer.si
 
 const void *AAsset_getBuffer(AAsset *asset) { return asset->buffer.c_str(); }
 
-void AAssetDir_close(AAssetDir *assetDir)
-{
+void AAssetDir_close(AAssetDir *assetDir) {
     if (assetDir)
         closedir(assetDir->dir);
     delete assetDir;
@@ -182,8 +154,7 @@ void AAssetDir_close(AAssetDir *assetDir)
 
 void AAssetDir_rewind(AAssetDir *assetDir) { rewinddir(assetDir->dir); }
 
-const char *AAssetDir_getNextFileName(AAssetDir *assetDir)
-{
+const char *AAssetDir_getNextFileName(AAssetDir *assetDir) {
     if (!assetDir)
         return nullptr;
     assetDir->ent = readdir(assetDir->dir);
@@ -194,8 +165,7 @@ const char *AAssetDir_getNextFileName(AAssetDir *assetDir)
 
 }  // namespace fake_assetmanager
 
-void FakeAssetManager::initHybrisHooks(std::unordered_map<std::string, void *> &syms)
-{
+void FakeAssetManager::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     using namespace fake_assetmanager;
     syms["AAssetManager_open"] = (void *)AAssetManager_open;
     syms["AAssetManager_openDir"] = (void *)AAssetManager_openDir;

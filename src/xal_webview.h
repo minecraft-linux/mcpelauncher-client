@@ -3,8 +3,7 @@
 #include <string>
 #include <vector>
 
-class XalWebView
-{
+class XalWebView {
    public:
     virtual ~XalWebView() {}
 

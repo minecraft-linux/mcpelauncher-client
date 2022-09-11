@@ -4,8 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-class GLCorePatch
-{
+class GLCorePatch {
    private:
     static bool enabled;
     static std::unordered_map<unsigned int, unsigned int> vaoMap;

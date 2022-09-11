@@ -7,22 +7,19 @@
 #include "jni/jni_support.h"
 #include "window_callbacks.h"
 
-class FakeLooper
-{
+class FakeLooper {
    private:
     static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
 
-    struct EventEntry
-    {
+    struct EventEntry {
         int fd, ident, events;
         void *data;
 
         EventEntry() : ident(-1) {}
         EventEntry(int fd, int ident, int events, void *data) : fd(fd), ident(ident), events(events), data(data) {}
 
-        void fill(int *outFd, void **outData) const
-        {
+        void fill(int *outFd, void **outData) const {
             if (outFd)
                 *outFd = fd;
             if (outData)

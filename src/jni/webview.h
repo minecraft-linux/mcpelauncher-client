@@ -2,8 +2,7 @@
 #include <fake-jni/fake-jni.h>
 #include "main_activity.h"
 
-class WebView : public FakeJni::JObject
-{
+class WebView : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/microsoft/xal/browser/WebView")
 
@@ -12,8 +11,7 @@ class WebView : public FakeJni::JObject
                         FakeJni::JLong j2);
 };
 
-class BrowserLaunchActivity : public FakeJni::JObject
-{
+class BrowserLaunchActivity : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/microsoft/xal/browser/BrowserLaunchActivity")
 

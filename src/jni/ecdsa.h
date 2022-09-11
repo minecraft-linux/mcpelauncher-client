@@ -9,8 +9,7 @@
 #include <utility>
 #include "main_activity.h"
 
-class EcdsaPublicKey : public FakeJni::JObject
-{
+class EcdsaPublicKey : public FakeJni::JObject {
     std::string xbase64;
     std::string ybase64;
 
@@ -24,8 +23,7 @@ class EcdsaPublicKey : public FakeJni::JObject
     std::shared_ptr<FakeJni::JString> getBase64UrlY();
 };
 
-class Ecdsa : public FakeJni::JObject
-{
+class Ecdsa : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/Ecdsa")
     Ecdsa();

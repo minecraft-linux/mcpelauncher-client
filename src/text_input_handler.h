@@ -5,8 +5,7 @@
 #include <functional>
 #include <string>
 
-struct TextInputHandler
-{
+struct TextInputHandler {
    public:
     using TextCallback = std::function<void(std::string)>;
 

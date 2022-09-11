@@ -7,8 +7,7 @@ int *Keyboard::_states;
 std::vector<Keyboard::InputEvent> *Keyboard::_inputs;
 int *Keyboard::_gameControllerId;
 
-void SymbolsHelper::initSymbols(void *handle)
-{
+void SymbolsHelper::initSymbols(void *handle) {
     Mouse::feed = (void (*)(char, char, short, short, short, short))linker::dlsym(handle, "_ZN5Mouse4feedEccssss");
 
     Keyboard::_states = (int *)linker::dlsym(handle, "_ZN8Keyboard7_statesE");

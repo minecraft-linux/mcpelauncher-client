@@ -7,8 +7,7 @@
 
 struct AAssetManager;
 
-struct FakeAssetManager
-{
+struct FakeAssetManager {
     std::string rootDir;
 
     FakeAssetManager(std::string rootDir);

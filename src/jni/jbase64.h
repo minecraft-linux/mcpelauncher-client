@@ -1,8 +1,7 @@
 #pragma once
 #include <fake-jni/fake-jni.h>
 
-class JBase64 : public FakeJni::JObject
-{
+class JBase64 : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("android/util/Base64")
 

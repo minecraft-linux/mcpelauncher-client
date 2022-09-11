@@ -11,8 +11,7 @@
 #include <stdexcept>
 #include "util.h"
 
-std::string XalWebViewQt::findWebView()
-{
+std::string XalWebViewQt::findWebView() {
     std::string path;
 #ifdef MCPELAUNCHER_WEBVIEW_PATH
     if (EnvPathUtil::findInPath("mcpelauncher-webview", path, MCPELAUNCHER_WEBVIEW_PATH,
@@ -24,8 +23,7 @@ std::string XalWebViewQt::findWebView()
     return std::string();
 }
 
-std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, std::string description)
-{
+std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, std::string description) {
     char ret[1024];
 
     int pipes[3][2];
@@ -39,8 +37,7 @@ std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, s
     pipe(pipes[PIPE_STDERR]);
     pipe(pipes[PIPE_STDIN]);
     int pid;
-    if (!(pid = fork()))
-    {
+    if (!(pid = fork())) {
         auto argv = buildCommandLine(path, title, description);
         auto argvc = convertToC(argv);
         dup2(pipes[PIPE_STDOUT][PIPE_WRITE], STDOUT_FILENO);
@@ -55,9 +52,7 @@ std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, s
         int r = execv(argvc[0], (char **)argvc.data());
         printf("Show: execv() error %i %s", r, strerror(errno));
         _exit(r);
-    }
-    else if (pid != -1)
-    {
+    } else if (pid != -1) {
         close(pipes[PIPE_STDIN][PIPE_WRITE]);
         close(pipes[PIPE_STDIN][PIPE_READ]);
 
@@ -78,29 +73,21 @@ std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, s
         int status;
         waitpid(pid, &status, 0);
         status = WEXITSTATUS(status);
-        if (status == 0)
-        {
+        if (status == 0) {
             return outputStdOut;
-        }
-        else
-        {
+        } else {
             throw std::runtime_error("Process exited with status=" + std::to_string(status) + " stdout:`" +
                                      outputStdOut + "` stderr:`" + outputStdErr + "`");
         }
-    }
-    else
-    {
+    } else {
         throw std::runtime_error("Fork failed");
     }
 }
 
-std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix)
-{
-    try
-    {
+std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix) {
+    try {
         auto webview_path = findWebView();
-        if (webview_path.empty())
-        {
+        if (webview_path.empty()) {
             throw std::runtime_error("mcpelauncher-webview not found");
         }
         auto result = exec_get_stdout(webview_path, starturl, endurlprefix);
@@ -112,11 +99,9 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix)
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0"
             "123456789-_.~!*'();:@&=+$,/?%#[] ";
         if ((result.rfind(endurlprefix, 0) != 0 || result.find_first_not_of(validUrlChars, 0) != std::string::npos) &&
-            !result.empty())
-        {
+            !result.empty()) {
             auto iurl = result.find(endurlprefix);
-            if (iurl != std::string::npos)
-            {
+            if (iurl != std::string::npos) {
                 auto eurl = result.find_first_not_of(validUrlChars, iurl);
                 auto url = result.substr(iurl, eurl);
                 GameWindowManager::getManager()->getErrorHandler()->onError(
@@ -135,9 +120,7 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix)
                                      endurlprefix + "`");
         }
         return result;
-    }
-    catch (const std::exception &ex)
-    {
+    } catch (const std::exception &ex) {
         GameWindowManager::getManager()->getErrorHandler()->onError(
             "XalWebViewQt", std::string("Failed to open Xboxlive login Window. Please look into "
                                         "the gamelog for more Information: ") +
@@ -146,8 +129,7 @@ std::string XalWebViewQt::show(std::string starturl, std::string endurlprefix)
     }
 }
 
-std::vector<std::string> XalWebViewQt::buildCommandLine(std::string path, std::string title, std::string description)
-{
+std::vector<std::string> XalWebViewQt::buildCommandLine(std::string path, std::string title, std::string description) {
     std::vector<std::string> cmd;
     cmd.emplace_back(path);
     cmd.emplace_back(title);
@@ -155,8 +137,7 @@ std::vector<std::string> XalWebViewQt::buildCommandLine(std::string path, std::s
     return std::move(cmd);
 }
 
-std::vector<const char *> XalWebViewQt::convertToC(std::vector<std::string> const &v)
-{
+std::vector<const char *> XalWebViewQt::convertToC(std::vector<std::string> const &v) {
     std::vector<const char *> ret;
     for (auto const &i : v) ret.push_back(i.c_str());
     ret.push_back(nullptr);

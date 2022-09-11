@@ -6,23 +6,19 @@
 
 std::shared_ptr<GameWindow> CorePatches::currentGameWindow;
 
-void CorePatches::install(void *handle)
-{
+void CorePatches::install(void *handle) {
     // void* ptr = linker::dlsym(handle,
     // "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
     // PatchUtils::patchCallInstruction(ptr, (void*) +[]() { return true; },
     // true);
 
     void *appPlatform = linker::dlsym(handle, "_ZTV21AppPlatform_android23");
-    if (appPlatform)
-    {
+    if (appPlatform) {
         void **vta = &((void **)appPlatform)[2];
         PatchUtils::VtableReplaceHelper vtr(handle, vta, vta);
         vtr.replace("_ZN11AppPlatform16hideMousePointerEv", &hideMousePointer);
         vtr.replace("_ZN11AppPlatform16showMousePointerEv", &showMousePointer);
-    }
-    else
-    {
+    } else {
         Log::debug("CorePatches", "Failed to patch, vtable _ZTV21AppPlatform_android23 not found");
     }
 }

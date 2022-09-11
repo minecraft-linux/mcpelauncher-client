@@ -3,8 +3,7 @@
 #include <memory>
 #include "xal_webview.h"
 
-class XalWebViewFactory
-{
+class XalWebViewFactory {
    public:
     static std::unique_ptr<XalWebView> createXalWebView();
 };

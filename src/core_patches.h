@@ -3,8 +3,7 @@
 #include <game_window.h>
 #include <memory>
 
-class CorePatches
-{
+class CorePatches {
    private:
     static std::shared_ptr<GameWindow> currentGameWindow;
 

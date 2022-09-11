@@ -4,8 +4,7 @@
 
 UUID::UUID(std::shared_ptr<FakeJni::JString> uuid) : uuid(uuid) {}
 
-std::shared_ptr<UUID> UUID::randomUUID()
-{
+std::shared_ptr<UUID> UUID::randomUUID() {
     static std::independent_bits_engine<std::random_device, CHAR_BIT, unsigned char> engine;
     unsigned char rawBytes[16];
     std::generate(rawBytes, rawBytes + 16, std::ref(engine));

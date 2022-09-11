@@ -3,8 +3,7 @@
 #include <fake-jni/fake-jni.h>
 #include <pulse/simple.h>
 
-class AudioDevice : public FakeJni::JObject
-{
+class AudioDevice : public FakeJni::JObject {
     pa_simple *s;
 
    public:

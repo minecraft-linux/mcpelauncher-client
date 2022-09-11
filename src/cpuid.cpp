@@ -2,13 +2,11 @@
 
 #include <string.h>
 
-void CpuId::cpuid(int *data, int leaf)
-{
+void CpuId::cpuid(int *data, int leaf) {
     __asm__("cpuid" : "=a"(data[0]), "=b"(data[1]), "=c"(data[2]), "=d"(data[3]) : "a"(leaf));
 }
 
-CpuId::CpuId()
-{
+CpuId::CpuId() {
     int data[4];
     cpuid(data, 0);
     hiLeaf = (unsigned int)data[0];
@@ -20,15 +18,13 @@ CpuId::CpuId()
     hiExtLeaf = (unsigned int)data[0];
 }
 
-const char *CpuId::getBrandString()
-{
+const char *CpuId::getBrandString() {
     if (hasBrandString)
         return brandString;
     if (hiExtLeaf < 0x80000004)
         return nullptr;
     int data[4];
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         cpuid(data, 0x80000002 + i);
         memcpy(&brandString[i * 16], data, 16);
     }
@@ -36,8 +32,7 @@ const char *CpuId::getBrandString()
     return brandString;
 }
 
-void CpuId::queryFeatureFlags()
-{
+void CpuId::queryFeatureFlags() {
     if (hasFeatureFlags)
         return;
     if (hiLeaf < 1)
@@ -49,8 +44,7 @@ void CpuId::queryFeatureFlags()
     featureFlagsD = data[3];
 }
 
-bool CpuId::queryFeatureFlag(CpuId::FeatureFlag flag)
-{
+bool CpuId::queryFeatureFlag(CpuId::FeatureFlag flag) {
     queryFeatureFlags();
     auto flagi = (unsigned char)flag;
     if (flagi & 128)

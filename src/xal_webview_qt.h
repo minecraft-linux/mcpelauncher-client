@@ -4,8 +4,7 @@
 #include <vector>
 #include "xal_webview.h"
 
-class XalWebViewQt : public XalWebView
-{
+class XalWebViewQt : public XalWebView {
     std::string findWebView();
     std::string exec_get_stdout(std::string path, std::string title, std::string description);
     std::vector<std::string> buildCommandLine(std::string path, std::string title, std::string description);

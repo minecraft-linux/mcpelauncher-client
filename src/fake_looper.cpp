@@ -17,8 +17,7 @@
 JniSupport *FakeLooper::jniSupport;
 thread_local std::unique_ptr<FakeLooper> FakeLooper::currentLooper;
 
-void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void *> &syms)
-{
+void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     Log::info("Launcher", "Loading gamepad mappings");
     WindowCallbacks::loadGamepadMappings();
 #ifdef MCPELAUNCHER_ENABLE_ERROR_WINDOW
@@ -28,8 +27,7 @@ void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void *> &syms)
     Log::info("Launcher", "Creating window");
     static auto associatedWindow = GameWindowManager::getManager()->createWindow(
         "Minecraft", options.windowWidth, options.windowHeight, options.graphicsApi);
-    syms["ALooper_prepare"] = (void *)+[]()
-    {
+    syms["ALooper_prepare"] = (void *)+[]() {
         if (currentLooper)
             throw std::runtime_error("Looper already prepared");
         currentLooper = std::make_unique<FakeLooper>();
@@ -39,24 +37,25 @@ void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void *> &syms)
         return (ALooper *)(void *)currentLooper.get();
     };
     syms["ALooper_addFd"] =
-        (void *)+[](ALooper *looper, int fd, int ident, int events, ALooper_callbackFunc callback, void *data)
-    { return ((FakeLooper *)(void *)looper)->addFd(fd, ident, events, callback, data); };
-    syms["ALooper_pollAll"] = (void *)+[](int timeoutMillis, int *outFd, int *outEvents, void **outData)
-    { return currentLooper->pollAll(timeoutMillis, outFd, outEvents, outData); };
+        (void *)+[](ALooper *looper, int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
+            return ((FakeLooper *)(void *)looper)->addFd(fd, ident, events, callback, data);
+        };
+    syms["ALooper_pollAll"] = (void *)+[](int timeoutMillis, int *outFd, int *outEvents, void **outData) {
+        return currentLooper->pollAll(timeoutMillis, outFd, outEvents, outData);
+    };
     syms["AInputQueue_attachLooper"] =
-        (void *)+[](AInputQueue *queue, ALooper *looper, int ident, ALooper_callbackFunc callback, void *data)
-    { ((FakeLooper *)(void *)looper)->attachInputQueue(ident, callback, data); };
+        (void *)+[](AInputQueue *queue, ALooper *looper, int ident, ALooper_callbackFunc callback, void *data) {
+            ((FakeLooper *)(void *)looper)->attachInputQueue(ident, callback, data);
+        };
 
-    syms["ANativeActivity_finish"] = (void *)+[](ANativeActivity *native)
-    {
+    syms["ANativeActivity_finish"] = (void *)+[](ANativeActivity *native) {
         FakeJni::JniEnvContext ctx(*(FakeJni::Jvm *)native->vm);
         auto activity = std::dynamic_pointer_cast<MainActivity>(ctx.getJniEnv().resolveReference(native->clazz));
         activity->quitCallback();
     };
 }
 
-void FakeLooper::prepare()
-{
+void FakeLooper::prepare() {
     jniSupport->setLooperRunning(true);
 
     jniSupport->onWindowCreated((ANativeWindow *)(void *)associatedWindow.get(),
@@ -72,15 +71,13 @@ void FakeLooper::prepare()
     ShaderErrorPatch::onGLContextCreated();
 }
 
-FakeLooper::~FakeLooper()
-{
+FakeLooper::~FakeLooper() {
     CorePatches::setGameWindow(nullptr);
     associatedWindow.reset();
     associatedWindowCallbacks.reset();
 }
 
-int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data)
-{
+int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
     if (androidEvent)
         return -1;
     if (callback != nullptr)
@@ -89,8 +86,7 @@ int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callba
     return 1;
 }
 
-void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void *data)
-{
+void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void *data) {
     if (inputEntry)
         throw std::runtime_error("attachInputQueue already called on this looper");
     if (callback != nullptr)
@@ -98,15 +94,12 @@ void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void
     inputEntry = EventEntry(-1, ident, 0, data);
 }
 
-int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData)
-{
-    if (androidEvent)
-    {
+int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData) {
+    if (androidEvent) {
         pollfd f;
         f.fd = androidEvent.fd;
         f.events = androidEvent.events;
-        if (poll(&f, 1, 0) > 0)
-        {
+        if (poll(&f, 1, 0) > 0) {
             androidEvent.fill(outFd, outData);
             if (outEvents)
                 *outEvents = f.revents;
@@ -114,8 +107,7 @@ int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **ou
         }
     }
 
-    if (inputEntry && fakeInputQueue.hasEvents())
-    {
+    if (inputEntry && fakeInputQueue.hasEvents()) {
         inputEntry.fill(outFd, outData);
         return inputEntry.ident;
     }

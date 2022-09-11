@@ -1,8 +1,7 @@
 #pragma once
 #include <fake-jni/fake-jni.h>
 
-class UUID : public FakeJni::JObject
-{
+class UUID : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("java/util/UUID")
 

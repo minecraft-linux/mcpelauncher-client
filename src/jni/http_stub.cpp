@@ -8,8 +8,7 @@ std::shared_ptr<FakeJni::JString> HTTPResponse::getBody() { return std::make_sha
 
 jint HTTPResponse::getResponseCode() { return 200; }
 
-std::shared_ptr<FakeJni::JArray<Header>> HTTPResponse::getHeaders()
-{
+std::shared_ptr<FakeJni::JArray<Header>> HTTPResponse::getHeaders() {
     return std::make_shared<FakeJni::JArray<Header>>();
 }
 
@@ -23,8 +22,7 @@ void HTTPRequest::setCookieData(std::shared_ptr<FakeJni::JString> arg0) {}
 
 void HTTPRequest::setContentType(std::shared_ptr<FakeJni::JString> arg0) {}
 
-std::shared_ptr<HTTPResponse> HTTPRequest::send(std::shared_ptr<FakeJni::JString> arg0)
-{
+std::shared_ptr<HTTPResponse> HTTPRequest::send(std::shared_ptr<FakeJni::JString> arg0) {
     return std::make_shared<HTTPResponse>();
 }
 

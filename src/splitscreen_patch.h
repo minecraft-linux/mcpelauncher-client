@@ -1,7 +1,6 @@
 #pragma once
 
-class SplitscreenPatch
-{
+class SplitscreenPatch {
    private:
     static void (*glScissor)(int x, int y, unsigned int w, unsigned int h);
 

@@ -2,8 +2,7 @@
 
 #include <cstddef>
 
-class ShaderErrorPatch
-{
+class ShaderErrorPatch {
    private:
     static void (*glGetShaderiv)(unsigned int shader, int pname, int *params);
     static void (*glGetShaderInfoLog)(unsigned int shader, unsigned int maxLength, unsigned int *length, char *log);

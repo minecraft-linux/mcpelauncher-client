@@ -4,15 +4,13 @@
 #include <future>
 #include <unordered_map>
 
-class ThreadMover
-{
+class ThreadMover {
    private:
     static ThreadMover instance;
 
     std::atomic_bool main_thread_started = false;
 
-    struct main_thread_info
-    {
+    struct main_thread_info {
         void *(*main_thread_fn)(void *);
         void *main_thread_arg;
     };

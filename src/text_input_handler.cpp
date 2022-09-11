@@ -1,23 +1,20 @@
 #include "text_input_handler.h"
 #include "utf8_util.h"
 
-void TextInputHandler::enable(std::string text, bool multiline)
-{
+void TextInputHandler::enable(std::string text, bool multiline) {
     enabled = true;
     this->multiline = multiline;
     update(std::move(text));
 }
 
-void TextInputHandler::update(std::string text)
-{
+void TextInputHandler::update(std::string text) {
     currentText = std::move(text);
     currentTextPosition = currentText.size();
     currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
     currentTextCopyPosition = currentTextPosition;
 }
 
-void TextInputHandler::disable()
-{
+void TextInputHandler::disable() {
     currentText.clear();
     currentTextPosition = 0;
     currentTextPositionUTF = 0;
@@ -25,15 +22,12 @@ void TextInputHandler::disable()
     enabled = false;
 }
 
-void TextInputHandler::onTextInput(std::string const &text)
-{
-    if (!enabled)
-    {
+void TextInputHandler::onTextInput(std::string const &text) {
+    if (!enabled) {
         textUpdateCallback(text);
         return;
     }
-    if (text.size() == 1 && text[0] == 8)
-    {  // backspace
+    if (text.size() == 1 && text[0] == 8) {  // backspace
         if (currentTextPositionUTF <= 0)
             return;
         currentTextPositionUTF--;
@@ -41,17 +35,13 @@ void TextInputHandler::onTextInput(std::string const &text)
         while (deleteStart > 0 && (currentText[deleteStart] & 0b11000000) == 0b10000000) deleteStart--;
         currentText.erase(currentText.begin() + deleteStart, currentText.begin() + currentTextPosition);
         currentTextPosition = deleteStart;
-    }
-    else if (text.size() == 1 && text[0] == 127)
-    {  // delete key
+    } else if (text.size() == 1 && text[0] == 127) {  // delete key
         if (currentTextPosition >= currentText.size())
             return;
         auto deleteEnd = currentTextPosition + 1;
         while (deleteEnd < currentText.size() && (currentText[deleteEnd] & 0b11000000) == 0b10000000) deleteEnd++;
         currentText.erase(currentText.begin() + currentTextPosition, currentText.begin() + deleteEnd);
-    }
-    else
-    {
+    } else {
         currentText.insert(currentText.begin() + currentTextPosition, text.begin(), text.end());
         currentTextPosition += text.size();
         currentTextPositionUTF += UTF8Util::getLength(text.c_str(), text.size());
@@ -60,15 +50,13 @@ void TextInputHandler::onTextInput(std::string const &text)
     currentTextCopyPosition = currentTextPosition;
 }
 
-void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action)
-{
+void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
     if (key == KeyCode::LEFT_SHIFT || key == KeyCode::RIGHT_SHIFT)
         shiftPressed = (action != KeyAction::RELEASE);
 
     if (action != KeyAction::PRESS && action != KeyAction::REPEAT)
         return;
-    if (key == KeyCode::RIGHT)
-    {
+    if (key == KeyCode::RIGHT) {
         if (currentTextPosition >= currentText.size())
             return;
         currentTextPosition++;
@@ -76,23 +64,17 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action)
                (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
             currentTextPosition++;
         currentTextPositionUTF++;
-    }
-    else if (key == KeyCode::LEFT)
-    {
+    } else if (key == KeyCode::LEFT) {
         if (currentTextPosition <= 0)
             return;
         currentTextPosition--;
         while (currentTextPosition > 0 && (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
             currentTextPosition--;
         currentTextPositionUTF--;
-    }
-    else if (key == KeyCode::HOME)
-    {
+    } else if (key == KeyCode::HOME) {
         currentTextPosition = 0;
         currentTextPositionUTF = 0;
-    }
-    else if (key == KeyCode::END)
-    {
+    } else if (key == KeyCode::END) {
         currentTextPosition = currentText.size();
         currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
     }
@@ -100,16 +82,12 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action)
         currentTextCopyPosition = currentTextPosition;
 }
 
-std::string TextInputHandler::getCopyText() const
-{
-    if (currentTextCopyPosition != currentTextPosition)
-    {
+std::string TextInputHandler::getCopyText() const {
+    if (currentTextCopyPosition != currentTextPosition) {
         size_t start = std::min(currentTextPosition, currentTextCopyPosition);
         size_t end = std::max(currentTextPosition, currentTextCopyPosition);
         return currentText.substr(start, end - start);
-    }
-    else
-    {
+    } else {
         return currentText;
     }
 }

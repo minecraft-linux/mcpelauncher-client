@@ -3,8 +3,7 @@
 #include <cll/event_upload_step.h>
 #include <mutex>
 
-class CllUploadAuthStep : public cll::EventUploadStep
-{
+class CllUploadAuthStep : public cll::EventUploadStep {
    private:
     std::recursive_mutex mutex;
     std::recursive_mutex cidMutex;

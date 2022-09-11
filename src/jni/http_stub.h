@@ -3,14 +3,12 @@
 #include <fake-jni/fake-jni.h>
 #include "java_types.h"
 
-class Header : public FakeJni::JObject
-{
+class Header : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("org/apache/http/Header")
 };
 
-class HTTPResponse : public FakeJni::JObject
-{
+class HTTPResponse : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/android/net/HTTPResponse")
     jint getStatus();
@@ -18,8 +16,7 @@ class HTTPResponse : public FakeJni::JObject
     jint getResponseCode();
     std::shared_ptr<FakeJni::JArray<Header>> getHeaders();
 };
-class HTTPRequest : public FakeJni::JObject
-{
+class HTTPRequest : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("com/mojang/android/net/HTTPRequest")
     HTTPRequest();

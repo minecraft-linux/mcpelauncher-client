@@ -10,11 +10,9 @@
 #include "main_activity.h"
 #include "store.h"
 
-struct JniSupport
-{
+struct JniSupport {
    private:
-    struct NativeEntry
-    {
+    struct NativeEntry {
         const char *name;
         const char *sig;
     };

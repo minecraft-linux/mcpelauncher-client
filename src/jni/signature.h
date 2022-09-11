@@ -1,14 +1,12 @@
 #pragma once
 #include <fake-jni/fake-jni.h>
 
-class PublicKey : public FakeJni::JObject
-{
+class PublicKey : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("java/security/PublicKey")
 };
 
-class Signature : public FakeJni::JObject
-{
+class Signature : public FakeJni::JObject {
    public:
     DEFINE_CLASS_NAME("java/security/Signature")
 

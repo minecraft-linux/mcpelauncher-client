@@ -2,8 +2,7 @@
 
 #include <cstddef>
 
-class HbuiPatch
-{
+class HbuiPatch {
    private:
     static bool returnTrue() { return true; }
 

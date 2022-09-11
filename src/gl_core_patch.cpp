@@ -17,8 +17,7 @@ void (*GLCorePatch::glLinkProgram_orig)(unsigned int program);
 void (*GLCorePatch::glUseProgram_orig)(unsigned int program);
 void (*GLCorePatch::glBindBuffer_orig)(int target, unsigned int buffer);
 
-void GLCorePatch::install(void *handle)
-{
+void GLCorePatch::install(void *handle) {
 #if __i386__
     void *ptr = PatchUtils::patternSearch(handle,
                                           "53 83 EC 18 E8 00 00 00 00 5B 81 C3 ?? ?? ?? ?? 8B 83 ?? ?? ?? "
@@ -31,8 +30,7 @@ void GLCorePatch::install(void *handle)
 #else
     void *ptr = nullptr;
 #endif
-    if (!ptr)
-    {
+    if (!ptr) {
         ptr = linker::dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
     }
     if (!ptr)
@@ -43,8 +41,7 @@ void GLCorePatch::install(void *handle)
     enabled = true;
 }
 
-void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides, void *(*resolver)(const char *))
-{
+void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides, void *(*resolver)(const char *)) {
     if (!enabled)
         return;
 
@@ -62,18 +59,15 @@ void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides, 
     overrides["glBindBuffer"] = (void *)glBindBuffer;
 }
 
-void GLCorePatch::glShaderSource(unsigned int shader, unsigned int count, const char **string, int *length)
-{
-    if (*length > 0 && !strcmp(string[0], "#version 300 es\n"))
-    {
+void GLCorePatch::glShaderSource(unsigned int shader, unsigned int count, const char **string, int *length) {
+    if (*length > 0 && !strcmp(string[0], "#version 300 es\n")) {
         string[0] = "#version 410\n";
         length[0] = strlen("#version 410\n");
     }
     glShaderSource_orig(shader, count, string, length);
 }
 
-void GLCorePatch::glLinkProgram(unsigned int program)
-{
+void GLCorePatch::glLinkProgram(unsigned int program) {
     glLinkProgram_orig(program);
 
     unsigned int vertexArr;
@@ -82,33 +76,27 @@ void GLCorePatch::glLinkProgram(unsigned int program)
     vaoMap[program] = vertexArr;
 }
 
-void GLCorePatch::glUseProgram(unsigned int program)
-{
+void GLCorePatch::glUseProgram(unsigned int program) {
     glUseProgram_orig(program);
 
-    if (program != 0)
-    {
+    if (program != 0) {
         glBindVertexArray(vaoMap.at(program));
         for (auto &e : GLCorePatch::buffers) glBindBuffer_orig(e.first, e.second);
     }
 }
 
-void GLCorePatch::glBindBuffer(int target, unsigned int buffer)
-{
+void GLCorePatch::glBindBuffer(int target, unsigned int buffer) {
     glBindBuffer_orig(target, buffer);
 
-    for (auto &e : GLCorePatch::buffers)
-    {
-        if (e.first == target)
-        {
+    for (auto &e : GLCorePatch::buffers) {
+        if (e.first == target) {
             e.second = buffer;
             return;
         }
     }
 }
 
-bool GLCorePatch::mustUseDesktopGL()
-{
+bool GLCorePatch::mustUseDesktopGL() {
 #ifdef __APPLE__
     return true;
 #else

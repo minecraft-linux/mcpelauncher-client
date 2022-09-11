@@ -6,11 +6,9 @@
 #include "fake_inputqueue.h"
 #include "jni/jni_support.h"
 
-class WindowCallbacks
-{
+class WindowCallbacks {
    private:
-    struct GamepadData
-    {
+    struct GamepadData {
         float axis[6];
         bool button[15];
 
@@ -25,8 +23,7 @@ class WindowCallbacks
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
     bool fullscreen = false;
-    enum class InputMode
-    {
+    enum class InputMode {
         Touch,
         Mouse,
         Gamepad,

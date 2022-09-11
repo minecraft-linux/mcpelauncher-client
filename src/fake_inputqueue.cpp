@@ -3,27 +3,25 @@
 #include <stdexcept>
 #include "armhfrewrite.h"
 
-static float _AMotionEvent_getX(const AInputEvent *event, size_t pointerIndex)
-{
+static float _AMotionEvent_getX(const AInputEvent *event, size_t pointerIndex) {
     return ((const FakeMotionEvent *)(const void *)event)->x;
 }
 
-static float _AMotionEvent_getY(const AInputEvent *event, size_t pointerIndex)
-{
+static float _AMotionEvent_getY(const AInputEvent *event, size_t pointerIndex) {
     return ((const FakeMotionEvent *)(const void *)event)->y;
 }
 
-static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, size_t pointerIndex)
-{
+static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, size_t pointerIndex) {
     return ((const FakeMotionEvent *)(const void *)event)->axisFunction(axis);
 }
 
-void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms)
-{
-    syms["AInputQueue_getEvent"] = (void *)+[](AInputQueue *queue, AInputEvent **outEvent)
-    { return ((FakeInputQueue *)(void *)queue)->getEvent((FakeInputEvent **)(void **)outEvent); };
-    syms["AInputQueue_finishEvent"] = (void *)+[](AInputQueue *queue, AInputEvent *event, int handled)
-    { ((FakeInputQueue *)(void *)queue)->finishEvent((FakeInputEvent *)(void *)event); };
+void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
+    syms["AInputQueue_getEvent"] = (void *)+[](AInputQueue *queue, AInputEvent **outEvent) {
+        return ((FakeInputQueue *)(void *)queue)->getEvent((FakeInputEvent **)(void **)outEvent);
+    };
+    syms["AInputQueue_finishEvent"] = (void *)+[](AInputQueue *queue, AInputEvent *event, int handled) {
+        ((FakeInputQueue *)(void *)queue)->finishEvent((FakeInputEvent *)(void *)event);
+    };
     syms["AInputQueue_preDispatchEvent"] = (void *)+[]() { return 0; };
     syms["AInputEvent_getSource"] =
         (void *)+[](const AInputEvent *event) { return ((const FakeInputEvent *)(const void *)event)->source; };
@@ -50,30 +48,24 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
     syms["AMotionEvent_getAxisValue"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getAxisValue));
 }
 
-int FakeInputQueue::getEvent(FakeInputEvent **event)
-{
-    if (!keyEvents.empty())
-    {
+int FakeInputQueue::getEvent(FakeInputEvent **event) {
+    if (!keyEvents.empty()) {
         *event = &keyEvents.front();
         return 0;
     }
-    if (!motionEvents.empty())
-    {
+    if (!motionEvents.empty()) {
         *event = &motionEvents.front();
         return 0;
     }
     return -1;
 }
 
-void FakeInputQueue::finishEvent(FakeInputEvent *event)
-{
-    if (!keyEvents.empty() && &keyEvents.front() == event)
-    {
+void FakeInputQueue::finishEvent(FakeInputEvent *event) {
+    if (!keyEvents.empty() && &keyEvents.front() == event) {
         keyEvents.pop_front();
         return;
     }
-    if (!motionEvents.empty() && &motionEvents.front() == event)
-    {
+    if (!motionEvents.empty() && &motionEvents.front() == event) {
         motionEvents.pop_front();
         return;
     }
