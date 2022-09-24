@@ -55,8 +55,6 @@ int main(int argc, char *argv[]) {
     argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
     argparser::arg<bool> forceEgl (p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
-    argparser::arg<bool> forceGooglePlayStoreUnverified(p, "--force-google-play-store-unverified", "-fguv", "Force telling the game that the license isn't verified, Google Play Store version", false);
-    argparser::arg<bool> forceAmazonAppStoreUnverified(p, "--force-amazon-app-store-unverified", "-fauv", "Force telling the game that the license isn't verified, Amazon App Store version", false);
     argparser::arg<bool> texturePatch(p, "--texture-patch", "-tp", "Rewrite textures of the game for Minecraft 1.16.210 - 1.17.4X", false);
 
     if (!p.parse(argc, (const char**) argv))
@@ -108,8 +106,6 @@ int main(int argc, char *argv[]) {
     for(auto&& redir : shim::from_android_data_dir) {
         Log::trace("REDIRECT", "%s to %s", redir.data(), shim::to_android_data_dir.data());
     }
-    StoreFactory::hasVerifiedGooglePlayStoreLicense = !forceGooglePlayStoreUnverified.get();
-    StoreFactory::hasVerifiedAmazonAppStoreLicense = !forceAmazonAppStoreUnverified.get();
     auto libC = MinecraftUtils::getLibCSymbols();
     ThreadMover::hookLibC(libC);
 
@@ -146,7 +142,13 @@ int main(int argc, char *argv[]) {
     }
     FakeEGL::setProcAddrFunction((void *(*)(const char*)) windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
-    MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
+    if (options.graphicsApi == GraphicsApi::OPENGL_ES2) {
+        MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
+    } else {
+        // The glcore patch requires an empty library
+        // Otherwise linker has to hide the symbols from dlsym in libminecraftpe.so
+        linker::load_library("libGLESv2.so", {});
+    }
 
     std::unordered_map<std::string, void*> android_syms;
     FakeAssetManager::initHybrisHooks(android_syms);
@@ -161,6 +163,17 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
+    if (!handle && options.graphicsApi == GraphicsApi::OPENGL) {
+        // Old game version or renderdragon
+        options.graphicsApi = GraphicsApi::OPENGL_ES2;
+        // Unload empty stub library
+        auto libGLESv2 = linker::dlopen("libGLESv2.so", 0);
+        linker::dlclose(libGLESv2);
+        // load fake libGLESv2 library
+        MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
+        // Try load the game again
+        handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
+    }
     if (!handle) {
       Log::error("Launcher", "Failed to load Minecraft library, please reinstall or wait for an update to support the new release");
       return 51;
@@ -182,6 +195,15 @@ int main(int argc, char *argv[]) {
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
 #endif
+    // If this Minecraft versions contains this bgfx symbol
+    // it is using the renderdragon engine
+    if(linker::dlsym(handle, "bgfx_init")) {
+        // The directinput mode is incompatible with the most of renderdragon enabled games
+        // Hide the availability of these symbols, until the bug is fixed
+        Keyboard::_states = nullptr;
+        Keyboard::_gameControllerId = nullptr;
+        Keyboard::_inputs = nullptr;
+    }
     if (options.graphicsApi == GraphicsApi::OPENGL) {
         try {
             GLCorePatch::install(handle);
