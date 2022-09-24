@@ -17,11 +17,22 @@
 JniSupport *FakeLooper::jniSupport;
 thread_local std::unique_ptr<FakeLooper> FakeLooper::currentLooper;
 
+void FakeLooper::initWindow() {
+    if (!currentLooper) {
+        currentLooper = std::make_unique<FakeLooper>();
+    }
+    currentLooper->initializeWindow();
+}
+
 void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void*> &syms) {
     syms["ALooper_prepare"] = (void *) +[]() {
-        if (currentLooper)
+        if (currentLooper && currentLooper->prepared)
             throw std::runtime_error("Looper already prepared");
-        currentLooper = std::make_unique<FakeLooper>();
+        if (!currentLooper) {
+            currentLooper = std::make_unique<FakeLooper>();
+        }
+        currentLooper->prepared = true;
+        
         currentLooper->prepare();
         return (ALooper *) (void *) currentLooper.get();
     };
@@ -42,9 +53,10 @@ void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void*> &syms) {
     };
 }
 
-void FakeLooper::prepare() {
-    jniSupport->setLooperRunning(true);
-
+void FakeLooper::initializeWindow() {
+    if(associatedWindow) {
+        return;
+    }
     Log::info("Launcher", "Loading gamepad mappings");
     WindowCallbacks::loadGamepadMappings();
 #ifdef MCPELAUNCHER_ENABLE_ERROR_WINDOW
@@ -54,6 +66,11 @@ void FakeLooper::prepare() {
     Log::info("Launcher", "Creating window");
     associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
             options.windowWidth, options.windowHeight, options.graphicsApi);
+}
+
+void FakeLooper::prepare() {
+    jniSupport->setLooperRunning(true);
+    initializeWindow();
     associatedWindow->makeCurrent(false);
     jniSupport->onWindowCreated((ANativeWindow *) (void *) associatedWindow.get(),
             (AInputQueue *) (void *) &fakeInputQueue);

@@ -12,6 +12,7 @@ class FakeLooper {
 private:
     static JniSupport* jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
+    bool prepared = false;
 
     struct EventEntry {
         int fd, ident, events;
@@ -36,6 +37,8 @@ private:
     std::shared_ptr<GameWindow> associatedWindow;
     std::shared_ptr<WindowCallbacks> associatedWindowCallbacks;
 
+    void initializeWindow();
+
 public:
     static void setJniSupport(JniSupport *support) {
         jniSupport = support;
@@ -52,6 +55,8 @@ public:
     int pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData);
 
 
+    static void initWindow();
+    
     static void initHybrisHooks(std::unordered_map<std::string, void*> &syms);
 
 };

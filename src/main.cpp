@@ -143,6 +143,8 @@ int main(int argc, char *argv[]) {
     FakeEGL::setProcAddrFunction((void *(*)(const char*)) windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
     if (options.graphicsApi == GraphicsApi::OPENGL_ES2) {
+        // GLFW needs a window to let eglGetProcAddress return symbols
+        FakeLooper::initWindow();
         MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
     } else {
         // The glcore patch requires an empty library
@@ -170,6 +172,8 @@ int main(int argc, char *argv[]) {
         auto libGLESv2 = linker::dlopen("libGLESv2.so", 0);
         linker::dlclose(libGLESv2);
         // load fake libGLESv2 library
+        // GLFW needs a window to let eglGetProcAddress return symbols
+        FakeLooper::initWindow();
         MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
         // Try load the game again
         handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
