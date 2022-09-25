@@ -71,7 +71,6 @@ void FakeLooper::initializeWindow() {
 void FakeLooper::prepare() {
     jniSupport->setLooperRunning(true);
     initializeWindow();
-    associatedWindow->makeCurrent(false);
     jniSupport->onWindowCreated((ANativeWindow *) (void *) associatedWindow.get(),
             (AInputQueue *) (void *) &fakeInputQueue);
     associatedWindowCallbacks = std::make_shared<WindowCallbacks>(*associatedWindow, *jniSupport, fakeInputQueue);
@@ -83,6 +82,7 @@ void FakeLooper::prepare() {
     FakeEGL::setupGLOverrides();
     SplitscreenPatch::onGLContextCreated();
     ShaderErrorPatch::onGLContextCreated();
+    associatedWindow->makeCurrent(false);
 }
 
 FakeLooper::~FakeLooper() {
