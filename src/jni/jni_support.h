@@ -1,18 +1,17 @@
 #pragma once
 
-#include "main_activity.h"
-#include "store.h"
-#include "../fake_assetmanager.h"
-#include <baron/baron.h>
 #include <android/native_activity.h>
+#include <baron/baron.h>
 #include <game_window.h>
 #include <condition_variable>
 #include <mutex>
+#include "../fake_assetmanager.h"
 #include "../text_input_handler.h"
+#include "main_activity.h"
+#include "store.h"
 
 struct JniSupport {
-
-private:
+    private:
     struct NativeEntry {
         const char *name;
         const char *sig;
@@ -33,16 +32,17 @@ private:
 
     void registerJniClasses();
 
-    void registerNatives(std::shared_ptr<FakeJni::JClass const> clazz, std::vector<NativeEntry> entries,
+    void registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
+                         std::vector<NativeEntry> entries,
                          void *(*symResolver)(const char *));
 
-public:
+    public:
     JniSupport();
 
     void registerMinecraftNatives(void *(*symResolver)(const char *));
 
     void startGame(ANativeActivity_createFunc *activityOnCreate,
-        void *stbiLoadFromMemory, void *stbiImageFree);
+                   void *stbiLoadFromMemory, void *stbiImageFree);
 
     void stopGame();
 
@@ -65,5 +65,4 @@ public:
     void setGameControllerConnected(int devId, bool connected);
 
     TextInputHandler &getTextInputHandler() { return textInput; }
-
 };
