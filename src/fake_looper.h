@@ -1,16 +1,15 @@
 #pragma once
 
 #include <android/looper.h>
-#include <memory>
 #include <game_window.h>
+#include <memory>
+#include "fake_inputqueue.h"
 #include "jni/jni_support.h"
 #include "window_callbacks.h"
-#include "fake_inputqueue.h"
 
 class FakeLooper {
-
-private:
-    static JniSupport* jniSupport;
+    private:
+    static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
     bool prepared = false;
 
@@ -19,16 +18,17 @@ private:
         void *data;
 
         EventEntry() : ident(-1) {}
-        EventEntry(int fd, int ident, int events, void *data) : fd(fd), ident(ident), events(events), data(data) {}
+        EventEntry(int fd, int ident, int events, void *data)
+            : fd(fd), ident(ident), events(events), data(data) {}
 
         void fill(int *outFd, void **outData) const {
-            if (outFd) *outFd = fd;
-            if (outData) *outData = data;
+            if(outFd)
+                *outFd = fd;
+            if(outData)
+                *outData = data;
         }
 
-        operator bool const() {
-            return ident != -1;
-        }
+        operator bool const() { return ident != -1; }
     };
     EventEntry androidEvent;
     EventEntry inputEntry;
@@ -39,24 +39,21 @@ private:
 
     void initializeWindow();
 
-public:
-    static void setJniSupport(JniSupport *support) {
-        jniSupport = support;
-    }
+    public:
+    static void setJniSupport(JniSupport *support) { jniSupport = support; }
 
     ~FakeLooper();
 
     void prepare();
 
-    int addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data);
+    int addFd(int fd, int ident, int events, ALooper_callbackFunc callback,
+              void *data);
 
     void attachInputQueue(int ident, ALooper_callbackFunc callback, void *data);
 
     int pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData);
 
-
     static void initWindow();
-    
-    static void initHybrisHooks(std::unordered_map<std::string, void*> &syms);
 
+    static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);
 };

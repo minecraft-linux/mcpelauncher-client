@@ -1,14 +1,13 @@
 #pragma once
 
 #include <game_window.h>
-#include <unordered_map>
-#include "jni/jni_support.h"
-#include "fake_inputqueue.h"
 #include <chrono>
+#include <unordered_map>
+#include "fake_inputqueue.h"
+#include "jni/jni_support.h"
 
 class WindowCallbacks {
-
-private:
+    private:
     struct GamepadData {
         float axis[6];
         bool button[15];
@@ -32,12 +31,14 @@ private:
     };
     InputMode inputMode = InputMode::Unknown;
     std::chrono::high_resolution_clock::time_point lastUpdated;
-    bool hasInputMode(InputMode want = InputMode::Unknown, bool changeMode = true);
+    bool hasInputMode(InputMode want = InputMode::Unknown,
+                      bool changeMode = true);
 
     void queueGamepadAxisInputIfNeeded(int gamepad);
 
-public:
-    WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue);
+    public:
+    WindowCallbacks(GameWindow &window, JniSupport &jniSupport,
+                    FakeInputQueue &inputQueue);
 
     static void loadGamepadMappings();
 
@@ -57,13 +58,12 @@ public:
     void onTouchUpdate(int id, double x, double y);
     void onTouchEnd(int id, double x, double y);
     void onKeyboard(KeyCode key, KeyAction action);
-    void onKeyboardText(std::string const& c);
-    void onPaste(std::string const& str);
+    void onKeyboardText(std::string const &c);
+    void onPaste(std::string const &str);
     void onGamepadState(int gamepad, bool connected);
     void onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed);
     void onGamepadAxis(int gamepad, GamepadAxisId ax, float value);
 
     static int mapMinecraftToAndroidKey(KeyCode code);
     static int mapGamepadToAndroidKey(GamepadButtonId btn);
-
 };

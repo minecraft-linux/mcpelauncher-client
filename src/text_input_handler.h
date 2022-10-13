@@ -1,16 +1,15 @@
 #pragma once
 
-#include <string>
-#include <functional>
-#include <key_mapping.h>
 #include <game_window.h>
+#include <key_mapping.h>
+#include <functional>
+#include <string>
 
 struct TextInputHandler {
+    public:
+    using TextCallback = std::function<void(std::string)>;
 
-public:
-    using TextCallback = std::function<void (std::string)>;
-
-private:
+    private:
     bool enabled = false, multiline = false, shiftPressed = false;
     std::string currentText;
     size_t currentTextPosition = 0;
@@ -18,8 +17,9 @@ private:
     size_t currentTextCopyPosition = 0;
     TextCallback textUpdateCallback;
 
-public:
-    explicit TextInputHandler(TextCallback cb) : textUpdateCallback(std::move(cb)) {}
+    public:
+    explicit TextInputHandler(TextCallback cb)
+        : textUpdateCallback(std::move(cb)) {}
 
     bool isEnabled() const { return enabled; }
 
@@ -38,5 +38,4 @@ public:
     std::string getCopyText() const;
 
     int getCursorPosition() const { return currentTextPositionUTF; }
-
 };

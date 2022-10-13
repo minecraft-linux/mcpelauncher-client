@@ -4,9 +4,6 @@
 #include "xal_webview.h"
 
 class XalWebViewFactory {
-
-public:
-
+    public:
     static std::unique_ptr<XalWebView> createXalWebView();
-
 };

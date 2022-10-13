@@ -1,14 +1,13 @@
 #pragma once
 
-#include <memory>
 #include <game_window.h>
+#include <memory>
 
 class CorePatches {
-
-private:
+    private:
     static std::shared_ptr<GameWindow> currentGameWindow;
 
-public:
+    public:
     static void install(void *handle);
 
     static void showMousePointer();
@@ -16,5 +15,4 @@ public:
     static void hideMousePointer();
 
     static void setGameWindow(std::shared_ptr<GameWindow> gameWindow);
-
 };

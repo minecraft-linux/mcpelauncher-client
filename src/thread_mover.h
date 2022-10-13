@@ -1,12 +1,11 @@
 #pragma once
 
-#include <unordered_map>
 #include <atomic>
 #include <future>
+#include <unordered_map>
 
 class ThreadMover {
-
-private:
+    private:
     static ThreadMover instance;
 
     std::atomic_bool main_thread_started = false;
@@ -20,9 +19,8 @@ private:
 
     ThreadMover() = default;
 
-public:
-    static void hookLibC(std::unordered_map<std::string, void*> &syms);
+    public:
+    static void hookLibC(std::unordered_map<std::string, void *> &syms);
 
     static void executeMainThread();
-
 };

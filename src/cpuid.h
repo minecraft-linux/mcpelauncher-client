@@ -1,8 +1,7 @@
 #pragma once
 
 class CpuId {
-
-private:
+    private:
     unsigned int hiLeaf;
     unsigned int hiExtLeaf;
     char manufacturerId[4 * 3 + 1];
@@ -15,19 +14,14 @@ private:
 
     void queryFeatureFlags();
 
-public:
-    enum class FeatureFlag : unsigned char {
-        SSSE3 = 9
-    };
+    public:
+    enum class FeatureFlag : unsigned char { SSSE3 = 9 };
 
     CpuId();
 
-    const char* getManufacturer() {
-        return manufacturerId;
-    }
+    const char* getManufacturer() { return manufacturerId; }
 
     const char* getBrandString();
 
     bool queryFeatureFlag(FeatureFlag flag);
-
 };
