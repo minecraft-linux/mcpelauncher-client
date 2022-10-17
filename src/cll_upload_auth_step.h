@@ -4,7 +4,7 @@
 #include <mutex>
 
 class CllUploadAuthStep : public cll::EventUploadStep {
-    private:
+private:
     std::recursive_mutex mutex;
     std::recursive_mutex cidMutex;
     std::string cid;
@@ -14,7 +14,7 @@ class CllUploadAuthStep : public cll::EventUploadStep {
 
     void refreshTokens(bool force = false);
 
-    public:
+public:
     void setAccount(std::string const& cid);
 
     void onRequest(cll::EventUploadRequest& request) override;

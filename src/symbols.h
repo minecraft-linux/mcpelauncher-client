@@ -9,9 +9,7 @@ struct Mouse {
 struct Keyboard {
     struct InputEvent {
         int event;
-        unsigned int key;  // it's actually an unsigned char, but the asm code
-                           // does suspicious stuff with the padding so use an
-                           // int so it gets zeroed out
+        unsigned int key;  // it's actually an unsigned char, but the asm code does suspicious stuff with the padding so use an int so it gets zeroed out
         int controllerId;
     };
 

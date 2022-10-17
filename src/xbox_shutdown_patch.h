@@ -5,14 +5,14 @@
 #include <mutex>
 
 class XboxShutdownPatch {
-    private:
+private:
     static std::condition_variable cv;
     static std::mutex mutex;
     static bool shuttingDown;
 
     static void sleepHook(unsigned int ms);
 
-    public:
+public:
     static std::atomic_int runningTasks;
     static std::mutex runningTasksMutex;
     static std::condition_variable runningTasksCv;

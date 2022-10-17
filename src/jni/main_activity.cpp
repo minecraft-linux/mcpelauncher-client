@@ -16,8 +16,7 @@
 #include <log.h>
 
 FakeJni::JInt BuildVersion::SDK_INT = 27;
-std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE =
-    std::make_shared<FakeJni::JString>("AndroidX");
+std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE = std::make_shared<FakeJni::JString>("AndroidX");
 
 std::shared_ptr<FakeJni::JString> MainActivity::createUUID() {
     return UUID::randomUUID()->toString();
@@ -31,8 +30,7 @@ FakeJni::JLong MainActivity::getUsedMemory() {
 
     struct vm_statistics64 stat;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&stat,
-                      &count);
+    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&stat, &count);
 
     double page_K = page_size / (double)1024;
     return (stat.active_count + stat.wire_count) * page_K * 1000;
@@ -56,8 +54,7 @@ FakeJni::JLong MainActivity::getFreeMemory() {
 
     struct vm_statistics64 stat;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&stat,
-                      &count);
+    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&stat, &count);
 
     double page_K = page_size / (double)1024;
     return stat.free_count * page_K * 1000;
@@ -85,9 +82,13 @@ FakeJni::JLong MainActivity::getTotalMemory() {
 #endif
 }
 
-FakeJni::JLong MainActivity::getMemoryLimit() { return getTotalMemory(); }
+FakeJni::JLong MainActivity::getMemoryLimit() {
+    return getTotalMemory();
+}
 
-FakeJni::JLong MainActivity::getAvailableMemory() { return getTotalMemory(); }
+FakeJni::JLong MainActivity::getAvailableMemory() {
+    return getTotalMemory();
+}
 
 void MainActivity::pickImage(FakeJni::JLong callback) {
     try {
@@ -95,38 +96,29 @@ void MainActivity::pickImage(FakeJni::JLong callback) {
         picker->setTitle("Select image");
         picker->setFileNameFilters({"*.png"});
         if(picker->show()) {
-            auto method = getClass().getMethod("(JLjava/lang/String;)V",
-                                               "nativeOnPickImageSuccess");
+            auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
             FakeJni::LocalFrame frame;
-            method->invoke(frame.getJniEnv(), this, callback,
-                           frame.getJniEnv().createLocalReference(
-                               std::make_shared<FakeJni::JString>(
-                                   picker->getPickedFile())));
+            method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
         } else {
-            auto method =
-                getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
+            auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
             FakeJni::LocalFrame frame;
             method->invoke(frame.getJniEnv(), this, callback);
         }
     } catch(const std::exception& e) {
-        GameWindowManager::getManager()->getErrorHandler()->onError(
-            "FilePickerFactory",
-            std::string("Failed to open the file-picker details: ") + e.what());
+        GameWindowManager::getManager()->getErrorHandler()->onError("FilePickerFactory", std::string("Failed to open the file-picker details: ") + e.what());
         auto method = getClass().getMethod("(J)V", "nativeOnPickImageCanceled");
         FakeJni::LocalFrame frame;
         method->invoke(frame.getJniEnv(), this, callback);
     }
 }
 
-void MainActivity::initializeXboxLive(FakeJni::JLong xalinit,
-                                      FakeJni::JLong xblinit) {
+void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
     auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
     FakeJni::LocalFrame frame;
     method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
 }
 
-FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit,
-                                                 FakeJni::JLong xblinit) {
+FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
     auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
     FakeJni::LocalFrame frame;
     auto ret = method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
@@ -140,8 +132,7 @@ FakeJni::JLong MainActivity::initializeLibHttpClient(FakeJni::JLong init) {
     return ret.j;
 }
 
-std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(
-    std::shared_ptr<FakeJni::JString> filename) {
+std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<FakeJni::JString> filename) {
     if(!stbi_load_from_memory || !stbi_image_free)
         return 0;
     int width, height, channels;
@@ -151,8 +142,7 @@ std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(
     std::stringstream s;
     s << f.rdbuf();
     auto buf = s.str();
-    auto image = stbi_load_from_memory((unsigned char*)buf.data(), buf.length(),
-                                       &width, &height, &channels, 4);
+    auto image = stbi_load_from_memory((unsigned char*)buf.data(), buf.length(), &width, &height, &channels, 4);
     if(!image)
         return 0;
     auto ret = std::make_shared<FakeJni::JIntArray>(2 + width * height);
@@ -160,14 +150,12 @@ std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(
     (*ret)[1] = height;
 
     for(int x = 0; x < width * height; x++) {
-        (*ret)[2 + x] = (image[x * 4 + 2]) | (image[x * 4 + 1] << 8) |
-                        (image[x * 4 + 0] << 16) | (image[x * 4 + 3] << 24);
+        (*ret)[2 + x] = (image[x * 4 + 2]) | (image[x * 4 + 1] << 8) | (image[x * 4 + 0] << 16) | (image[x * 4 + 3] << 24);
     }
     stbi_image_free(image);
     return ret;
 }
 
-std::shared_ptr<FakeJni::JByteArray> MainActivity::getFileDataBytes(
-    std::shared_ptr<FakeJni::JString> path) {
+std::shared_ptr<FakeJni::JByteArray> MainActivity::getFileDataBytes(std::shared_ptr<FakeJni::JString> path) {
     return std::make_shared<FakeJni::JByteArray>();
 }

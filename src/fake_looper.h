@@ -8,7 +8,7 @@
 #include "window_callbacks.h"
 
 class FakeLooper {
-    private:
+private:
     static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
     bool prepared = false;
@@ -18,8 +18,7 @@ class FakeLooper {
         void *data;
 
         EventEntry() : ident(-1) {}
-        EventEntry(int fd, int ident, int events, void *data)
-            : fd(fd), ident(ident), events(events), data(data) {}
+        EventEntry(int fd, int ident, int events, void *data) : fd(fd), ident(ident), events(events), data(data) {}
 
         void fill(int *outFd, void **outData) const {
             if(outFd)
@@ -28,7 +27,9 @@ class FakeLooper {
                 *outData = data;
         }
 
-        operator bool const() { return ident != -1; }
+        operator bool const() {
+            return ident != -1;
+        }
     };
     EventEntry androidEvent;
     EventEntry inputEntry;
@@ -39,15 +40,16 @@ class FakeLooper {
 
     void initializeWindow();
 
-    public:
-    static void setJniSupport(JniSupport *support) { jniSupport = support; }
+public:
+    static void setJniSupport(JniSupport *support) {
+        jniSupport = support;
+    }
 
     ~FakeLooper();
 
     void prepare();
 
-    int addFd(int fd, int ident, int events, ALooper_callbackFunc callback,
-              void *data);
+    int addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data);
 
     void attachInputQueue(int ident, ALooper_callbackFunc callback, void *data);
 

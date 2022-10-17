@@ -13,8 +13,7 @@ Ecdsa::~Ecdsa() {
 
 void Ecdsa::generateKey(std::shared_ptr<FakeJni::JString> unique_id) {
     this->unique_id = unique_id;
-    ecgroup = EC_GROUP_new_by_curve_name(
-        NID_X9_62_prime256v1);  // openssl alias of secp256r1
+    ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);  // openssl alias of secp256r1
     if(!ecgroup) {
         throw std::runtime_error("OpenSSL failed to allocate group prime256v1");
     }
@@ -30,10 +29,8 @@ void Ecdsa::generateKey(std::shared_ptr<FakeJni::JString> unique_id) {
     }
 }
 
-std::shared_ptr<FakeJni::JByteArray> Ecdsa::sign(
-    std::shared_ptr<FakeJni::JByteArray> a) {
-    ECDSA_SIG *sig = ECDSA_do_sign((const unsigned char *)a->getArray(),
-                                   a->getSize(), eckey);
+std::shared_ptr<FakeJni::JByteArray> Ecdsa::sign(std::shared_ptr<FakeJni::JByteArray> a) {
+    ECDSA_SIG *sig = ECDSA_do_sign((const unsigned char *)a->getArray(), a->getSize(), eckey);
     if(!sig) {
         throw std::runtime_error("OpenSSL failed to sign bytearray");
     }
@@ -61,7 +58,9 @@ std::shared_ptr<EcdsaPublicKey> Ecdsa::getPublicKey() {
     return std::make_shared<EcdsaPublicKey>(eckey, ecgroup);
 }
 
-std::shared_ptr<FakeJni::JString> Ecdsa::getUniqueId() { return unique_id; }
+std::shared_ptr<FakeJni::JString> Ecdsa::getUniqueId() {
+    return unique_id;
+}
 
 std::shared_ptr<Ecdsa> Ecdsa::restoreKeyAndId(std::shared_ptr<Context> ctx) {
     if(eckey == NULL || ecgroup == NULL) {

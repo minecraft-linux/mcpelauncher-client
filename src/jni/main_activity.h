@@ -5,7 +5,7 @@
 #include "java_types.h"
 
 class BuildVersion : public FakeJni::JObject {
-    public:
+public:
     DEFINE_CLASS_NAME("android/os/Build$VERSION")
 
     static FakeJni::JInt SDK_INT;
@@ -13,25 +13,26 @@ class BuildVersion : public FakeJni::JObject {
 };
 
 class PackageInfo : public FakeJni::JObject {
-    public:
+public:
     DEFINE_CLASS_NAME("android/content/pm/PackageInfo")
 
-    PackageInfo() { versionName = std::make_shared<FakeJni::JString>("TODO"); }
+    PackageInfo() {
+        versionName = std::make_shared<FakeJni::JString>("TODO");
+    }
     std::shared_ptr<FakeJni::JString> versionName;
 };
 
 class PackageManager : public FakeJni::JObject {
-    public:
+public:
     DEFINE_CLASS_NAME("android/content/pm/PackageManager")
 
-    std::shared_ptr<PackageInfo> getPackageInfo(
-        std::shared_ptr<FakeJni::JString> packageName, FakeJni::JInt flags) {
+    std::shared_ptr<PackageInfo> getPackageInfo(std::shared_ptr<FakeJni::JString> packageName, FakeJni::JInt flags) {
         return std::make_shared<PackageInfo>(PackageInfo());
     }
 };
 
 class Context : public FakeJni::JObject {
-    public:
+public:
     DEFINE_CLASS_NAME("android/content/Context")
 
     virtual std::shared_ptr<File> getFilesDir() = 0;
@@ -56,22 +57,22 @@ class Context : public FakeJni::JObject {
 };
 
 class ContextWrapper : public Context {
-    public:
+public:
     DEFINE_CLASS_NAME("android/content/ContextWrapper", Context)
 };
 
 class Activity : public ContextWrapper {
-    public:
+public:
     DEFINE_CLASS_NAME("android/app/Activity", ContextWrapper)
 };
 
 class NativeActivity : public Activity {
-    public:
+public:
     DEFINE_CLASS_NAME("android/app/NativeActivity", Activity)
 };
 
 class HardwareInfo : public FakeJni::JObject {
-    public:
+public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/HardwareInformation")
 
     static std::shared_ptr<FakeJni::JString> getAndroidVersion() {
@@ -84,14 +85,11 @@ class HardwareInfo : public FakeJni::JObject {
 };
 #include <fstream>
 class MainActivity : public NativeActivity {
-    private:
+private:
     bool ignoreNextHideKeyboard = false;
 
-    public:
-    unsigned char *(*stbi_load_from_memory)(unsigned char const *buffer,
-                                            int len, int *x, int *y,
-                                            int *channels_in_file,
-                                            int desired_channels);
+public:
+    unsigned char *(*stbi_load_from_memory)(unsigned char const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
     void (*stbi_image_free)(void *retval_from_stbi_load);
 
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", NativeActivity)
@@ -101,7 +99,9 @@ class MainActivity : public NativeActivity {
     std::function<void()> quitCallback;
     GameWindow *window;
 
-    int getAndroidVersion() { return 27; }
+    int getAndroidVersion() {
+        return 27;
+    }
 
     int getScreenWidth() {
         int width, height;
@@ -129,9 +129,13 @@ class MainActivity : public NativeActivity {
 
     void tick() {}
 
-    FakeJni::JBoolean isNetworkEnabled(FakeJni::JBoolean wifi) { return true; }
+    FakeJni::JBoolean isNetworkEnabled(FakeJni::JBoolean wifi) {
+        return true;
+    }
 
-    FakeJni::JBoolean isChromebook() { return false; }
+    FakeJni::JBoolean isChromebook() {
+        return false;
+    }
 
     std::shared_ptr<FakeJni::JString> getLocale() {
         return std::make_shared<FakeJni::JString>("en");
@@ -157,12 +161,13 @@ class MainActivity : public NativeActivity {
         return getExternalStoragePath();
     }
 
-    std::shared_ptr<FakeJni::JString> getLegacyExternalStoragePath(
-        std::shared_ptr<FakeJni::JString> gameFolder) {
+    std::shared_ptr<FakeJni::JString> getLegacyExternalStoragePath(std::shared_ptr<FakeJni::JString> gameFolder) {
         return std::make_shared<FakeJni::JString>("");
     }
 
-    FakeJni::JBoolean hasWriteExternalStoragePermission() { return true; }
+    FakeJni::JBoolean hasWriteExternalStoragePermission() {
+        return true;
+    }
 
     std::shared_ptr<HardwareInfo> getHardwareInfo() {
         return std::make_shared<HardwareInfo>();
@@ -175,8 +180,7 @@ class MainActivity : public NativeActivity {
 
     std::shared_ptr<FakeJni::JString> createUUID();
 
-    std::shared_ptr<FakeJni::JByteArray> getFileDataBytes(
-        std::shared_ptr<FakeJni::JString> path);
+    std::shared_ptr<FakeJni::JByteArray> getFileDataBytes(std::shared_ptr<FakeJni::JString> path);
 
     std::shared_ptr<FakeJni::JArray<FakeJni::JString>> getIPAddresses() {
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
@@ -186,8 +190,7 @@ class MainActivity : public NativeActivity {
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
     }
 
-    void showKeyboard(std::shared_ptr<FakeJni::JString> text,
-                      FakeJni::JInt maxLen, FakeJni::JBoolean ignored,
+    void showKeyboard(std::shared_ptr<FakeJni::JString> text, FakeJni::JInt maxLen, FakeJni::JBoolean ignored,
                       FakeJni::JBoolean ignored2, FakeJni::JBoolean multiline) {
         ignoreNextHideKeyboard = false;
         if(textInput)
@@ -216,9 +219,13 @@ class MainActivity : public NativeActivity {
         return -1;
     }
 
-    void lockCursor() { window->setCursorDisabled(true); }
+    void lockCursor() {
+        window->setCursorDisabled(true);
+    }
 
-    void unlockCursor() { window->setCursorDisabled(false); }
+    void unlockCursor() {
+        window->setCursorDisabled(false);
+    }
 
     FakeJni::JLong getUsedMemory();
 
@@ -234,16 +241,14 @@ class MainActivity : public NativeActivity {
 
     void initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
 
-    FakeJni::JLong initializeXboxLive2(FakeJni::JLong xalinit,
-                                       FakeJni::JLong xblinit);
+    FakeJni::JLong initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
 
     FakeJni::JLong initializeLibHttpClient(FakeJni::JLong init);
 
-    std::shared_ptr<FakeJni::JIntArray> getImageData(
-        std::shared_ptr<FakeJni::JString> filename);
+    std::shared_ptr<FakeJni::JIntArray> getImageData(std::shared_ptr<FakeJni::JString> filename);
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {
-    public:
+public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/input/JellyBeanDeviceManager")
 };

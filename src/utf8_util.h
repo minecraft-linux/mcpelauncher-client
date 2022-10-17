@@ -3,7 +3,7 @@
 #include <cstddef>
 
 class UTF8Util {
-    public:
+public:
     static int getCharByteSize(char c) {
         if((c & 0b11110000) == 0b11100000)
             return 3;

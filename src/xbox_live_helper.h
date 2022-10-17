@@ -8,7 +8,7 @@
 #include "cll_upload_auth_step.h"
 
 class XboxLiveHelper {
-    private:
+private:
     static std::string const MSA_CLIENT_ID;
     static std::string const MSA_COBRAND_ID;
 
@@ -27,8 +27,10 @@ class XboxLiveHelper {
 
     msa::client::ServiceClient& getMsaClient();
 
-    public:
-    static XboxLiveHelper& getInstance() { return instance; }
+public:
+    static XboxLiveHelper& getInstance() {
+        return instance;
+    }
 
     static std::string findMsa();
 
@@ -39,23 +41,15 @@ class XboxLiveHelper {
         client.reset();
     }
 
-    void invokeMsaAuthFlow(
-        std::function<void(std::string const& cid,
-                           std::string const& binaryToken)>
-            success_cb,
-        std::function<void(simpleipc::rpc_error_code, std::string const&)>
-            error_cb);
+    void invokeMsaAuthFlow(std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
+                           std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb);
 
-    simpleipc::client::rpc_call<std::shared_ptr<msa::client::Token>>
-    requestXblToken(std::string const& cid, bool silent);
+    simpleipc::client::rpc_call<std::shared_ptr<msa::client::Token>> requestXblToken(std::string const& cid,
+                                                                                     bool silent);
 
-    void requestXblToken(
-        std::string const& cid, bool silent,
-        std::function<void(std::string const& cid,
-                           std::string const& binaryToken)>
-            success_cb,
-        std::function<void(simpleipc::rpc_error_code, std::string const&)>
-            error_cb);
+    void requestXblToken(std::string const& cid, bool silent,
+                         std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
+                         std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb);
 
     std::string getCllMsaToken(std::string const& cid);
 

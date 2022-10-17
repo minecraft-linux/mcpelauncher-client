@@ -8,4 +8,5 @@ IndentCaseLabels: false
 IncludeBlocks: Preserve
 SpaceBeforeParens: Never
 PointerAlignment: Left
-AccessModifierOffset: 0
+AccessModifierOffset: -4
+ColumnLimit: 0

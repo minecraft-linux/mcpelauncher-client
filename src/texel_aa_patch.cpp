@@ -5,19 +5,15 @@
 #include <memory.h>
 
 void TexelAAPatch::install(void *handle) {
-    auto ptr = (unsigned char *)linker::dlsym(
-        handle,
-        "_ZN31GeneralSettingsScreenController28_registerControllerCallbacksEv");
+    auto ptr = (unsigned char *)linker::dlsym(handle, "_ZN31GeneralSettingsScreenController28_registerControllerCallbacksEv");
     if(ptr == nullptr)
         return;
     int hash = 0x96F031FF;
     for(int i = 0; i < 0x4000; i++) {
-        if((int &)ptr[i + 4] == hash && ptr[i] == 0xC7 && ptr[i + 1] == 0x44 &&
-           ptr[i + 2] == 0x24) {
+        if((int &)ptr[i + 4] == hash && ptr[i] == 0xC7 && ptr[i + 1] == 0x44 && ptr[i + 2] == 0x24) {
             Log::trace("TexelAAPatch", "Found patch at @%x", i);
             if(ptr[i + 0x24] != 0x8D && ptr[i + 0x24 + 1] != 0x83) {
-                Log::trace("TexelAAPatch",
-                           "LDR instruction invalid; patch incompatible");
+                Log::trace("TexelAAPatch", "LDR instruction invalid; patch incompatible");
                 return;
             }
             ptr[i + 0x24] = 0xB8;  // mov eax, lamda_addr

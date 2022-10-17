@@ -11,7 +11,7 @@
 #include "store.h"
 
 struct JniSupport {
-    private:
+private:
     struct NativeEntry {
         const char *name;
         const char *sig;
@@ -32,11 +32,10 @@ struct JniSupport {
 
     void registerJniClasses();
 
-    void registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
-                         std::vector<NativeEntry> entries,
+    void registerNatives(std::shared_ptr<FakeJni::JClass const> clazz, std::vector<NativeEntry> entries,
                          void *(*symResolver)(const char *));
 
-    public:
+public:
     JniSupport();
 
     void registerMinecraftNatives(void *(*symResolver)(const char *));

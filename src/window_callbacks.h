@@ -7,7 +7,7 @@
 #include "jni/jni_support.h"
 
 class WindowCallbacks {
-    private:
+private:
     struct GamepadData {
         float axis[6];
         bool button[15];
@@ -31,14 +31,12 @@ class WindowCallbacks {
     };
     InputMode inputMode = InputMode::Unknown;
     std::chrono::high_resolution_clock::time_point lastUpdated;
-    bool hasInputMode(InputMode want = InputMode::Unknown,
-                      bool changeMode = true);
+    bool hasInputMode(InputMode want = InputMode::Unknown, bool changeMode = true);
 
     void queueGamepadAxisInputIfNeeded(int gamepad);
 
-    public:
-    WindowCallbacks(GameWindow &window, JniSupport &jniSupport,
-                    FakeInputQueue &inputQueue);
+public:
+    WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue);
 
     static void loadGamepadMappings();
 

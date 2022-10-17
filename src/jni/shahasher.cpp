@@ -14,7 +14,9 @@ ShaHasher::ShaHasher() {
     }
 }
 
-ShaHasher::~ShaHasher() { EVP_MD_CTX_free(mdctx); }
+ShaHasher::~ShaHasher() {
+    EVP_MD_CTX_free(mdctx);
+}
 
 void ShaHasher::AddBytes(std::shared_ptr<FakeJni::JByteArray> barray) {
     auto data = barray->getArray();

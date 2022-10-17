@@ -6,10 +6,10 @@
 #include <string>
 
 struct TextInputHandler {
-    public:
+public:
     using TextCallback = std::function<void(std::string)>;
 
-    private:
+private:
     bool enabled = false, multiline = false, shiftPressed = false;
     std::string currentText;
     size_t currentTextPosition = 0;
@@ -17,9 +17,8 @@ struct TextInputHandler {
     size_t currentTextCopyPosition = 0;
     TextCallback textUpdateCallback;
 
-    public:
-    explicit TextInputHandler(TextCallback cb)
-        : textUpdateCallback(std::move(cb)) {}
+public:
+    explicit TextInputHandler(TextCallback cb) : textUpdateCallback(std::move(cb)) {}
 
     bool isEnabled() const { return enabled; }
 

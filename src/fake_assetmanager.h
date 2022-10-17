@@ -14,5 +14,7 @@ struct FakeAssetManager {
 
     static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);
 
-    explicit operator AAssetManager *() const { return (AAssetManager *)this; }
+    explicit operator AAssetManager *() const {
+        return (AAssetManager *)this;
+    }
 };

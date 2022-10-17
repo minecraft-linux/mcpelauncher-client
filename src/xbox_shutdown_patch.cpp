@@ -16,8 +16,7 @@ std::mutex XboxShutdownPatch::runningTasksMutex;
 
 void XboxShutdownPatch::sleepHook(unsigned int ms) {
     std::unique_lock<std::mutex> l(mutex);
-    cv.wait_for(l, std::chrono::milliseconds(ms),
-                []() { return shuttingDown; });
+    cv.wait_for(l, std::chrono::milliseconds(ms), []() { return shuttingDown; });
 }
 
 void XboxShutdownPatch::install(void* handle) {
@@ -38,21 +37,18 @@ void XboxShutdownPatch::notifyShutdown() {
     {
         std::unique_lock<std::mutex> l(runningTasksMutex);
         while(XboxShutdownPatch::runningTasks > 0) {
-            Log::trace("XboxLive", "Waiting for %i tasks",
-                       (int)XboxShutdownPatch::runningTasks);
+            Log::trace("XboxLive", "Waiting for %i tasks", (int)XboxShutdownPatch::runningTasks);
             cv.wait_for(l, std::chrono::seconds(1));
         }
     }
     Log::trace("XboxLive", "Finished waiting for tasks");
 }
 
-extern "C" void xbox_shutdown_patch_run_one_enter() asm(
-    "xbox_shutdown_patch_run_one_enter");
+extern "C" void xbox_shutdown_patch_run_one_enter() asm("xbox_shutdown_patch_run_one_enter");
 extern "C" void xbox_shutdown_patch_run_one_enter() {
     ++XboxShutdownPatch::runningTasks;
 }
-extern "C" void xbox_shutdown_patch_run_one_exit() asm(
-    "xbox_shutdown_patch_run_one_exit");
+extern "C" void xbox_shutdown_patch_run_one_exit() asm("xbox_shutdown_patch_run_one_exit");
 extern "C" void xbox_shutdown_patch_run_one_exit() {
     if(XboxShutdownPatch::runningTasks.fetch_sub(1) <= 1) {
         XboxShutdownPatch::runningTasksCv.notify_all();

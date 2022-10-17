@@ -9,29 +9,19 @@
 
 bool GLCorePatch::enabled = false;
 std::unordered_map<unsigned int, unsigned int> GLCorePatch::vaoMap;
-std::pair<int, unsigned int> GLCorePatch::buffers[2] = {{0x8892, 0},
-                                                        {0x8893, 0}};
+std::pair<int, unsigned int> GLCorePatch::buffers[2] = {{0x8892, 0}, {0x8893, 0}};
 void (*GLCorePatch::glGenVertexArrays)(int n, unsigned int *arrays);
 void (*GLCorePatch::glBindVertexArray)(unsigned int array);
-void (*GLCorePatch::glShaderSource_orig)(unsigned int shader,
-                                         unsigned int count,
-                                         const char **string, int *length);
+void (*GLCorePatch::glShaderSource_orig)(unsigned int shader, unsigned int count, const char **string, int *length);
 void (*GLCorePatch::glLinkProgram_orig)(unsigned int program);
 void (*GLCorePatch::glUseProgram_orig)(unsigned int program);
 void (*GLCorePatch::glBindBuffer_orig)(int target, unsigned int buffer);
 
 void GLCorePatch::install(void *handle) {
 #if __i386__
-    void *ptr = PatchUtils::patternSearch(
-        handle,
-        "53 83 EC 18 E8 00 00 00 00 5B 81 C3 ?? ?? ?? ?? 8B 83 ?? ?? ?? ?? 85 "
-        "C0 79 5F 8D 44 24 08 89 04 24 E8 ?? ?? ?? ?? 83 EC 04 8B 44 24 08 83 "
-        "F8 02");
+    void *ptr = PatchUtils::patternSearch(handle, "53 83 EC 18 E8 00 00 00 00 5B 81 C3 ?? ?? ?? ?? 8B 83 ?? ?? ?? ?? 85 C0 79 5F 8D 44 24 08 89 04 24 E8 ?? ?? ?? ?? 83 EC 04 8B 44 24 08 83 F8 02");
 #elif __x86_64__
-    void *ptr = PatchUtils::patternSearch(
-        handle,
-        "8B 15 ?? ?? ?? ?? 85 D2 78 07 83 FA 01 0F 94 C0 C3 50 E8 ?? ?? ?? ?? "
-        "C1 EA 10 F7 D2 83 E2 01 89");
+    void *ptr = PatchUtils::patternSearch(handle, "8B 15 ?? ?? ?? ?? 85 D2 78 07 83 FA 01 0F 94 C0 C3 50 E8 ?? ?? ?? ?? C1 EA 10 F7 D2 83 E2 01 89");
 #else
     void *ptr = nullptr;
 #endif
@@ -46,17 +36,14 @@ void GLCorePatch::install(void *handle) {
     enabled = true;
 }
 
-void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides,
-                            void *(*resolver)(const char *)) {
+void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides, void *(*resolver)(const char *)) {
     if(!enabled)
         return;
 
-    glGenVertexArrays =
-        (void (*)(int, unsigned int *))resolver("glGenVertexArrays");
+    glGenVertexArrays = (void (*)(int, unsigned int *))resolver("glGenVertexArrays");
     glBindVertexArray = (void (*)(unsigned int))resolver("glBindVertexArray");
 
-    glShaderSource_orig = (void (*)(unsigned int, unsigned int, const char **,
-                                    int *))resolver("glShaderSource");
+    glShaderSource_orig = (void (*)(unsigned int, unsigned int, const char **, int *))resolver("glShaderSource");
     glLinkProgram_orig = (void (*)(unsigned int))resolver("glLinkProgram");
     glUseProgram_orig = (void (*)(unsigned int))resolver("glUseProgram");
     glBindBuffer_orig = (void (*)(int, unsigned int))resolver("glBindBuffer");
@@ -67,8 +54,7 @@ void GLCorePatch::installGL(std::unordered_map<std::string, void *> &overrides,
     overrides["glBindBuffer"] = (void *)glBindBuffer;
 }
 
-void GLCorePatch::glShaderSource(unsigned int shader, unsigned int count,
-                                 const char **string, int *length) {
+void GLCorePatch::glShaderSource(unsigned int shader, unsigned int count, const char **string, int *length) {
     if(*length > 0 && !strcmp(string[0], "#version 300 es\n")) {
         string[0] = "#version 410\n";
         length[0] = strlen("#version 410\n");

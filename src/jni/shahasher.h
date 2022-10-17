@@ -5,7 +5,7 @@
 class ShaHasher : public FakeJni::JObject {
     EVP_MD_CTX *mdctx = NULL;
 
-    public:
+public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/ShaHasher")
 
     ShaHasher();

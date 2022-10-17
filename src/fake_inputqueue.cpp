@@ -11,24 +11,20 @@ static float _AMotionEvent_getY(const AInputEvent *event, size_t pointerIndex) {
     return ((const FakeMotionEvent *)(const void *)event)->y;
 }
 
-static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis,
-                                        size_t pointerIndex) {
+static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, size_t pointerIndex) {
     return ((const FakeMotionEvent *)(const void *)event)->axisFunction(axis);
 }
 
-void FakeInputQueue::initHybrisHooks(
-    std::unordered_map<std::string, void *> &syms) {
-    syms["AInputQueue_getEvent"] =
-        (void *)+[](AInputQueue *queue, AInputEvent **outEvent) {
-            return ((FakeInputQueue *)(void *)queue)
-                ->getEvent((FakeInputEvent **)(void **)outEvent);
-        };
-    syms["AInputQueue_finishEvent"] =
-        (void *)+[](AInputQueue *queue, AInputEvent *event, int handled) {
-            ((FakeInputQueue *)(void *)queue)
-                ->finishEvent((FakeInputEvent *)(void *)event);
-        };
-    syms["AInputQueue_preDispatchEvent"] = (void *)+[]() { return 0; };
+void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
+    syms["AInputQueue_getEvent"] = (void *)+[](AInputQueue *queue, AInputEvent **outEvent) {
+        return ((FakeInputQueue *)(void *)queue)->getEvent((FakeInputEvent **)(void **)outEvent);
+    };
+    syms["AInputQueue_finishEvent"] = (void *)+[](AInputQueue *queue, AInputEvent *event, int handled) {
+        ((FakeInputQueue *)(void *)queue)->finishEvent((FakeInputEvent *)(void *)event);
+    };
+    syms["AInputQueue_preDispatchEvent"] = (void *)+[]() {
+        return 0;
+    };
     syms["AInputEvent_getSource"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeInputEvent *)(const void *)event)->source;
     };
@@ -44,30 +40,29 @@ void FakeInputQueue::initHybrisHooks(
     syms["AKeyEvent_getKeyCode"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeKeyEvent *)(const void *)event)->keyCode;
     };
-    syms["AKeyEvent_getRepeatCount"] =
-        (void *)+[](const AInputEvent *event) { return (int32_t)0; };
-    syms["AKeyEvent_getMetaState"] =
-        (void *)+[](const AInputEvent *event) { return (int32_t)0; };
+    syms["AKeyEvent_getRepeatCount"] = (void *)+[](const AInputEvent *event) {
+        return (int32_t)0;
+    };
+    syms["AKeyEvent_getMetaState"] = (void *)+[](const AInputEvent *event) {
+        return (int32_t)0;
+    };
     syms["AMotionEvent_getAction"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeMotionEvent *)(const void *)event)->action;
     };
-    syms["AMotionEvent_getPointerCount"] =
-        (void *)+[](const AInputEvent *event) { return 1; };
-    syms["AMotionEvent_getButtonState"] =
-        (void *)+[](const AInputEvent *event) { return 0; };
+    syms["AMotionEvent_getPointerCount"] = (void *)+[](const AInputEvent *event) {
+        return 1;
+    };
+    syms["AMotionEvent_getButtonState"] = (void *)+[](const AInputEvent *event) {
+        return 0;
+    };
     syms["AMotionEvent_getPointerId"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeMotionEvent *)(const void *)event)->pointerId;
     };
-    syms["AMotionEvent_getX"] =
-        reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
-    syms["AMotionEvent_getY"] =
-        reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getY));
-    syms["AMotionEvent_getRawX"] =
-        reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
-    syms["AMotionEvent_getRawY"] =
-        reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getY));
-    syms["AMotionEvent_getAxisValue"] =
-        reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getAxisValue));
+    syms["AMotionEvent_getX"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
+    syms["AMotionEvent_getY"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getY));
+    syms["AMotionEvent_getRawX"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
+    syms["AMotionEvent_getRawY"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getY));
+    syms["AMotionEvent_getAxisValue"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getAxisValue));
 }
 
 int FakeInputQueue::getEvent(FakeInputEvent **event) {
@@ -91,8 +86,7 @@ void FakeInputQueue::finishEvent(FakeInputEvent *event) {
         motionEvents.pop_front();
         return;
     }
-    throw std::runtime_error(
-        "finishEvent: the event is not the event on the front of queue");
+    throw std::runtime_error("finishEvent: the event is not the event on the front of queue");
 }
 
 void FakeInputQueue::addEvent(FakeKeyEvent event) {

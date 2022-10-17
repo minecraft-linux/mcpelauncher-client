@@ -9,21 +9,15 @@
 #define WRAP1(name, sa, da)  \
     WRAP_DEF_ORIG(name, da); \
     WRAP_DEF_FUNC(name, sa v1) { WRAP_DEF_FUNC_C(name, (da&)v1); }
-#define WRAP2(name, sa, sb, da, db)              \
-    WRAP_DEF_ORIG(name, da, db);                 \
-    WRAP_DEF_FUNC(name, sa v1, sb v2) {          \
-        WRAP_DEF_FUNC_C(name, (da&)v1, (db&)v2); \
-    }
-#define WRAP3(name, sa, sb, sc, da, db, dc)               \
-    WRAP_DEF_ORIG(name, da, db, dc);                      \
-    WRAP_DEF_FUNC(name, sa v1, sb v2, sc v3) {            \
-        WRAP_DEF_FUNC_C(name, (da&)v1, (db&)v2, (dc&)v3); \
-    }
-#define WRAP4(name, sa, sb, sc, sd, da, db, dc, dd)                \
-    WRAP_DEF_ORIG(name, da, db, dc, dd);                           \
-    WRAP_DEF_FUNC(name, sa v1, sb v2, sc v3, sd v4) {              \
-        WRAP_DEF_FUNC_C(name, (da&)v1, (db&)v2, (dc&)v3, (dd&)v4); \
-    }
+#define WRAP2(name, sa, sb, da, db) \
+    WRAP_DEF_ORIG(name, da, db);    \
+    WRAP_DEF_FUNC(name, sa v1, sb v2) { WRAP_DEF_FUNC_C(name, (da&)v1, (db&)v2); }
+#define WRAP3(name, sa, sb, sc, da, db, dc) \
+    WRAP_DEF_ORIG(name, da, db, dc);        \
+    WRAP_DEF_FUNC(name, sa v1, sb v2, sc v3) { WRAP_DEF_FUNC_C(name, (da&)v1, (db&)v2, (dc&)v3); }
+#define WRAP4(name, sa, sb, sc, sd, da, db, dc, dd) \
+    WRAP_DEF_ORIG(name, da, db, dc, dd);            \
+    WRAP_DEF_FUNC(name, sa v1, sb v2, sc v3, sd v4) { WRAP_DEF_FUNC_C(name, (da&)v1, (db&)v2, (dc&)v3, (dd&)v4); }
 
 WRAP4(glClearColor, int, int, int, int, float, float, float, float)
 WRAP2(glUniform1f, int, int, int, float)

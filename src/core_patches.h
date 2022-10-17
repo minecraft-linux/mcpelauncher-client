@@ -4,10 +4,10 @@
 #include <memory>
 
 class CorePatches {
-    private:
+private:
     static std::shared_ptr<GameWindow> currentGameWindow;
 
-    public:
+public:
     static void install(void *handle);
 
     static void showMousePointer();
