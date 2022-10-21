@@ -10,3 +10,4 @@ SpaceBeforeParens: Never
 PointerAlignment: Left
 AccessModifierOffset: -4
 ColumnLimit: 0
+SortIncludes: false
