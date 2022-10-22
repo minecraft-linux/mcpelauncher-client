@@ -1,6 +1,17 @@
 on: pull_request
 jobs:
-  _:
+ linux:
+    uses: ChristopherHX/linux-packaging-scripts/.github/workflows/main.yml@main
+    with:
+      submodule-refs: |-
+        [
+          {
+            "project": "mcpelauncher",
+            "path": "mcpelauncher-client",
+            "ref": ${{ tojson(github.sha) }}
+          }
+        ]
+ macOS:
     uses: ChristopherHX/osx-packaging-scripts/.github/workflows/main.yml@main
     with:
       submodule-refs: |-
