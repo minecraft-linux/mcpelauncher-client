@@ -113,9 +113,10 @@ void MainActivity::pickImage(FakeJni::JLong callback) {
 }
 
 void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
-    auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
-    FakeJni::LocalFrame frame;
-    method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
+    // skipping it to avoid the 65-70% progress deadlock
+    // auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
+    // FakeJni::LocalFrame frame;
+    // method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
 }
 
 FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
