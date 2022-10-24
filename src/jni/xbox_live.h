@@ -6,7 +6,6 @@
 class XboxLoginCallback;
 
 class XboxInterop : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("com/microsoft/xbox/idp/interop/Interop")
 
@@ -20,7 +19,7 @@ public:
                           std::shared_ptr<FakeJni::JString> cid);
 
     static void invokeAuthFlow(FakeJni::JLong userPtr, std::shared_ptr<Activity> activity, FakeJni::JBoolean isProd,
-            std::shared_ptr<FakeJni::JString> signInText);
+                               std::shared_ptr<FakeJni::JString> signInText);
 
     static void initCLL(std::shared_ptr<Context> arg0, std::shared_ptr<FakeJni::JString> arg1);
 
@@ -38,22 +37,20 @@ private:
     static constexpr int TICKET_UNKNOWN_ERROR = 3;
 
     static void ticketCallback(FakeJni::Jvm const &vm, std::string const &ticket, int requestCode, int errorCode,
-            std::string const &errorStr);
+                               std::string const &errorStr);
 
     static void authFlowCallback(FakeJni::Jvm const &vm, FakeJni::JLong userPtr, int status, std::string const &cid);
 
     static void signOutCallback();
 
     static void invokeXBLogin(FakeJni::Jvm const &vm, FakeJni::JLong userPtr, std::string const &ticket,
-            std::shared_ptr<XboxLoginCallback> callback);
+                              std::shared_ptr<XboxLoginCallback> callback);
 
     static void invokeEventInitialization(FakeJni::Jvm const &vm, FakeJni::JLong userPtr, std::string const &ticket,
-            std::shared_ptr<XboxLoginCallback> callback);
-
+                                          std::shared_ptr<XboxLoginCallback> callback);
 };
 
 class XboxLoginCallback : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("com/microsoft/xbox/idp/interop/Interop$XBLoginCallback")
 
@@ -61,19 +58,16 @@ public:
     FakeJni::JLong userPtr;
     std::string cid, ticket;
 
-    XboxLoginCallback(FakeJni::Jvm const &jvm, FakeJni::JLong userPtr, std::string cid, std::string ticket) :
-        jvm(jvm), userPtr(userPtr), cid(std::move(cid)), ticket(std::move(ticket)) {}
+    XboxLoginCallback(FakeJni::Jvm const &jvm, FakeJni::JLong userPtr, std::string cid, std::string ticket) : jvm(jvm), userPtr(userPtr), cid(std::move(cid)), ticket(std::move(ticket)) {}
 
     void onLogin(FakeJni::JLong nativePtr, FakeJni::JBoolean newAccount);
 
     void onSuccess();
 
     void onError(int httpStatus, int status, std::shared_ptr<FakeJni::JString> message);
-
 };
 
 class XboxLocalStorage : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("com/microsoft/xboxlive/LocalStorage")
 

@@ -5,7 +5,6 @@
 #include <future>
 
 class ThreadMover {
-
 private:
     static ThreadMover instance;
 
@@ -21,8 +20,7 @@ private:
     ThreadMover() = default;
 
 public:
-    static void hookLibC(std::unordered_map<std::string, void*> &syms);
+    static void hookLibC(std::unordered_map<std::string, void *> &syms);
 
     static void executeMainThread();
-
 };

@@ -1,7 +1,6 @@
 #include "cert_manager.h"
 
 ByteArrayInputStream::ByteArrayInputStream(std::shared_ptr<FakeJni::JByteArray> bytes) {
-
 }
 
 std::shared_ptr<CertificateFactory> CertificateFactory::getInstance(std::shared_ptr<FakeJni::JString> s) {
@@ -23,9 +22,7 @@ std::shared_ptr<FakeJni::JArray<TrustManager>> TrustManagerFactory::getTrustMana
 }
 
 StrictHostnameVerifier::StrictHostnameVerifier() {
-
 }
 
 void StrictHostnameVerifier::verify(std::shared_ptr<FakeJni::JString> s, std::shared_ptr<X509Certificate> cert) {
-
 }

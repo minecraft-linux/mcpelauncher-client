@@ -1,7 +1,6 @@
 #pragma once
 
 class CpuId {
-
 private:
     unsigned int hiLeaf;
     unsigned int hiExtLeaf;
@@ -29,5 +28,4 @@ public:
     const char* getBrandString();
 
     bool queryFeatureFlag(FeatureFlag flag);
-
 };

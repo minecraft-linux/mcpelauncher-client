@@ -3,10 +3,9 @@
 #include <fake-jni/fake-jni.h>
 #include "java_types.h"
 
-class Header : public FakeJni::JObject{
+class Header : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("org/apache/http/Header")
-
 };
 
 class HTTPResponse : public FakeJni::JObject {

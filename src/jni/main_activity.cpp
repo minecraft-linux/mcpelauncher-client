@@ -30,13 +30,13 @@ FakeJni::JLong MainActivity::getUsedMemory() {
 
     struct vm_statistics64 stat;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t) &stat, &count);
+    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&stat, &count);
 
-    double page_K = page_size / (double) 1024;
+    double page_K = page_size / (double)1024;
     return (stat.active_count + stat.wire_count) * page_K * 1000;
 #else
     FILE* file = fopen("/proc/self/statm", "r");
-    if (file == nullptr)
+    if(file == nullptr)
         return 0L;
     int pageSize = getpagesize();
     long long pageCount = 0L;
@@ -54,13 +54,13 @@ FakeJni::JLong MainActivity::getFreeMemory() {
 
     struct vm_statistics64 stat;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t) &stat, &count);
+    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&stat, &count);
 
-    double page_K = page_size / (double) 1024;
+    double page_K = page_size / (double)1024;
     return stat.free_count * page_K * 1000;
 #else
     struct sysinfo memInfo;
-    sysinfo (&memInfo);
+    sysinfo(&memInfo);
     long long total = memInfo.freeram;
     total *= memInfo.mem_unit;
     return total;
@@ -75,7 +75,7 @@ FakeJni::JLong MainActivity::getTotalMemory() {
     return memsize;
 #else
     struct sysinfo memInfo;
-    sysinfo (&memInfo);
+    sysinfo(&memInfo);
     long long total = memInfo.totalram;
     total *= memInfo.mem_unit;
     return total;
@@ -94,8 +94,8 @@ void MainActivity::pickImage(FakeJni::JLong callback) {
     try {
         auto picker = FilePickerFactory::createFilePicker();
         picker->setTitle("Select image");
-        picker->setFileNameFilters({ "*.png" });
-        if (picker->show()) {
+        picker->setFileNameFilters({"*.png"});
+        if(picker->show()) {
             auto method = getClass().getMethod("(JLjava/lang/String;)V", "nativeOnPickImageSuccess");
             FakeJni::LocalFrame frame;
             method->invoke(frame.getJniEnv(), this, callback, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
@@ -133,15 +133,18 @@ FakeJni::JLong MainActivity::initializeLibHttpClient(FakeJni::JLong init) {
 }
 
 std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<FakeJni::JString> filename) {
-    if(!stbi_load_from_memory || !stbi_image_free) return 0;
+    if(!stbi_load_from_memory || !stbi_image_free)
+        return 0;
     int width, height, channels;
     std::ifstream f(filename->asStdString().data());
-    if(!f.is_open()) return 0;
+    if(!f.is_open())
+        return 0;
     std::stringstream s;
     s << f.rdbuf();
     auto buf = s.str();
     auto image = stbi_load_from_memory((unsigned char*)buf.data(), buf.length(), &width, &height, &channels, 4);
-    if(!image) return 0;
+    if(!image)
+        return 0;
     auto ret = std::make_shared<FakeJni::JIntArray>(2 + width * height);
     (*ret)[0] = width;
     (*ret)[1] = height;

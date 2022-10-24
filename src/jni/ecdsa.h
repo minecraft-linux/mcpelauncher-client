@@ -12,10 +12,11 @@
 class EcdsaPublicKey : public FakeJni::JObject {
     std::string xbase64;
     std::string ybase64;
+
 public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/EccPubKey")
 
-    EcdsaPublicKey(EC_KEY * eckey, EC_GROUP * ecgroup);
+    EcdsaPublicKey(EC_KEY* eckey, EC_GROUP* ecgroup);
 
     std::shared_ptr<FakeJni::JString> getBase64UrlX();
 
@@ -31,8 +32,8 @@ public:
 
     void generateKey(std::shared_ptr<FakeJni::JString> unique_id);
 
-    static EC_KEY * eckey;
-    static EC_GROUP * ecgroup;
+    static EC_KEY* eckey;
+    static EC_GROUP* ecgroup;
     static std::shared_ptr<FakeJni::JString> unique_id;
 
     std::shared_ptr<FakeJni::JByteArray> sign(std::shared_ptr<FakeJni::JByteArray> a);
@@ -42,5 +43,4 @@ public:
     std::shared_ptr<FakeJni::JString> getUniqueId();
 
     static std::shared_ptr<Ecdsa> restoreKeyAndId(std::shared_ptr<Context> ctx);
-    
 };

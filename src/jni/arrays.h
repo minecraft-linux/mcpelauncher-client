@@ -2,7 +2,6 @@
 #include <fake-jni/fake-jni.h>
 
 class Arrays : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("java/util/Arrays")
 

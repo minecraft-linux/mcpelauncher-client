@@ -1,0 +1,13 @@
+BasedOnStyle: Google
+Standard: Auto
+UseTab: Never
+IndentWidth: 4
+BreakBeforeBraces: Attach
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+IncludeBlocks: Preserve
+SpaceBeforeParens: Never
+PointerAlignment: Left
+AccessModifierOffset: -4
+ColumnLimit: 0
+SortIncludes: false

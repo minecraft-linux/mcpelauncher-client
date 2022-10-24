@@ -7,9 +7,9 @@ class ShaHasher : public FakeJni::JObject {
 
 public:
     DEFINE_CLASS_NAME("com/microsoft/xal/crypto/ShaHasher")
-    
+
     ShaHasher();
-    
+
     ~ShaHasher();
 
     void AddBytes(std::shared_ptr<FakeJni::JByteArray> barray);

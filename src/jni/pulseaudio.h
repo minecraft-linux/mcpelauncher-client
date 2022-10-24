@@ -4,7 +4,6 @@
 #include <pulse/simple.h>
 
 class AudioDevice : public FakeJni::JObject {
-
     pa_simple* s;
 
 public:

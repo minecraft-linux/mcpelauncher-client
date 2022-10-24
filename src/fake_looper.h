@@ -8,9 +8,8 @@
 #include "fake_inputqueue.h"
 
 class FakeLooper {
-
 private:
-    static JniSupport* jniSupport;
+    static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
     bool prepared = false;
 
@@ -22,8 +21,10 @@ private:
         EventEntry(int fd, int ident, int events, void *data) : fd(fd), ident(ident), events(events), data(data) {}
 
         void fill(int *outFd, void **outData) const {
-            if (outFd) *outFd = fd;
-            if (outData) *outData = data;
+            if(outFd)
+                *outFd = fd;
+            if(outData)
+                *outData = data;
         }
 
         operator bool const() {
@@ -54,9 +55,7 @@ public:
 
     int pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData);
 
-
     static void initWindow();
-    
-    static void initHybrisHooks(std::unordered_map<std::string, void*> &syms);
 
+    static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);
 };

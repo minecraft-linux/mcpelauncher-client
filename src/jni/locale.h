@@ -3,7 +3,6 @@
 #include <locale>
 
 class Locale : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("java/util/Locale")
 
@@ -13,5 +12,4 @@ public:
 
 private:
     std::locale l;
-
 };

@@ -1,7 +1,6 @@
 #pragma once
 
 class SplitscreenPatch {
-
 private:
     static void (*glScissor)(int x, int y, unsigned int w, unsigned int h);
 
@@ -11,5 +10,4 @@ public:
     static void install(void* handle);
 
     static void onGLContextCreated();
-
 };

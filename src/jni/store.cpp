@@ -66,7 +66,6 @@ void Store::purchase(std::shared_ptr<FakeJni::JString> arg0, FakeJni::JBoolean a
 }
 
 void Store::acknowledgePurchase(std::shared_ptr<FakeJni::JString> arg0, std::shared_ptr<FakeJni::JString> arg1) {
-    
 }
 
 void Store::queryPurchases() {
@@ -74,7 +73,6 @@ void Store::queryPurchases() {
 }
 
 void Store::destructor() {
-    
 }
 
 bool StoreFactory::hasVerifiedGooglePlayStoreLicense = true;

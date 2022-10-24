@@ -11,7 +11,6 @@
 #include "../text_input_handler.h"
 
 struct JniSupport {
-
 private:
     struct NativeEntry {
         const char *name;
@@ -42,7 +41,7 @@ public:
     void registerMinecraftNatives(void *(*symResolver)(const char *));
 
     void startGame(ANativeActivity_createFunc *activityOnCreate,
-        void *stbiLoadFromMemory, void *stbiImageFree);
+                   void *stbiLoadFromMemory, void *stbiImageFree);
 
     void stopGame();
 
@@ -65,5 +64,4 @@ public:
     void setGameControllerConnected(int devId, bool connected);
 
     TextInputHandler &getTextInputHandler() { return textInput; }
-
 };

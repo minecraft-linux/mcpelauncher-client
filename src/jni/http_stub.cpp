@@ -19,23 +19,18 @@ std::shared_ptr<FakeJni::JArray<Header>> HTTPResponse::getHeaders() {
 }
 
 HTTPRequest::HTTPRequest() {
-    
 }
 
 void HTTPRequest::setURL(std::shared_ptr<FakeJni::JString> arg0) {
-    
 }
 
 void HTTPRequest::setRequestBody(std::shared_ptr<FakeJni::JString> arg0) {
-    
 }
 
 void HTTPRequest::setCookieData(std::shared_ptr<FakeJni::JString> arg0) {
-    
 }
 
 void HTTPRequest::setContentType(std::shared_ptr<FakeJni::JString> arg0) {
-    
 }
 
 std::shared_ptr<HTTPResponse> HTTPRequest::send(std::shared_ptr<FakeJni::JString> arg0) {
@@ -43,5 +38,4 @@ std::shared_ptr<HTTPResponse> HTTPRequest::send(std::shared_ptr<FakeJni::JString
 }
 
 void HTTPRequest::abort() {
-    
 }

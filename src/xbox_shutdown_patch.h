@@ -5,7 +5,6 @@
 #include <atomic>
 
 class XboxShutdownPatch {
-
 private:
     static std::condition_variable cv;
     static std::mutex mutex;
@@ -21,5 +20,4 @@ public:
     static void install(void* handle);
 
     static void notifyShutdown();
-
 };

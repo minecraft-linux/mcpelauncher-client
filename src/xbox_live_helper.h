@@ -8,7 +8,6 @@
 #include <fake-jni/jvm.h>
 
 class XboxLiveHelper {
-
 private:
     static std::string const MSA_CLIENT_ID;
     static std::string const MSA_COBRAND_ID;
@@ -22,7 +21,7 @@ private:
     std::mutex cllMutex;
     std::unique_ptr<cll::EventManager> cll;
     CllUploadAuthStep cllAuthStep;
-    FakeJni::Jvm *vm;
+    FakeJni::Jvm* vm;
 
     msa::client::ServiceClient* getMsaClientOrNull();
 
@@ -42,22 +41,19 @@ public:
         client.reset();
     }
 
-
-    void invokeMsaAuthFlow(std::function<void (std::string const& cid, std::string const& binaryToken)> success_cb,
-                           std::function<void (simpleipc::rpc_error_code, std::string const&)> error_cb);
-
+    void invokeMsaAuthFlow(std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
+                           std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb);
 
     simpleipc::client::rpc_call<std::shared_ptr<msa::client::Token>> requestXblToken(std::string const& cid,
                                                                                      bool silent);
 
     void requestXblToken(std::string const& cid, bool silent,
-                         std::function<void (std::string const& cid, std::string const& binaryToken)> success_cb,
-                         std::function<void (simpleipc::rpc_error_code, std::string const&)> error_cb);
-
+                         std::function<void(std::string const& cid, std::string const& binaryToken)> success_cb,
+                         std::function<void(simpleipc::rpc_error_code, std::string const&)> error_cb);
 
     std::string getCllMsaToken(std::string const& cid);
 
-    void setJvm(FakeJni::Jvm *vm);
+    void setJvm(FakeJni::Jvm* vm);
 
     std::string getCllXToken(bool refresh);
 
@@ -66,5 +62,4 @@ public:
     void initCll(std::string const& cid = std::string());
 
     void logCll(cll::Event const& event);
-
 };

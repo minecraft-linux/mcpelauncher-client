@@ -4,7 +4,6 @@
 #include <cll/event_upload_step.h>
 
 class CllUploadAuthStep : public cll::EventUploadStep {
-
 private:
     std::recursive_mutex mutex;
     std::recursive_mutex cidMutex;
@@ -21,5 +20,4 @@ public:
     void onRequest(cll::EventUploadRequest& request) override;
 
     bool onAuthenticationFailed() override;
-
 };

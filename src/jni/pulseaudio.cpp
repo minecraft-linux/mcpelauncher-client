@@ -8,7 +8,7 @@ AudioDevice::AudioDevice() {
 }
 
 FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt samplerate, FakeJni::JInt c, FakeJni::JInt d) {
-    if (s != NULL) {
+    if(s != NULL) {
         GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", "pulseaudio already initialized");
     }
     pa_sample_spec ss;
@@ -22,17 +22,17 @@ FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt sample
     b.prebuf = -1;
     b.tlength = -1;
     int error = 0;
-    s = pa_simple_new(NULL,             // Use the default server.
-                    "mcpelauncher",     // Our application's name.
-                    PA_STREAM_PLAYBACK,
-                    NULL,               // Use the default device.
-                    "Music",            // Description of our stream.
-                    &ss,                // Our sample format.
-                    NULL,               // Use default channel map
-                    &b,                 // buffering attributes.
-                    &error              // error code.
-                    );
-    if (s == NULL) {
+    s = pa_simple_new(NULL,            // Use the default server.
+                      "mcpelauncher",  // Our application's name.
+                      PA_STREAM_PLAYBACK,
+                      NULL,     // Use the default device.
+                      "Music",  // Description of our stream.
+                      &ss,      // Our sample format.
+                      NULL,     // Use default channel map
+                      &b,       // buffering attributes.
+                      &error    // error code.
+    );
+    if(s == NULL) {
         auto errormsg = pa_strerror(error);
         GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", std::string("pulseaudio pa_simple_new failed, audio will be unavailable: ") + (errormsg ? errormsg : "No message from pulseaudio"));
         return false;
@@ -42,7 +42,7 @@ FakeJni::JBoolean AudioDevice::init(FakeJni::JInt channels, FakeJni::JInt sample
 
 void AudioDevice::write(std::shared_ptr<FakeJni::JByteArray> data, FakeJni::JInt length) {
     int error = 0;
-    if (s && pa_simple_write(s, data->getArray(), length, &error)) {
+    if(s && pa_simple_write(s, data->getArray(), length, &error)) {
         pa_simple_free(s);
         s = nullptr;
         auto errormsg = pa_strerror(error);
@@ -52,7 +52,7 @@ void AudioDevice::write(std::shared_ptr<FakeJni::JByteArray> data, FakeJni::JInt
 
 void AudioDevice::close() {
     int error = 0;
-    if (pa_simple_flush(s, &error)) {
+    if(pa_simple_flush(s, &error)) {
         auto errormsg = pa_strerror(error);
         GameWindowManager::getManager()->getErrorHandler()->onError("Pulseaudio failed", std::string("pulseaudio pa_simple_flush failed: ") + (errormsg ? errormsg : "No message from pulseaudio"));
     }

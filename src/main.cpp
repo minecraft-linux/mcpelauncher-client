@@ -41,25 +41,25 @@ LauncherOptions options;
 
 void printVersionInfo();
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     auto windowManager = GameWindowManager::getManager();
     CrashHandler::registerCrashHandler();
     MinecraftUtils::workaroundLocaleBug();
 
     argparser::arg_parser p;
-    argparser::arg<bool> printVersion (p, "--version", "-v", "Prints version info");
-    argparser::arg<std::string> gameDir (p, "--game-dir", "-dg", "Directory with the game and assets");
-    argparser::arg<std::string> dataDir (p, "--data-dir", "-dd", "Directory to use for the data");
-    argparser::arg<std::string> cacheDir (p, "--cache-dir", "-dc", "Directory to use for cache");
-    argparser::arg<int> windowWidth (p, "--width", "-ww", "Window width", 720);
-    argparser::arg<int> windowHeight (p, "--height", "-wh", "Window height", 480);
-    argparser::arg<bool> disableFmod (p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
-    argparser::arg<bool> forceEgl (p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
+    argparser::arg<bool> printVersion(p, "--version", "-v", "Prints version info");
+    argparser::arg<std::string> gameDir(p, "--game-dir", "-dg", "Directory with the game and assets");
+    argparser::arg<std::string> dataDir(p, "--data-dir", "-dd", "Directory to use for the data");
+    argparser::arg<std::string> cacheDir(p, "--cache-dir", "-dc", "Directory to use for cache");
+    argparser::arg<int> windowWidth(p, "--width", "-ww", "Window width", 720);
+    argparser::arg<int> windowHeight(p, "--height", "-wh", "Window height", 480);
+    argparser::arg<bool> disableFmod(p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
+    argparser::arg<bool> forceEgl(p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
     argparser::arg<bool> texturePatch(p, "--texture-patch", "-tp", "Rewrite textures of the game for Minecraft 1.16.210 - 1.17.4X", false);
 
-    if (!p.parse(argc, (const char**) argv))
+    if(!p.parse(argc, (const char**)argv))
         return 1;
-    if (printVersion) {
+    if(printVersion) {
         printVersionInfo();
         return 0;
     }
@@ -68,11 +68,11 @@ int main(int argc, char *argv[]) {
     options.graphicsApi = forceEgl.get() ? GraphicsApi::OPENGL_ES2 : GraphicsApi::OPENGL;
 
     FakeEGL::enableTexturePatch = texturePatch.get();
-    if (!gameDir.get().empty())
+    if(!gameDir.get().empty())
         PathHelper::setGameDir(gameDir);
-    if (!dataDir.get().empty())
+    if(!dataDir.get().empty())
         PathHelper::setDataDir(dataDir);
-    if (!cacheDir.get().empty())
+    if(!cacheDir.get().empty())
         PathHelper::setCacheDir(cacheDir);
 
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         CpuId cpuid;
         Log::info("Launcher", "CPU: %s %s", cpuid.getManufacturer(), cpuid.getBrandString());
         Log::info("Launcher", "CPU supports SSSE3: %s",
-                cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
+                  cpuid.queryFeatureFlag(CpuId::FeatureFlag::SSSE3) ? "YES" : "NO");
     }
 #endif
 
@@ -90,12 +90,11 @@ int main(int argc, char *argv[]) {
     // Fix saving to internal storage without write access to /data/*
     // TODO research how this path is constructed
     auto pid = getpid();
-    shim::from_android_data_dir = { 
+    shim::from_android_data_dir = {
         // Minecraft 1.16.210 or older
-        "/data/data/com.mojang.minecraftpe", 
+        "/data/data/com.mojang.minecraftpe",
         // Minecraft 1.16.210 or later, absolute path on linux (source build ubuntu 20.04)
-        std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) + "/proc/" + std::to_string(pid) + "/cmdline"
-    };
+        std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) + "/proc/" + std::to_string(pid) + "/cmdline"};
     if(argc >= 1 && argv != nullptr && argv[0] != nullptr && argv[0][0] != '\0') {
         // Minecraft 1.16.210 or later, relative path on linux (source build ubuntu 20.04) or every path AppImage / flatpak
         shim::from_android_data_dir.emplace_back(argv[0][0] == '/' ? std::string("/data/data") + argv[0] : std::string("/data/data/") + argv[0]);
@@ -113,10 +112,10 @@ int main(int argc, char *argv[]) {
     linker::load_library("ld-android.so", {});
     android_dlextinfo extinfo;
     std::vector<mcpelauncher_hook_t> hooks;
-    for (auto && entry : libC) {
-        hooks.emplace_back(mcpelauncher_hook_t{ entry.first.data(), entry.second });
+    for(auto&& entry : libC) {
+        hooks.emplace_back(mcpelauncher_hook_t{entry.first.data(), entry.second});
     }
-    hooks.emplace_back(mcpelauncher_hook_t{ nullptr, nullptr });
+    hooks.emplace_back(mcpelauncher_hook_t{nullptr, nullptr});
     extinfo.flags = ANDROID_DLEXT_MCPELAUNCHER_HOOKS;
     extinfo.mcpelauncher_hooks = hooks.data();
     linker::dlopen_ext(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libc.so").c_str(), 0, &extinfo);
@@ -128,21 +127,21 @@ int main(int argc, char *argv[]) {
     MinecraftUtils::setupHybris();
     try {
         PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi() + "/libminecraftpe.so");
-    } catch (std::exception& e) {
+    } catch(std::exception& e) {
         Log::error("LAUNCHER", "Could not find the game, use the -dg flag to fix this error. Original Error: %s", e.what());
         return 1;
     }
     linker::update_LD_LIBRARY_PATH(PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
-    if (!disableFmod) {
+    if(!disableFmod) {
         try {
             MinecraftUtils::loadFMod();
-        } catch (std::exception& e) {
+        } catch(std::exception& e) {
             Log::warn("FMOD", "Failed to load host libfmod: '%s', use experimental pulseaudio backend if available", e.what());
         }
     }
-    FakeEGL::setProcAddrFunction((void *(*)(const char*)) windowManager->getProcAddrFunc());
+    FakeEGL::setProcAddrFunction((void* (*)(const char*))windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
-    if (options.graphicsApi == GraphicsApi::OPENGL_ES2) {
+    if(options.graphicsApi == GraphicsApi::OPENGL_ES2) {
         // GLFW needs a window to let eglGetProcAddress return symbols
         FakeLooper::initWindow();
         MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
@@ -157,15 +156,15 @@ int main(int argc, char *argv[]) {
     FakeInputQueue::initHybrisHooks(android_syms);
     FakeLooper::initHybrisHooks(android_syms);
     FakeWindow::initHybrisHooks(android_syms);
-    for (auto s = android_symbols; *s; s++) // stub missing symbols
-        android_syms.insert({*s, (void *) +[]() { Log::warn("Main", "Android stub called"); }});
+    for(auto s = android_symbols; *s; s++)  // stub missing symbols
+        android_syms.insert({*s, (void*)+[]() { Log::warn("Main", "Android stub called"); }});
     linker::load_library("libandroid.so", android_syms);
     ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
-    if (!handle && options.graphicsApi == GraphicsApi::OPENGL) {
+    if(!handle && options.graphicsApi == GraphicsApi::OPENGL) {
         // Old game version or renderdragon
         options.graphicsApi = GraphicsApi::OPENGL_ES2;
         // Unload empty stub library
@@ -178,12 +177,12 @@ int main(int argc, char *argv[]) {
         // Try load the game again
         handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
     }
-    if (!handle) {
-      Log::error("Launcher", "Failed to load Minecraft library, please reinstall or wait for an update to support the new release");
-      return 51;
+    if(!handle) {
+        Log::error("Launcher", "Failed to load Minecraft library, please reinstall or wait for an update to support the new release");
+        return 51;
     }
     Log::info("Launcher", "Loaded Minecraft library");
-    Log::debug("Launcher", "Minecraft is at offset 0x%" PRIXPTR, (uintptr_t) MinecraftUtils::getLibraryBase(handle));
+    Log::debug("Launcher", "Minecraft is at offset 0x%" PRIXPTR, (uintptr_t)MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
 
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
@@ -208,10 +207,10 @@ int main(int argc, char *argv[]) {
         Keyboard::_gameControllerId = nullptr;
         Keyboard::_inputs = nullptr;
     }
-    if (options.graphicsApi == GraphicsApi::OPENGL) {
+    if(options.graphicsApi == GraphicsApi::OPENGL) {
         try {
             GLCorePatch::install(handle);
-        } catch (const std::exception& ex) {
+        } catch(const std::exception& ex) {
             Log::error("GLCOREPATCH", "Failed to apply glcorepatch: %s", ex.what());
             options.graphicsApi = GraphicsApi::OPENGL_ES2;
         }
@@ -220,13 +219,13 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Initializing JNI");
     JniSupport support;
     FakeLooper::setJniSupport(&support);
-    support.registerMinecraftNatives(+[](const char *sym) {
+    support.registerMinecraftNatives(+[](const char* sym) {
         return linker::dlsym(handle, sym);
     });
     std::thread startThread([&support]() {
-        support.startGame((ANativeActivity_createFunc *) linker::dlsym(handle, "ANativeActivity_onCreate"),
-            linker::dlsym(handle, "stbi_load_from_memory"),
-            linker::dlsym(handle, "stbi_image_free"));
+        support.startGame((ANativeActivity_createFunc*)linker::dlsym(handle, "ANativeActivity_onCreate"),
+                          linker::dlsym(handle, "stbi_load_from_memory"),
+                          linker::dlsym(handle, "stbi_image_free"));
         linker::dlclose(handle);
     });
     startThread.detach();
@@ -235,7 +234,7 @@ int main(int argc, char *argv[]) {
     ThreadMover::executeMainThread();
     support.setLooperRunning(false);
 
-//    XboxLivePatches::workaroundShutdownFreeze(handle);
+    //    XboxLivePatches::workaroundShutdownFreeze(handle);
     XboxLiveHelper::getInstance().shutdown();
     // Workaround for XboxLive ShutdownFreeze
     _Exit(0);
@@ -252,7 +251,7 @@ void printVersionInfo() {
     auto windowManager = GameWindowManager::getManager();
     GraphicsApi graphicsApi = GLCorePatch::mustUseDesktopGL() ? GraphicsApi::OPENGL : GraphicsApi::OPENGL_ES2;
     auto window = windowManager->createWindow("mcpelauncher", 32, 32, graphicsApi);
-    auto glGetString = (const char* (*)(int)) windowManager->getProcAddrFunc()("glGetString");
+    auto glGetString = (const char* (*)(int))windowManager->getProcAddrFunc()("glGetString");
     printf("GL Vendor: %s\n", glGetString(0x1F00 /* GL_VENDOR */));
     printf("GL Renderer: %s\n", glGetString(0x1F01 /* GL_RENDERER */));
     printf("GL Version: %s\n", glGetString(0x1F02 /* GL_VERSION */));

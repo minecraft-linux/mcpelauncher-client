@@ -6,9 +6,8 @@
 #include <game_window.h>
 
 struct TextInputHandler {
-
 public:
-    using TextCallback = std::function<void (std::string)>;
+    using TextCallback = std::function<void(std::string)>;
 
 private:
     bool enabled = false, multiline = false, shiftPressed = false;
@@ -38,5 +37,4 @@ public:
     std::string getCopyText() const;
 
     int getCursorPosition() const { return currentTextPositionUTF; }
-
 };

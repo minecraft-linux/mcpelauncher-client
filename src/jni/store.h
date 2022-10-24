@@ -3,7 +3,6 @@
 #include <fake-jni/fake-jni.h>
 
 class StoreListener : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/StoreListener")
 };
@@ -55,9 +54,7 @@ public:
     }
 };
 
-
 class NativeStoreListener : public StoreListener {
-
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/NativeStoreListener", StoreListener)
 
@@ -77,6 +74,7 @@ public:
 class Store : public FakeJni::JObject {
     bool _hasVerifiedLicense = false;
     std::shared_ptr<NativeStoreListener> storeListener;
+
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/Store")
 
@@ -106,7 +104,6 @@ public:
 };
 
 class StoreFactory : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/store/StoreFactory")
 

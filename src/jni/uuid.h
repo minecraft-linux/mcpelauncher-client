@@ -12,5 +12,4 @@ private:
     UUID(std::shared_ptr<FakeJni::JString> uuid);
 
     std::shared_ptr<FakeJni::JString> uuid;
-
 };
