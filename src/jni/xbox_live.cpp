@@ -1,9 +1,9 @@
-#include "xbox_live.h"
 #include <FileUtil.h>
-#include <log.h>
 #include <mcpelauncher/path_helper.h>
-#include <msa/client/error.h>
+#include <log.h>
+#include "xbox_live.h"
 #include "../xbox_live_helper.h"
+#include <msa/client/error.h>
 
 std::shared_ptr<FakeJni::JString> XboxInterop::getLocalStoragePath(std::shared_ptr<Context> context) {
     return std::make_shared<FakeJni::JString>(PathHelper::getPrimaryDataDirectory());

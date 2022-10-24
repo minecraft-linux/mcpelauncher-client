@@ -1,7 +1,7 @@
 #include "hbui_patch.h"
-#include <log.h>
 #include <mcpelauncher/linker.h>
 #include <mcpelauncher/patch_utils.h>
+#include <log.h>
 
 void HbuiPatch::install(void* handle) {
     void* ptr = linker::dlsym(handle, "_ZN6cohtml17VerifiyLicenseKeyEPKc");

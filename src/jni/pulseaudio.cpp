@@ -1,7 +1,7 @@
 #include "pulseaudio.h"
-#include <game_window_manager.h>
-#include <pulse/error.h>
 #include <pulse/simple.h>
+#include <pulse/error.h>
+#include <game_window_manager.h>
 
 AudioDevice::AudioDevice() {
     s = nullptr;

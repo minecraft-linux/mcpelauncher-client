@@ -1,10 +1,10 @@
 #include "fake_looper.h"
-#include "core_patches.h"
-#include "fake_egl.h"
-#include "gl_core_patch.h"
 #include "main.h"
 #include "shader_error_patch.h"
 #include "splitscreen_patch.h"
+#include "gl_core_patch.h"
+#include "core_patches.h"
+#include "fake_egl.h"
 
 #include <sys/poll.h>
 

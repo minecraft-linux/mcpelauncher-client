@@ -1,12 +1,12 @@
 #pragma once
-#include <base64.h>
 #include <fake-jni/fake-jni.h>
-#include <openssl/bn.h>
 #include <openssl/ecdsa.h>
 #include <openssl/obj_mac.h>
+#include <openssl/bn.h>
+#include <utility>
+#include <base64.h>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include "main_activity.h"
 
 class EcdsaPublicKey : public FakeJni::JObject {

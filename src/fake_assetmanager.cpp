@@ -1,13 +1,13 @@
-#include "fake_assetmanager.h"
-#include <FileUtil.h>
-#include <android/compat.h>
-#include <dirent.h>
-#include <libc_shim.h>
-#include <log.h>
-#include <sys/types.h>
-#include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <cerrno>
+#include <FileUtil.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <log.h>
+#include <libc_shim.h>
+#include <android/compat.h>
+#include "fake_assetmanager.h"
 
 struct AAsset {
     std::string buffer;

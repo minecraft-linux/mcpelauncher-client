@@ -1,26 +1,26 @@
-#include "jni_support.h"
 #include <log.h>
-#include <mcpelauncher/linker.h>
 #include <mcpelauncher/path_helper.h>
-#include "../xbox_live_helper.h"
-#include "cert_manager.h"
-#include "http_stub.h"
-#include "lib_http_client.h"
-#include "package_source.h"
+#include <mcpelauncher/linker.h>
+#include "jni_support.h"
 #include "xbox_live.h"
+#include "lib_http_client.h"
+#include "cert_manager.h"
+#include "package_source.h"
+#include "../xbox_live_helper.h"
+#include "http_stub.h"
 #ifdef HAVE_PULSEAUDIO
 #include "pulseaudio.h"
 #endif
 #include "accounts.h"
-#include "arrays.h"
 #include "ecdsa.h"
+#include "webview.h"
 #include "jbase64.h"
+#include "arrays.h"
 #include "locale.h"
-#include "securerandom.h"
-#include "shahasher.h"
 #include "signature.h"
 #include "uuid.h"
-#include "webview.h"
+#include "shahasher.h"
+#include "securerandom.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<File>();

@@ -1,5 +1,5 @@
-#include "symbols.h"
 #include <mcpelauncher/linker.h>
+#include "symbols.h"
 
 void (*Mouse::feed)(char, char, short, short, short, short);
 

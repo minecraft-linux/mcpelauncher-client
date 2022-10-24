@@ -4,14 +4,14 @@
 #ifndef __APPLE__
 #include <sys/sysinfo.h>
 #else
-#include <mach/mach.h>
 #include <sys/sysctl.h>
+#include <mach/mach.h>
 #endif
 #include <file_picker_factory.h>
 #include <game_window_manager.h>
+#include "uuid.h"
 #include <climits>
 #include <sstream>
-#include "uuid.h"
 
 #include <log.h>
 

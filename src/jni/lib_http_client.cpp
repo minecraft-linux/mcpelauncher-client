@@ -1,7 +1,7 @@
 #include "lib_http_client.h"
-#include <curl/curl.h>
-#include <log.h>
 #include "../util.h"
+#include <log.h>
+#include <curl/curl.h>
 
 using namespace std::placeholders;
 

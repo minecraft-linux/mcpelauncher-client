@@ -1,8 +1,8 @@
 #pragma once
 
 #include <fake-jni/fake-jni.h>
-#include <log.h>
 #include "main_activity.h"
+#include <log.h>
 
 #include <utility>
 

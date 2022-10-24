@@ -1,8 +1,8 @@
 #include "core_patches.h"
 
-#include <log.h>
 #include <mcpelauncher/linker.h>
 #include <mcpelauncher/patch_utils.h>
+#include <log.h>
 
 std::shared_ptr<GameWindow> CorePatches::currentGameWindow;
 

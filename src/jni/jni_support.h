@@ -1,14 +1,14 @@
 #pragma once
 
-#include <android/native_activity.h>
+#include "main_activity.h"
+#include "store.h"
+#include "../fake_assetmanager.h"
 #include <baron/baron.h>
+#include <android/native_activity.h>
 #include <game_window.h>
 #include <condition_variable>
 #include <mutex>
-#include "../fake_assetmanager.h"
 #include "../text_input_handler.h"
-#include "main_activity.h"
-#include "store.h"
 
 struct JniSupport {
 private:

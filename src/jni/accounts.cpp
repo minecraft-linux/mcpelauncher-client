@@ -1,5 +1,5 @@
-#include "accounts.h"
 #include <log.h>
+#include "accounts.h"
 
 std::shared_ptr<AccountManager> AccountManager::get(std::shared_ptr<Context>) {
     return std::make_shared<AccountManager>(AccountManager());

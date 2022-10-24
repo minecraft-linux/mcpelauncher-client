@@ -1,9 +1,9 @@
 #pragma once
 
-#include <game_window.h>
-#include <key_mapping.h>
-#include <functional>
 #include <string>
+#include <functional>
+#include <key_mapping.h>
+#include <game_window.h>
 
 struct TextInputHandler {
 public:

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <game_window.h>
-#include <chrono>
 #include <unordered_map>
-#include "fake_inputqueue.h"
 #include "jni/jni_support.h"
+#include "fake_inputqueue.h"
+#include <chrono>
 
 class WindowCallbacks {
 private:

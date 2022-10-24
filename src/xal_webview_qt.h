@@ -1,8 +1,8 @@
 #pragma once
 
+#include "xal_webview.h"
 #include <string>
 #include <vector>
-#include "xal_webview.h"
 
 class XalWebViewQt : public XalWebView {
     std::string findWebView();

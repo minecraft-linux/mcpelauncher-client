@@ -1,14 +1,14 @@
 #include "xal_webview_qt.h"
 #include <EnvPathUtil.h>
-#include <errno.h>
-#include <game_window_manager.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <array>
-#include <cstring>
 #include <memory>
 #include <stdexcept>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <cstring>
+#include <errno.h>
+#include <game_window_manager.h>
 #include "util.h"
 
 std::string XalWebViewQt::findWebView() {

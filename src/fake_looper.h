@@ -1,11 +1,11 @@
 #pragma once
 
 #include <android/looper.h>
-#include <game_window.h>
 #include <memory>
-#include "fake_inputqueue.h"
+#include <game_window.h>
 #include "jni/jni_support.h"
 #include "window_callbacks.h"
+#include "fake_inputqueue.h"
 
 class FakeLooper {
 private:

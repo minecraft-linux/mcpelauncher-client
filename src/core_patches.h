@@ -1,7 +1,7 @@
 #pragma once
 
-#include <game_window.h>
 #include <memory>
+#include <game_window.h>
 
 class CorePatches {
 private:

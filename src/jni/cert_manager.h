@@ -1,8 +1,8 @@
 #pragma once
 
 #include <fake-jni/fake-jni.h>
-#include "../text_input_handler.h"
 #include "java_types.h"
+#include "../text_input_handler.h"
 
 class InputStream : public FakeJni::JObject {
 public:

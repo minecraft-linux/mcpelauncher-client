@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cll/event_upload_step.h>
 #include <mutex>
+#include <cll/event_upload_step.h>
 
 class CllUploadAuthStep : public cll::EventUploadStep {
 private:

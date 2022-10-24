@@ -1,10 +1,10 @@
 #include "xbox_shutdown_patch.h"
 
-#include <log.h>
 #include <mcpelauncher/linker.h>
-#include <mcpelauncher/minecraft_version.h>
 #include <mcpelauncher/patch_utils.h>
 #include <cstring>
+#include <log.h>
+#include <mcpelauncher/minecraft_version.h>
 
 std::condition_variable XboxShutdownPatch::cv;
 std::mutex XboxShutdownPatch::mutex;

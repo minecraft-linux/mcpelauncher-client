@@ -1,8 +1,8 @@
 #include "texel_aa_patch.h"
 
-#include <log.h>
 #include <mcpelauncher/linker.h>
 #include <memory.h>
+#include <log.h>
 
 void TexelAAPatch::install(void *handle) {
     auto ptr = (unsigned char *)linker::dlsym(handle, "_ZN31GeneralSettingsScreenController28_registerControllerCallbacksEv");

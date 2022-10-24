@@ -1,14 +1,14 @@
 #include "fake_egl.h"
-#include <map>
 #include "gl_core_patch.h"
+#include <map>
 
 #define __ANDROID__
 #include <EGL/egl.h>
 #undef __ANDROID__
-#include <game_window.h>
 #include <log.h>
-#include <mcpelauncher/linker.h>
 #include <cstring>
+#include <game_window.h>
+#include <mcpelauncher/linker.h>
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
 #endif

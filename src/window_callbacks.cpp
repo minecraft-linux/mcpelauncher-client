@@ -1,9 +1,9 @@
 #include "window_callbacks.h"
 #include "symbols.h"
 
+#include <mcpelauncher/minecraft_version.h>
 #include <game_window_manager.h>
 #include <log.h>
-#include <mcpelauncher/minecraft_version.h>
 #include <mcpelauncher/path_helper.h>
 
 WindowCallbacks::WindowCallbacks(GameWindow& window, JniSupport& jniSupport, FakeInputQueue& inputQueue) : window(window), jniSupport(jniSupport), inputQueue(inputQueue) {

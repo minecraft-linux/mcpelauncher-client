@@ -1,8 +1,8 @@
-#include "splitscreen_patch.h"
 #include <game_window_manager.h>
-#include <log.h>
 #include <mcpelauncher/linker.h>
 #include <mcpelauncher/patch_utils.h>
+#include <log.h>
+#include "splitscreen_patch.h"
 
 void (*SplitscreenPatch::glScissor)(int x, int y, unsigned int w, unsigned int h);
 

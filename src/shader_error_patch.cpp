@@ -1,7 +1,7 @@
 #include "shader_error_patch.h"
+#include <mcpelauncher/linker.h>
 #include <game_window_manager.h>
 #include <log.h>
-#include <mcpelauncher/linker.h>
 
 void (*ShaderErrorPatch::glGetShaderiv)(unsigned int shader, int pname, int* params);
 void (*ShaderErrorPatch::glGetShaderInfoLog)(unsigned int shader, unsigned int maxLength, unsigned int* length, char* log);

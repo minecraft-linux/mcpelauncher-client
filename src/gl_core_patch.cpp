@@ -1,10 +1,10 @@
 #include "gl_core_patch.h"
 
-#include <log.h>
+#include <cstring>
 #include <mcpelauncher/linker.h>
+#include <log.h>
 #include <mcpelauncher/minecraft_version.h>
 #include <mcpelauncher/patch_utils.h>
-#include <cstring>
 #include <stdexcept>
 
 bool GLCorePatch::enabled = false;

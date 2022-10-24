@@ -1,9 +1,9 @@
-#include "xbox_live_helper.h"
-#include <FileUtil.h>
-#include <log.h>
-#include <mcpelauncher/minecraft_version.h>
-#include <mcpelauncher/path_helper.h>
 #include <msa/client/compact_token.h>
+#include <log.h>
+#include <FileUtil.h>
+#include <mcpelauncher/path_helper.h>
+#include <mcpelauncher/minecraft_version.h>
+#include "xbox_live_helper.h"
 #include "jni/xbox_live.h"
 
 using namespace simpleipc;
