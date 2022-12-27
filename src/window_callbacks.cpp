@@ -41,7 +41,7 @@ void WindowCallbacks::onClose() {
 
 bool WindowCallbacks::hasInputMode(WindowCallbacks::InputMode want, bool changeMode) {
     auto now = std::chrono::high_resolution_clock::now();
-    if(inputMode == want || changeMode && ((int)want < (int)inputMode || (now - lastUpdated) > std::chrono::seconds(2))) {
+    if(inputMode == want || (changeMode && ((int)want < (int)inputMode || (now - lastUpdated) > std::chrono::seconds(2)))) {
         if(inputMode != want) {
 #ifndef NDEBUG
             printf("Input Mode changed to %d\n", (int)want);
