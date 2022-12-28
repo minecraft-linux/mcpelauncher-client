@@ -118,8 +118,14 @@ int main(int argc, char* argv[]) {
     hooks.emplace_back(mcpelauncher_hook_t{nullptr, nullptr});
     extinfo.flags = ANDROID_DLEXT_MCPELAUNCHER_HOOKS;
     extinfo.mcpelauncher_hooks = hooks.data();
-    linker::dlopen_ext(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libc.so").c_str(), 0, &extinfo);
-    linker::dlopen(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libm.so").c_str(), 0);
+    if(linker::dlopen_ext(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libc.so").c_str(), 0, &extinfo) == nullptr) {
+        Log::error("LAUNCHER", "Failed to load armhf compat libc.so Original Error: %s", linker::dlerror());
+        return 1;
+    }
+    if(linker::dlopen(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libm.so").c_str(), 0) == nullptr) {
+        Log::error("LAUNCHER", "Failed to load armhf compat libm.so Original Error: %s", linker::dlerror());
+        return 1;
+    }
 #else
     linker::load_library("libc.so", libC);
     MinecraftUtils::loadLibM();
