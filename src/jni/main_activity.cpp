@@ -127,6 +127,9 @@ FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni
 
 FakeJni::JLong MainActivity::initializeLibHttpClient(FakeJni::JLong init) {
     auto method = getClass().getMethod("(J)J", "nativeinitializeLibHttpClient");
+    if(!method) {
+        method = getClass().getMethod("(J)J", "nativeInitializeLibHttpClient");
+    }
     FakeJni::LocalFrame frame;
     auto ret = method->invoke(frame.getJniEnv(), this, init);
     return ret.j;
