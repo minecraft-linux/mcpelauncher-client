@@ -246,9 +246,16 @@ public:
     FakeJni::JLong initializeLibHttpClient(FakeJni::JLong init);
 
     std::shared_ptr<FakeJni::JIntArray> getImageData(std::shared_ptr<FakeJni::JString> filename);
+
+    void startPlayIntegrityCheck();
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/input/JellyBeanDeviceManager")
+};
+
+class PlayIntegrity : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/mojang/minecraftpe/PlayIntegrity")
 };

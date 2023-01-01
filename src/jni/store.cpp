@@ -58,7 +58,16 @@ std::shared_ptr<ExtraLicenseResponseData> Store::getExtraLicenseData() {
 }
 
 void Store::queryProducts(std::shared_ptr<FakeJni::JArray<FakeJni::JString>> arg0) {
-    this->storeListener->onQueryProductsSuccess(std::make_shared<FakeJni::JArray<Product>>(arg0->getSize()));
+    auto products = std::make_shared<FakeJni::JArray<Product>>(arg0->getSize());
+    for(int i = 0; i < arg0->getSize(); i++) {
+        auto product = std::make_shared<Product>();
+        product->mId = (*arg0)[i];
+        product->mPrice->append("10000#");
+        product->mUnformattedPrice->append("10000#");
+        product->mCurrencyCode->append("mcl");
+        (*products)[i] = product;
+    }
+    this->storeListener->onQueryProductsSuccess(products);
 }
 
 void Store::purchase(std::shared_ptr<FakeJni::JString> arg0, FakeJni::JBoolean arg1, std::shared_ptr<FakeJni::JString> arg2) {

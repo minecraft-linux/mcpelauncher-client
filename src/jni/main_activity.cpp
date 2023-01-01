@@ -162,3 +162,9 @@ std::shared_ptr<FakeJni::JIntArray> MainActivity::getImageData(std::shared_ptr<F
 std::shared_ptr<FakeJni::JByteArray> MainActivity::getFileDataBytes(std::shared_ptr<FakeJni::JString> path) {
     return std::make_shared<FakeJni::JByteArray>();
 }
+
+void MainActivity::startPlayIntegrityCheck() {
+    // auto method = PlayIntegrity::getDescriptor()->getMethod("()V", "nativePlayIntegrityComplete");
+    // FakeJni::LocalFrame frame;
+    // method->invoke(frame.getJniEnv(), PlayIntegrity::getDescriptor().get());
+}
