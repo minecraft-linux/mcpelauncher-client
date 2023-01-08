@@ -87,6 +87,8 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<Purchase>();
     vm.registerClass<NotificationListenerService>();
 
+    vm.registerClass<PlayIntegrity>();
+
 #ifdef HAVE_PULSEAUDIO
     vm.registerClass<AudioDevice>();
 #endif
@@ -117,6 +119,10 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
                     symResolver);
     registerNatives(NativeOutputStream::getDescriptor(), {
                                                              {"nativeWrite", "(J[BII)V"},
+                                                         },
+                    symResolver);
+    registerNatives(PlayIntegrity::getDescriptor(), {
+                                                             {"nativePlayIntegrityComplete", "()V"},
                                                          },
                     symResolver);
 }

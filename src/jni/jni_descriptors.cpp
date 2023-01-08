@@ -107,6 +107,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {Function<&MainActivity::getImageData>{}, "getImageData"},
     {Function<&MainActivity::tick>{}, "tick"},
     {Function<&MainActivity::getPixelsPerMillimeter>{}, "getPixelsPerMillimeter"},
+    {Function<&MainActivity::startPlayIntegrityCheck>{}, "startPlayIntegrityCheck"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(AccountManager){Function<&AccountManager::get>{}, "get"},
@@ -119,26 +120,29 @@ END_NATIVE_DESCRIPTOR
 BEGIN_NATIVE_DESCRIPTOR(JellyBeanDeviceManager)
 END_NATIVE_DESCRIPTOR
 
+BEGIN_NATIVE_DESCRIPTOR(PlayIntegrity)
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(StoreListener)
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(NativeStoreListener){Constructor<NativeStoreListener, JLong>{}},
-    // {FakeJni::Function<&NativeStoreListener::onPurchaseFailed>{}, "onPurchaseFailed", FakeJni::JMethodID::PUBLIC },
-    // {FakeJni::Function<&NativeStoreListener::onQueryProductsSuccess>{}, "onQueryProductsSuccess", FakeJni::JMethodID::PUBLIC },
-    // {FakeJni::Function<&NativeStoreListener::onQueryPurchasesSuccess>{}, "onQueryPurchasesSuccess", FakeJni::JMethodID::PUBLIC },
-    END_NATIVE_DESCRIPTOR
+{FakeJni::Function<&NativeStoreListener::onPurchaseFailed>{}, "onPurchaseFailed", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&NativeStoreListener::onQueryProductsSuccess>{}, "onQueryProductsSuccess", FakeJni::JMethodID::PUBLIC },
+{FakeJni::Function<&NativeStoreListener::onQueryPurchasesSuccess>{}, "onQueryPurchasesSuccess", FakeJni::JMethodID::PUBLIC },
+END_NATIVE_DESCRIPTOR
 
-    BEGIN_NATIVE_DESCRIPTOR(Purchase)
-// {FakeJni::Field<&Purchase::mProductId>{}, "mProductId", FakeJni::JFieldID::PUBLIC },
-// {FakeJni::Field<&Purchase::mReceipt>{}, "mReceipt", FakeJni::JFieldID::PUBLIC },
-// {FakeJni::Field<&Purchase::mPurchaseActive>{}, "mPurchaseActive", FakeJni::JFieldID::PUBLIC },
+BEGIN_NATIVE_DESCRIPTOR(Purchase)
+{FakeJni::Field<&Purchase::mProductId>{}, "mProductId", FakeJni::JFieldID::PUBLIC },
+{FakeJni::Field<&Purchase::mReceipt>{}, "mReceipt", FakeJni::JFieldID::PUBLIC },
+{FakeJni::Field<&Purchase::mPurchaseActive>{}, "mPurchaseActive", FakeJni::JFieldID::PUBLIC },
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(Product)
-// {FakeJni::Field<&Product::mId>{}, "mId", FakeJni::JFieldID::PUBLIC },
-// {FakeJni::Field<&Product::mPrice>{}, "mPrice", FakeJni::JFieldID::PUBLIC },
-// {FakeJni::Field<&Product::mCurrencyCode>{}, "mCurrencyCode", FakeJni::JFieldID::PUBLIC },
-// {FakeJni::Field<&Product::mUnformattedPrice>{}, "mUnformattedPrice", FakeJni::JFieldID::PUBLIC },
+{FakeJni::Field<&Product::mId>{}, "mId", FakeJni::JFieldID::PUBLIC },
+{FakeJni::Field<&Product::mPrice>{}, "mPrice", FakeJni::JFieldID::PUBLIC },
+{FakeJni::Field<&Product::mCurrencyCode>{}, "mCurrencyCode", FakeJni::JFieldID::PUBLIC },
+{FakeJni::Field<&Product::mUnformattedPrice>{}, "mUnformattedPrice", FakeJni::JFieldID::PUBLIC },
 END_NATIVE_DESCRIPTOR
 
 BEGIN_NATIVE_DESCRIPTOR(NotificationListenerService){FakeJni::Function<&NotificationListenerService::getDeviceRegistrationToken>{}, "getDeviceRegistrationToken", FakeJni::JMethodID::PUBLIC | FakeJni::JMethodID::STATIC},
