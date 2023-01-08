@@ -68,19 +68,12 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
         // curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
         // curl_easy_setopt(curl, CURLOPT_READDATA, this->inputStream.get());
         // curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) contentLength);
-        if(contentLength > 4000) {
-            Log::debug("XboxHttp", "Long content");
-        }
-        this->body.resize(contentLength * 2 + 1);
+        this->body.resize(contentLength + 1);
         auto stream = std::make_shared<NativeInputStream>(callHandle);
         FakeJni::LocalFrame frame;
-        auto read = stream->Read(this->body.data(), contentLength * 2);
+        auto read = stream->Read(this->body.data(), contentLength);
         this->body[read] = '\0';
-        Log::debug("XboxHttp", "%s", this->body.data());
-        if(frame.getJniEnv().ExceptionOccurred()) {
-            frame.getJniEnv().ExceptionClear();
-            return;
-        }
+        //Log::debug("XboxHttp", "%s", this->body.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, read);
     }
@@ -185,7 +178,4 @@ void NativeOutputStream::WriteAll(std::shared_ptr<FakeJni::JByteArray> data) {
     FakeJni::LocalFrame frame;
     auto method = getClass().getMethod("(J[BII)V", "nativeWrite");
     method->invoke(frame.getJniEnv(), this, call_handle, frame.getJniEnv().createLocalReference(data), (FakeJni::JInt)0, (FakeJni::JInt)data->getSize());
-    if(frame.getJniEnv().ExceptionOccurred()) {
-        frame.getJniEnv().ExceptionClear();
-    }
 }
