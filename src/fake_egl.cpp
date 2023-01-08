@@ -8,6 +8,7 @@
 #include <log.h>
 #include <cstring>
 #include <game_window.h>
+#include <thread>
 #include <mcpelauncher/linker.h>
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
@@ -20,6 +21,7 @@ static void *(*hostProcAddrFn)(const char *);
 static std::unordered_map<std::string, void *> hostProcOverrides;
 
 EGLBoolean eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor) {
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     if(major)
         *major = 1;
     if(minor)
