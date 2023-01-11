@@ -42,7 +42,7 @@ FakeJni::JBoolean Store::hasVerifiedLicense() {
 }
 
 std::shared_ptr<FakeJni::JString> Store::getStoreId() {
-    return {};
+    return std::make_shared<FakeJni::JString>("android.googleplay");
 }
 
 std::shared_ptr<FakeJni::JString> Store::getProductSkuPrefix() {
