@@ -8,7 +8,11 @@ std::vector<Keyboard::InputEvent> *Keyboard::_inputs;
 int *Keyboard::_gameControllerId;
 
 void SymbolsHelper::initSymbols(void *handle) {
-    Mouse::feed = (void (*)(char, char, short, short, short, short))linker::dlsym(handle, "_ZN5Mouse4feedEccssss");
+    void* MouseFeedSym;
+    if (!(MouseFeedSym = linker::dlsym(handle, "_ZN5Mouse4feedEccssss"))) {
+        MouseFeedSym = linker::dlsym(handle, "_ZN5Mouse4feedEcassss"); // 1.19.60.26 Beta Mouse::feed ABI changed
+    }
+    Mouse::feed = (void (*)(char, char, short, short, short, short))MouseFeedSym;
 
     Keyboard::_states = (int *)linker::dlsym(handle, "_ZN8Keyboard7_statesE");
     Keyboard::_inputs = (std::vector<Keyboard::InputEvent> *)linker::dlsym(handle, "_ZN8Keyboard7_inputsE");
