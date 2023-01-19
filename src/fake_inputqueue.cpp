@@ -74,14 +74,14 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
 
 int FakeInputQueue::getEvent(FakeInputEvent **event) {
     if(!keyEvents.empty()) {
-        currentEvent.keyEvent = std::move(keyEvents.front());
-        *event = &currentEvent.keyEvent;
+        keyEvent = std::move(keyEvents.front());
+        *event = &keyEvent;
         keyEvents.pop_front();
         return 0;
     }
     if(!motionEvents.empty()) {
-        currentEvent.motionEvent = std::move(motionEvents.front());
-        *event = &currentEvent.motionEvent;
+        motionEvent = std::move(motionEvents.front());
+        *event = &motionEvent;
         motionEvents.pop_front();
         return 0;
     }

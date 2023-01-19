@@ -34,10 +34,8 @@ class FakeInputQueue {
 private:
     std::deque<FakeKeyEvent> keyEvents;
     std::deque<FakeMotionEvent> motionEvents;
-    union {
-        FakeKeyEvent keyEvent;
-        FakeMotionEvent motionEvent;
-    } currentEvent;
+    FakeKeyEvent keyEvent;
+    FakeMotionEvent motionEvent;
 
 public:
     FakeInputQueue();
