@@ -34,8 +34,14 @@ class FakeInputQueue {
 private:
     std::deque<FakeKeyEvent> keyEvents;
     std::deque<FakeMotionEvent> motionEvents;
+    union {
+        FakeKeyEvent keyEvent;
+        FakeMotionEvent motionEvent;
+    } currentEvent;
 
 public:
+    FakeInputQueue();
+
     static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);
 
     bool hasEvents() const { return !keyEvents.empty() || !motionEvents.empty(); }

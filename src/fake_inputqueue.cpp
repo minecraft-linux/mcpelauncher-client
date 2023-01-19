@@ -15,6 +15,13 @@ static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, 
     return ((const FakeMotionEvent *)(const void *)event)->axisFunction(axis);
 }
 
+FakeInputQueue::FakeInputQueue() {
+    keyEvents.resize(50);
+    keyEvents.resize(0);
+    motionEvents.resize(50);
+    motionEvents.resize(0);
+}
+
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     syms["AInputQueue_getEvent"] = (void *)+[](AInputQueue *queue, AInputEvent **outEvent) {
         return ((FakeInputQueue *)(void *)queue)->getEvent((FakeInputEvent **)(void **)outEvent);
@@ -67,26 +74,22 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
 
 int FakeInputQueue::getEvent(FakeInputEvent **event) {
     if(!keyEvents.empty()) {
-        *event = &keyEvents.front();
+        currentEvent.keyEvent = std::move(keyEvents.front());
+        *event = &currentEvent.keyEvent;
+        keyEvents.pop_front();
         return 0;
     }
     if(!motionEvents.empty()) {
-        *event = &motionEvents.front();
+        currentEvent.motionEvent = std::move(motionEvents.front());
+        *event = &currentEvent.motionEvent;
+        motionEvents.pop_front();
         return 0;
     }
     return -1;
 }
 
 void FakeInputQueue::finishEvent(FakeInputEvent *event) {
-    if(!keyEvents.empty() && &keyEvents.front() == event) {
-        keyEvents.pop_front();
-        return;
-    }
-    if(!motionEvents.empty() && &motionEvents.front() == event) {
-        motionEvents.pop_front();
-        return;
-    }
-    throw std::runtime_error("finishEvent: the event is not the event on the front of queue");
+
 }
 
 void FakeInputQueue::addEvent(FakeKeyEvent event) {
