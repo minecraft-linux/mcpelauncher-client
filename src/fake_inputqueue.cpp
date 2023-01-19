@@ -22,7 +22,8 @@ FakeInputQueue::FakeInputQueue() : keyEvent(AKEY_EVENT_ACTION_DOWN, 0), motionEv
     }
     for(int i = 0; i < 100; i++) {
         FakeInputEvent* ev;
-        getEvent(ev);
+        getEvent(&ev);
+        finishEvent(ev);
     }
 }
 
