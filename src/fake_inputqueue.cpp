@@ -15,11 +15,15 @@ static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, 
     return ((const FakeMotionEvent *)(const void *)event)->axisFunction(axis);
 }
 
-FakeInputQueue::FakeInputQueue() {
-    keyEvents.resize(50);
-    keyEvents.resize(0);
-    motionEvents.resize(50);
-    motionEvents.resize(0);
+FakeInputQueue::FakeInputQueue() : keyEvent(AKEY_EVENT_ACTION_DOWN, 0), motionEvent(AMOTION_EVENT_ACTION_MOVE, 0, 0, 0)) {
+    for(int i = 0; i < 50; i++) {
+        addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, 0));
+        addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, 0, 0));
+    }
+    for(int i = 0; i < 100; i++) {
+        FakeInputEvent* ev;
+        getEvent(ev);
+    }
 }
 
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
