@@ -15,7 +15,7 @@ static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, 
     return ((const FakeMotionEvent *)(const void *)event)->axisFunction(axis);
 }
 
-FakeInputQueue::FakeInputQueue() : keyEvent(AKEY_EVENT_ACTION_DOWN, 0), motionEvent(AMOTION_EVENT_ACTION_MOVE, 0, 0, 0)) {
+FakeInputQueue::FakeInputQueue() : keyEvent(AKEY_EVENT_ACTION_DOWN, 0), motionEvent(AMOTION_EVENT_ACTION_MOVE, 0, 0, 0) {
     for(int i = 0; i < 50; i++) {
         addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, 0));
         addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, 0, 0));
