@@ -134,7 +134,7 @@ public:
     }
 
     FakeJni::JBoolean isChromebook() {
-        return false;
+        return true;
     }
 
     std::shared_ptr<FakeJni::JString> getLocale() {
