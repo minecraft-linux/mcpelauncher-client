@@ -201,9 +201,9 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
 
     Log::trace("JniSupport", "Invoking start activity callbacks\n");
     nativeActivityCallbacks.onInputQueueCreated(&nativeActivity, inputQueue);
-    nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, window);
     nativeActivityCallbacks.onStart(&nativeActivity);
-    nativeActivityCallbacks.onResume(&nativeActivity);
+    nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, window);
+    // nativeActivityCallbacks.onResume(&nativeActivity);
 }
 
 void JniSupport::stopGame() {
