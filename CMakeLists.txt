@@ -49,5 +49,10 @@ if (ENABLE_ERROR_WINDOW)
     target_compile_definitions(mcpelauncher-client PRIVATE MCPELAUNCHER_ENABLE_ERROR_WINDOW)
 endif()
 
+if(USE_SNMALLOC)
+    target_link_libraries(mcpelauncher-client PRIVATE snmalloc)
+    target_sources(mcpelauncher-client PRIVATE ${snmalloc_ext_SOURCE_DIR}/src/snmalloc/override/new.cc)
+endif()
+
 install(TARGETS mcpelauncher-client RUNTIME COMPONENT mcpelauncher-client DESTINATION bin)
 include(CPackSettings.cmake)
