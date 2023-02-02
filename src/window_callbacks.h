@@ -8,12 +8,6 @@
 
 class WindowCallbacks {
 private:
-    struct GamepadData {
-        float axis[6];
-        bool button[15];
-
-        GamepadData();
-    };
 
     GameWindow &window;
     JniSupport &jniSupport;
@@ -42,7 +36,7 @@ public:
 
     void registerCallbacks();
 
-    void markRequeueGamepadInput() { needsQueueGamepadInput = true; }
+    void markRequeueGamepadInput();
 
     void onWindowSizeCallback(int w, int h);
 

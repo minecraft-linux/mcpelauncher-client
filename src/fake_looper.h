@@ -2,6 +2,7 @@
 
 #include <android/looper.h>
 #include <memory>
+#include <mutex>
 #include <game_window.h>
 #include "jni/jni_support.h"
 #include "window_callbacks.h"
@@ -12,6 +13,7 @@ private:
     static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
     bool prepared = false;
+    std::mutex sync;
 
     struct EventEntry {
         int fd, ident, events;

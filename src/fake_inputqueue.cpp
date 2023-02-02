@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include "armhfrewrite.h"
+#include "game_window.h"
 
 static float _AMotionEvent_getX(const AInputEvent *event, size_t pointerIndex) {
     return ((const FakeMotionEvent *)(const void *)event)->x;
@@ -11,8 +12,40 @@ static float _AMotionEvent_getY(const AInputEvent *event, size_t pointerIndex) {
     return ((const FakeMotionEvent *)(const void *)event)->y;
 }
 
+static float deadzone(float f) {
+    return f < 0.02 && f > -0.02 ? 0.f : f;
+}
+
 static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, size_t pointerIndex) {
-    return ((const FakeMotionEvent *)(const void *)event)->axisFunction(axis);
+    auto && gp = ((const FakeMotionEvent *)(const void *)event)->data;
+    if(axis == AMOTION_EVENT_AXIS_X)
+        return deadzone(gp.axis[(int)GamepadAxisId::LEFT_X]);
+    if(axis == AMOTION_EVENT_AXIS_Y)
+        return deadzone(gp.axis[(int)GamepadAxisId::LEFT_Y]);
+    if(axis == AMOTION_EVENT_AXIS_RX)
+        return deadzone(gp.axis[(int)GamepadAxisId::RIGHT_X]);
+    if(axis == AMOTION_EVENT_AXIS_RY)
+        return deadzone(gp.axis[(int)GamepadAxisId::RIGHT_Y]);
+    if(axis == AMOTION_EVENT_AXIS_BRAKE)
+        return deadzone(gp.axis[(int)GamepadAxisId::LEFT_TRIGGER]);
+    if(axis == AMOTION_EVENT_AXIS_GAS)
+        return deadzone(gp.axis[(int)GamepadAxisId::RIGHT_TRIGGER]);
+    if(axis == AMOTION_EVENT_AXIS_HAT_X) {
+        if(gp.button[(int)GamepadButtonId::DPAD_LEFT])
+            return -1.f;
+        if(gp.button[(int)GamepadButtonId::DPAD_RIGHT])
+            return 1.f;
+        return 0.f;
+    }
+    if(axis == AMOTION_EVENT_AXIS_HAT_Y) {
+        if(gp.button[(int)GamepadButtonId::DPAD_UP])
+            return -1.f;
+        if(gp.button[(int)GamepadButtonId::DPAD_DOWN])
+            return 1.f;
+        return 0.f;
+    }
+
+    return 0;
 }
 
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
@@ -66,33 +99,29 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
 }
 
 int FakeInputQueue::getEvent(FakeInputEvent **event) {
-    if(!keyEvents.empty()) {
-        *event = &keyEvents.front();
-        return 0;
-    }
-    if(!motionEvents.empty()) {
-        *event = &motionEvents.front();
+    std::lock_guard<std::mutex> lock(sync);
+    if(!events.empty()) {
+        *event = (FakeInputEvent *)events.front().Storage;
         return 0;
     }
     return -1;
 }
 
 void FakeInputQueue::finishEvent(FakeInputEvent *event) {
-    if(!keyEvents.empty() && &keyEvents.front() == event) {
-        keyEvents.pop_front();
-        return;
-    }
-    if(!motionEvents.empty() && &motionEvents.front() == event) {
-        motionEvents.pop_front();
+    std::lock_guard<std::mutex> lock(sync);
+    if(!events.empty() && (FakeInputEvent *)events.front().Storage == event) {
+        events.pop_front();
         return;
     }
     throw std::runtime_error("finishEvent: the event is not the event on the front of queue");
 }
 
 void FakeInputQueue::addEvent(FakeKeyEvent event) {
-    keyEvents.push_back(event);
+    std::lock_guard<std::mutex> lock(sync);
+    events.emplace_back(std::move(event));
 }
 
 void FakeInputQueue::addEvent(FakeMotionEvent event) {
-    motionEvents.push_back(std::move(event));
+    std::lock_guard<std::mutex> lock(sync);
+    events.emplace_back(std::move(event));
 }

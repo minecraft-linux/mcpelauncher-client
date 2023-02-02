@@ -168,44 +168,12 @@ void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
     // jniSupport.setGameControllerConnected(gamepad, connected);
 }
 
-void WindowCallbacks::queueGamepadAxisInputIfNeeded(int gamepad) {
-    if(!needsQueueGamepadInput)
-        return;
-    inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AMOTION_EVENT_ACTION_MOVE, 0, 0.f, 0.f,
-                                        [this, gamepad](int axis) {
-                                            auto gpi = gamepads.find(gamepad);
-                                            if(gpi == gamepads.end())
-                                                return 0.f;
-                                            auto& gp = gpi->second;
-                                            if(axis == AMOTION_EVENT_AXIS_X)
-                                                return gp.axis[(int)GamepadAxisId::LEFT_X];
-                                            if(axis == AMOTION_EVENT_AXIS_Y)
-                                                return gp.axis[(int)GamepadAxisId::LEFT_Y];
-                                            if(axis == AMOTION_EVENT_AXIS_RX)
-                                                return gp.axis[(int)GamepadAxisId::RIGHT_X];
-                                            if(axis == AMOTION_EVENT_AXIS_RY)
-                                                return gp.axis[(int)GamepadAxisId::RIGHT_Y];
-                                            if(axis == AMOTION_EVENT_AXIS_BRAKE)
-                                                return gp.axis[(int)GamepadAxisId::LEFT_TRIGGER];
-                                            if(axis == AMOTION_EVENT_AXIS_GAS)
-                                                return gp.axis[(int)GamepadAxisId::RIGHT_TRIGGER];
-                                            if(axis == AMOTION_EVENT_AXIS_HAT_X) {
-                                                if(gp.button[(int)GamepadButtonId::DPAD_LEFT])
-                                                    return -1.f;
-                                                if(gp.button[(int)GamepadButtonId::DPAD_RIGHT])
-                                                    return 1.f;
-                                                return 0.f;
-                                            }
-                                            if(axis == AMOTION_EVENT_AXIS_HAT_Y) {
-                                                if(gp.button[(int)GamepadButtonId::DPAD_UP])
-                                                    return -1.f;
-                                                if(gp.button[(int)GamepadButtonId::DPAD_DOWN])
-                                                    return 1.f;
-                                                return 0.f;
-                                            }
-                                            return 0.f;
-                                        }));
-    needsQueueGamepadInput = false;
+void WindowCallbacks::markRequeueGamepadInput() {
+    if(hasInputMode(InputMode::Gamepad, false)) {
+        for(auto&& gp : gamepads) {
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_GAMEPAD, gp.first, AMOTION_EVENT_ACTION_MOVE, 0, 0.f, 0.f, gp.second));
+        }
+    }
 }
 
 void WindowCallbacks::onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed) {
@@ -221,7 +189,6 @@ void WindowCallbacks::onGamepadButton(int gamepad, GamepadButtonId btn, bool pre
         gp.button[(int)btn] = pressed;
 
         if(btn == GamepadButtonId::DPAD_UP || btn == GamepadButtonId::DPAD_DOWN || btn == GamepadButtonId::DPAD_LEFT || btn == GamepadButtonId::DPAD_RIGHT) {
-            queueGamepadAxisInputIfNeeded(gamepad);
             return;
         }
 
@@ -241,7 +208,6 @@ void WindowCallbacks::onGamepadAxis(int gamepad, GamepadAxisId ax, float value) 
         if((int)ax < 0 || (int)ax >= 6)
             throw std::runtime_error("bad axis id");
         gp.axis[(int)ax] = value;
-        queueGamepadAxisInputIfNeeded(gamepad);
     }
 }
 
@@ -259,7 +225,7 @@ void WindowCallbacks::loadGamepadMappings() {
     }
 }
 
-WindowCallbacks::GamepadData::GamepadData() {
+GamepadData::GamepadData() {
     for(int i = 0; i < 6; i++)
         axis[i] = 0.f;
     memset(button, 0, sizeof(button));

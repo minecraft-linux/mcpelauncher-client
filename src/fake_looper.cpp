@@ -69,6 +69,7 @@ void FakeLooper::initializeWindow() {
 }
 
 void FakeLooper::prepare() {
+    std::lock_guard<std::mutex> lock(sync);
     jniSupport->setLooperRunning(true);
     initializeWindow();
     jniSupport->onWindowCreated((ANativeWindow *)(void *)associatedWindow.get(),
@@ -86,12 +87,14 @@ void FakeLooper::prepare() {
 }
 
 FakeLooper::~FakeLooper() {
+    std::lock_guard<std::mutex> lock(sync);
     CorePatches::setGameWindow(nullptr);
     associatedWindow.reset();
     associatedWindowCallbacks.reset();
 }
 
 int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
+    std::lock_guard<std::mutex> lock(sync);
     if(androidEvent)
         return -1;
     if(callback != nullptr)
@@ -101,6 +104,7 @@ int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callba
 }
 
 void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void *data) {
+    std::lock_guard<std::mutex> lock(sync);
     if(inputEntry)
         throw std::runtime_error("attachInputQueue already called on this looper");
     if(callback != nullptr)
@@ -109,6 +113,7 @@ void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void
 }
 
 int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData) {
+    std::lock_guard<std::mutex> lock(sync);
     if(androidEvent) {
         pollfd f;
         f.fd = androidEvent.fd;
