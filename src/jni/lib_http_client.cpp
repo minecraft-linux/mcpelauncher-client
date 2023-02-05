@@ -57,7 +57,11 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
     // if(this->method == "POST") {
     //     curl_easy_setopt(curl, CURLOPT_HTTPPOST, 1);
     // } else {
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
+    if (this->method == "HEAD") {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+    } else {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
+    }
     // }
     if(contentLength > 0) {
         // static auto ___callback = (void*)+[](char *ptr, size_t size, size_t nmemb, void *userdata) -> size_t {
