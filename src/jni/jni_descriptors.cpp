@@ -2,6 +2,7 @@
 #include "store.h"
 #include "xbox_live.h"
 #include "lib_http_client.h"
+#include "lib_http_client_websocket.h"
 #include "cert_manager.h"
 #include "package_source.h"
 #include "http_stub.h"
@@ -202,6 +203,10 @@ BEGIN_NATIVE_DESCRIPTOR(NotificationListenerService){FakeJni::Function<&Notifica
     {Function<&HttpClientRequest::setHttpMethodAndBody2>{}, "setHttpMethodAndBody"},
     {Function<&HttpClientRequest::setHttpHeader>{}, "setHttpHeader"},
     {Function<&HttpClientRequest::doRequestAsync>{}, "doRequestAsync"},
+    END_NATIVE_DESCRIPTOR
+
+    BEGIN_NATIVE_DESCRIPTOR(HttpClientWebSocket){Constructor<HttpClientWebSocket>{}},
+    {Function<&HttpClientWebSocket::connect>{}, "connect"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(HttpClientResponse){Function<&HttpClientResponse::getNumHeaders>{}, "getNumHeaders"},
