@@ -137,12 +137,10 @@ void MainActivity::share(std::shared_ptr<FakeJni::JString> title, std::shared_pt
     #ifdef __APPLE__
         execl("/usr/bin/osascript", "/usr/bin/osascript", "-e", ("display alert \"" + title->asStdString() + "\" message \"" + string->asStdString() + "\n" + url->asStdString() + "\"").c_str(), NULL);
     #else
-        //execl("/usr/bin/zenity", "/usr/bin/zenity", "--info", "--title", title->asStdString().c_str(), "--text", (string->asStdString() + "\n" + url->asStdString()).c_str(), NULL);
+        execl("/usr/bin/zenity", "/usr/bin/zenity", "--info", "--title", title->asStdString().c_str(), "--text", (string->asStdString() + "\n" + url->asStdString()).c_str(), NULL);
     #endif
         _Exit(0);
     }
-
-    //Log::info("MainActivity", "SHARE %s, %s, %s", am->asStdString().c_str(), og->asStdString().c_str(), us->asStdString().c_str());
 }
 
 FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
