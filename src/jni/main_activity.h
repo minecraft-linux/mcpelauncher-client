@@ -3,6 +3,7 @@
 #include <fake-jni/fake-jni.h>
 #include "java_types.h"
 #include "../text_input_handler.h"
+#include <build_info.h>
 
 class BuildVersion : public FakeJni::JObject {
 public:
@@ -76,7 +77,7 @@ public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/HardwareInformation")
 
     static std::shared_ptr<FakeJni::JString> getAndroidVersion() {
-        return std::make_shared<FakeJni::JString>("Linux");
+        return std::make_shared<FakeJni::JString>(("mcpelauncher-client " CLIENT_GIT_COMMIT_HASH));
     }
 
     std::shared_ptr<FakeJni::JString> getInstallerPackageName() {
@@ -142,7 +143,7 @@ public:
     }
 
     std::shared_ptr<FakeJni::JString> getDeviceModel() {
-        return std::make_shared<FakeJni::JString>("Linux");
+        return std::make_shared<FakeJni::JString>(("Unofficial *nix Launcher " MANIFEST_GIT_COMMIT_HASH));
     }
 
     std::shared_ptr<File> getFilesDir() override {
@@ -186,6 +187,8 @@ public:
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
     }
 
+    void launchUri(std::shared_ptr<FakeJni::JString>);
+    void share(std::shared_ptr<FakeJni::JString>, std::shared_ptr<FakeJni::JString>, std::shared_ptr<FakeJni::JString>);
     std::shared_ptr<FakeJni::JArray<FakeJni::JString>> getBroadcastAddresses() {
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
     }
