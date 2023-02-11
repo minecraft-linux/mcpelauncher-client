@@ -131,15 +131,17 @@ void MainActivity::launchUri(std::shared_ptr<FakeJni::JString> url) {
 }
 
 void MainActivity::share(std::shared_ptr<FakeJni::JString> title, std::shared_ptr<FakeJni::JString> string, std::shared_ptr<FakeJni::JString> url) {
-    int pid;
-    if ((pid = fork())) {
-    } else {
-    #ifdef __APPLE__
-        execl("/usr/bin/osascript", "/usr/bin/osascript", "-e", ("display alert \"" + title->asStdString() + "\" message \"" + string->asStdString() + "\n" + url->asStdString() + "\"").c_str(), NULL);
-    #else
-        execl("/usr/bin/zenity", "/usr/bin/zenity", "--info", "--title", title->asStdString().c_str(), "--text", (string->asStdString() + "\n" + url->asStdString()).c_str(), NULL);
-    #endif
-        _Exit(0);
+    if ((title->asStdString().find("\"") == std::string::npos) && (title->asStdString().find("\\") == std::string::npos) && (string->asStdString().find("\"") == std::string::npos) && (string->asStdString().find("\\") == std::string::npos)) {
+        int pid;
+        if ((pid = fork())) {
+        } else {
+        #ifdef __APPLE__
+            execl("/usr/bin/osascript", "/usr/bin/osascript", "-e", ("display alert \"" + title->asStdString() + "\" message \"" + string->asStdString() + "\n" + url->asStdString() + "\"").c_str(), NULL);
+        #else
+            execl("/usr/bin/zenity", "/usr/bin/zenity", "--info", "--title", title->asStdString().c_str(), "--text", (string->asStdString() + "\n" + url->asStdString()).c_str(), NULL);
+        #endif
+            _Exit(0);
+        }
     }
 }
 
