@@ -195,3 +195,47 @@ void MainActivity::startPlayIntegrityCheck() {
     // FakeJni::LocalFrame frame;
     // method->invoke(frame.getJniEnv(), PlayIntegrity::getDescriptor().get());
 }
+
+void MainActivity::openFile() {
+    try {
+        auto picker = FilePickerFactory::createFilePicker();
+        picker->setTitle("Select file");
+        if(picker->show()) {
+            auto method = getClass().getMethod("(Ljava/lang/String;)V", "nativeOnPickFileSuccess");
+            FakeJni::LocalFrame frame;
+            method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
+        } else {
+            auto method = getClass().getMethod("()V", "nativeOnPickFileCanceled");
+            FakeJni::LocalFrame frame;
+            method->invoke(frame.getJniEnv(), this);
+        }
+    } catch(const std::exception& e) {
+        GameWindowManager::getManager()->getErrorHandler()->onError("FilePickerFactory", std::string("Failed to open the file-picker details: ") + e.what());
+        auto method = getClass().getMethod("()V", "nativeOnPickFileCanceled");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), this);
+    }
+}
+void MainActivity::saveFile(std::shared_ptr<FakeJni::JString> fileName) {
+    try {
+        auto picker = FilePickerFactory::createFilePicker();
+        picker->setMode(FilePicker::Mode::SAVE);
+        picker->setTitle("Select file");
+        picker->setFileName(fileName->asStdString());
+        if(picker->show()) {
+            auto method = getClass().getMethod("(Ljava/lang/String;)V", "nativeOnPickFileSuccess");
+            FakeJni::LocalFrame frame;
+            method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(picker->getPickedFile())));
+        } else {
+            auto method = getClass().getMethod("()V", "nativeOnPickFileCanceled");
+            FakeJni::LocalFrame frame;
+            method->invoke(frame.getJniEnv(), this);
+        }
+    } catch(const std::exception& e) {
+        GameWindowManager::getManager()->getErrorHandler()->onError("FilePickerFactory", std::string("Failed to open the file-picker details: ") + e.what());
+        auto method = getClass().getMethod("()V", "nativeOnPickFileCanceled");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), this);
+    }
+}
+
