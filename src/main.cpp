@@ -90,20 +90,21 @@ int main(int argc, char* argv[]) {
     // Fix saving to internal storage without write access to /data/*
     // TODO research how this path is constructed
     auto pid = getpid();
-    shim::from_android_data_dir = {
+    shim::rewrite_filesystem_access = {
         // Minecraft 1.16.210 or older
-        "/data/data/com.mojang.minecraftpe",
+        { "/data/data/com.mojang.minecraftpe", PathHelper::getPrimaryDataDirectory() },
         // Minecraft 1.16.210 or later, absolute path on linux (source build ubuntu 20.04)
-        std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) + "/proc/" + std::to_string(pid) + "/cmdline"};
+        { std::string("/data/data") + PathHelper::getParentDir(PathHelper::getAppDir()) + "/proc/" + std::to_string(pid) + "/cmdline", PathHelper::getPrimaryDataDirectory() }};
     if(argc >= 1 && argv != nullptr && argv[0] != nullptr && argv[0][0] != '\0') {
         // Minecraft 1.16.210 or later, relative path on linux (source build ubuntu 20.04) or every path AppImage / flatpak
-        shim::from_android_data_dir.emplace_back(argv[0][0] == '/' ? std::string("/data/data") + argv[0] : std::string("/data/data/") + argv[0]);
+        shim::rewrite_filesystem_access.emplace_back(argv[0][0] == '/' ? std::string("/data/data") + argv[0] : std::string("/data/data/") + argv[0], PathHelper::getPrimaryDataDirectory());
     }
     // Minecraft 1.16.210 or later, macOS
-    shim::from_android_data_dir.emplace_back("/data/data");
-    shim::to_android_data_dir = PathHelper::getPrimaryDataDirectory();
-    for(auto&& redir : shim::from_android_data_dir) {
-        Log::trace("REDIRECT", "%s to %s", redir.data(), shim::to_android_data_dir.data());
+    shim::rewrite_filesystem_access.emplace_back("/data/data", PathHelper::getPrimaryDataDirectory());
+    // vanilla_music isn't loaded via AAssetManager, it uses libc-shim via relative filepath
+    shim::rewrite_filesystem_access.emplace_back(".", PathHelper::getGameDir() + "assets/");
+    for(auto&& redir : shim::rewrite_filesystem_access) {
+        Log::trace("REDIRECT", "%s to %s", redir.first.data(), redir.second.data());
     }
     auto libC = MinecraftUtils::getLibCSymbols();
     ThreadMover::hookLibC(libC);

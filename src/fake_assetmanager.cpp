@@ -16,6 +16,8 @@ struct AAsset {
 struct AAssetDir {
     DIR *dir;
     dirent *ent;
+    std::string dirname;
+    std::string currentFileName;
 };
 
 FakeAssetManager::FakeAssetManager(std::string rootDir) {
@@ -25,19 +27,6 @@ FakeAssetManager::FakeAssetManager(std::string rootDir) {
 }
 
 namespace fake_assetmanager {
-
-// implement a rewrite function here so we don't need to call shim::open
-// Some calls to AssetManager_open use full paths instead of relative paths
-// I don't know why.
-std::string rewrite_path(std::string path) {
-    for(auto &&from : shim::from_android_data_dir) {
-        // check if path starts with 'from' and 'to' does not
-        if(path.rfind(from, 0) == 0 && shim::to_android_data_dir.rfind(from.data(), 0) != 0) {
-            return shim::to_android_data_dir + path.substr(from.length());
-        }
-    }
-    return path;
-}
 
 AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mode) {
     std::string fullPath;
@@ -51,7 +40,8 @@ AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mod
     if(filename[0] != '/') {
         fullPath = amgr->rootDir + filename;
     } else {
-        fullPath = rewrite_path(filename);
+        // Ignore full paths, the game tries to open user data files with the AAssetManager
+        return nullptr;
     }
 
 #ifndef NDEBUG
@@ -79,7 +69,8 @@ AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname) {
     if(dirname[0] != '/') {
         fullPath = amgr->rootDir + dirname;
     } else {
-        fullPath = rewrite_path(dirname);
+        // Ignore full paths, the game tries to open user data files with the AAssetManager
+        return nullptr;
     }
 
 #ifndef NDEBUG
@@ -93,6 +84,7 @@ AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname) {
     auto ret = new AAssetDir;
     ret->dir = d;
     ret->ent = nullptr;
+    ret->dirname = dirname;
     return ret;
 }
 
@@ -178,7 +170,15 @@ const char *AAssetDir_getNextFileName(AAssetDir *assetDir) {
     assetDir->ent = readdir(assetDir->dir);
     if(!assetDir->ent)
         return nullptr;
-    return assetDir->ent->d_name;
+    std::string cname = assetDir->ent->d_name;
+    if(cname == "." || cname == "..") {
+        return AAssetDir_getNextFileName(assetDir);
+    }
+    assetDir->currentFileName = assetDir->dirname + "/" + cname;
+#ifndef NDEBUG
+    Log::trace("AAssetDir", "getNextFileName '%s'\n", assetDir->currentFileName.data());
+#endif
+    return assetDir->currentFileName.data();
 }
 
 }  // namespace fake_assetmanager
