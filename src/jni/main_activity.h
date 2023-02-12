@@ -3,7 +3,6 @@
 #include <fake-jni/fake-jni.h>
 #include "java_types.h"
 #include "../text_input_handler.h"
-#include <build_info.h>
 
 class BuildVersion : public FakeJni::JObject {
 public:
@@ -77,7 +76,11 @@ public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/HardwareInformation")
 
     static std::shared_ptr<FakeJni::JString> getAndroidVersion() {
-        return std::make_shared<FakeJni::JString>(("mcpelauncher-client " CLIENT_GIT_COMMIT_HASH));
+        #ifdef __APPLE__
+        return std::make_shared<FakeJni::JString>("macOS");
+        #else
+        return std::make_shared<FakeJni::JString>("Linux");
+        #endif
     }
 
     std::shared_ptr<FakeJni::JString> getInstallerPackageName() {
@@ -143,7 +146,11 @@ public:
     }
 
     std::shared_ptr<FakeJni::JString> getDeviceModel() {
-        return std::make_shared<FakeJni::JString>(("Unofficial *nix Launcher " MANIFEST_GIT_COMMIT_HASH));
+        #ifdef __APPLE__
+        return std::make_shared<FakeJni::JString>("macOS");
+        #else
+        return std::make_shared<FakeJni::JString>("Linux");
+        #endif
     }
 
     std::shared_ptr<File> getFilesDir() override {
