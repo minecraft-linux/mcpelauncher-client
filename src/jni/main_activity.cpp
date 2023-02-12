@@ -117,6 +117,33 @@ void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xbl
     FakeJni::LocalFrame frame;
     method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
 }
+void MainActivity::launchUri(std::shared_ptr<FakeJni::JString> url) {
+    int pid;
+    if ((pid = fork())) {
+    } else {
+    #ifdef __APPLE__
+        execl("/usr/bin/open", "/usr/bin/open", url->asStdString().c_str(), NULL);
+    #else
+        execl("/usr/bin/xdg-open", "/usr/bin/xdg-open", url->asStdString().c_str(), NULL);
+    #endif
+        _Exit(0);
+    }
+}
+
+void MainActivity::share(std::shared_ptr<FakeJni::JString> title, std::shared_ptr<FakeJni::JString> string, std::shared_ptr<FakeJni::JString> url) {
+    if ((title->asStdString().find("\"") == std::string::npos) && (title->asStdString().find("\\") == std::string::npos) && (string->asStdString().find("\"") == std::string::npos) && (string->asStdString().find("\\") == std::string::npos)) {
+        int pid;
+        if ((pid = fork())) {
+        } else {
+        #ifdef __APPLE__
+            execl("/usr/bin/osascript", "/usr/bin/osascript", "-e", ("display alert \"" + title->asStdString() + "\" message \"" + string->asStdString() + "\n" + url->asStdString() + "\"").c_str(), NULL);
+        #else
+            execl("/usr/bin/zenity", "/usr/bin/zenity", "--info", "--title", title->asStdString().c_str(), "--text", (string->asStdString() + "\n" + url->asStdString()).c_str(), NULL);
+        #endif
+            _Exit(0);
+        }
+    }
+}
 
 FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
     auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");

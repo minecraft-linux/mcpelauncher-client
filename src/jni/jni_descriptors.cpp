@@ -109,6 +109,8 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {Function<&MainActivity::tick>{}, "tick"},
     {Function<&MainActivity::getPixelsPerMillimeter>{}, "getPixelsPerMillimeter"},
     {Function<&MainActivity::startPlayIntegrityCheck>{}, "startPlayIntegrityCheck"},
+    {Function<&MainActivity::launchUri>{}, "launchUri"},
+    {Function<&MainActivity::share>{}, "share"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(AccountManager){Function<&AccountManager::get>{}, "get"},

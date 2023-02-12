@@ -76,7 +76,11 @@ public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/HardwareInformation")
 
     static std::shared_ptr<FakeJni::JString> getAndroidVersion() {
+        #ifdef __APPLE__
+        return std::make_shared<FakeJni::JString>("macOS");
+        #else
         return std::make_shared<FakeJni::JString>("Linux");
+        #endif
     }
 
     std::shared_ptr<FakeJni::JString> getInstallerPackageName() {
@@ -142,7 +146,11 @@ public:
     }
 
     std::shared_ptr<FakeJni::JString> getDeviceModel() {
+        #ifdef __APPLE__
+        return std::make_shared<FakeJni::JString>("macOS");
+        #else
         return std::make_shared<FakeJni::JString>("Linux");
+        #endif
     }
 
     std::shared_ptr<File> getFilesDir() override {
@@ -186,6 +194,8 @@ public:
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
     }
 
+    void launchUri(std::shared_ptr<FakeJni::JString>);
+    void share(std::shared_ptr<FakeJni::JString>, std::shared_ptr<FakeJni::JString>, std::shared_ptr<FakeJni::JString>);
     std::shared_ptr<FakeJni::JArray<FakeJni::JString>> getBroadcastAddresses() {
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
     }
