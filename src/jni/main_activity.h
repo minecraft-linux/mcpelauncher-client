@@ -249,6 +249,8 @@ public:
 
     void pickImage(FakeJni::JLong callback);
 
+    void setClipboard(std::shared_ptr<FakeJni::JString>);
+
     void initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
 
     FakeJni::JLong initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit);
