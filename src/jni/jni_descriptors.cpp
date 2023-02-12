@@ -111,6 +111,8 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {Function<&MainActivity::startPlayIntegrityCheck>{}, "startPlayIntegrityCheck"},
     {Function<&MainActivity::launchUri>{}, "launchUri"},
     {Function<&MainActivity::share>{}, "share"},
+    {Function<&MainActivity::openFile>{}, "openFile"},
+    {Function<&MainActivity::saveFile>{}, "saveFile"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(AccountManager){Function<&AccountManager::get>{}, "get"},
@@ -324,3 +326,4 @@ BEGIN_NATIVE_DESCRIPTOR(Signature){Function<&Signature::initVerify>{}, "initVeri
     {Function<&Signature::verify>{}, "verify"},
     {Function<&Signature::getInstance>{}, "getInstance"},
     END_NATIVE_DESCRIPTOR
+

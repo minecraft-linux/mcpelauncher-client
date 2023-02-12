@@ -258,6 +258,10 @@ public:
     std::shared_ptr<FakeJni::JIntArray> getImageData(std::shared_ptr<FakeJni::JString> filename);
 
     void startPlayIntegrityCheck();
+
+    void openFile();
+    void saveFile(std::shared_ptr<FakeJni::JString>);
+
 };
 
 class JellyBeanDeviceManager : public FakeJni::JObject {
