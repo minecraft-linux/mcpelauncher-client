@@ -130,6 +130,10 @@ void MainActivity::launchUri(std::shared_ptr<FakeJni::JString> url) {
     }
 }
 
+void MainActivity::setClipboard(std::shared_ptr<FakeJni::JString> tocopy) {
+    window->setClipboardText(tocopy->asStdString());
+}
+
 void MainActivity::share(std::shared_ptr<FakeJni::JString> title, std::shared_ptr<FakeJni::JString> string, std::shared_ptr<FakeJni::JString> url) {
     if ((title->asStdString().find("\"") == std::string::npos) && (title->asStdString().find("\\") == std::string::npos) && (string->asStdString().find("\"") == std::string::npos) && (string->asStdString().find("\\") == std::string::npos)) {
         int pid;
