@@ -31,6 +31,15 @@ void WindowCallbacks::registerCallbacks() {
     window.setGamepadAxisCallback(std::bind(&WindowCallbacks::onGamepadAxis, this, _1, _2, _3));
 }
 
+void WindowCallbacks::startSendEvents() {
+    if(!sendEvents) {
+        sendEvents = true;
+        for(auto && gp : gamepads) {
+            jniSupport.setGameControllerConnected(gp.first, true);
+        }
+    }
+}
+
 void WindowCallbacks::onWindowSizeCallback(int w, int h) {
     jniSupport.onWindowResized(w, h);
 }
@@ -40,6 +49,9 @@ void WindowCallbacks::onClose() {
 }
 
 bool WindowCallbacks::hasInputMode(WindowCallbacks::InputMode want, bool changeMode) {
+    if(!sendEvents) {
+        return false;
+    }
     auto now = std::chrono::high_resolution_clock::now();
     if(inputMode == want || (changeMode && ((int)want < (int)inputMode || (now - lastUpdated) > std::chrono::seconds(2)))) {
         if(inputMode != want) {
@@ -164,8 +176,13 @@ void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
         gamepads.insert({gamepad, GamepadData()});
     else
         gamepads.erase(gamepad);
-    // This crashs the game 1.16.210+ during init, but works after loading, disable for now
-    // jniSupport.setGameControllerConnected(gamepad, connected);
+
+    if(sendEvents) {
+        // This crashs the game 1.16.210+ during init, but works after loading
+        // We block sendEvents before the game starts polling the looper, to avoid the crash
+        // 1.19.60+ requires calling this method, otherwise the game ignores the gamepad input
+        jniSupport.setGameControllerConnected(gamepad, connected);
+    }
 }
 
 void WindowCallbacks::queueGamepadAxisInputIfNeeded(int gamepad) {

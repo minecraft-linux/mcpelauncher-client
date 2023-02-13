@@ -23,6 +23,7 @@ private:
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
     bool fullscreen = false;
+    bool sendEvents = false;
     enum class InputMode {
         Touch,
         Mouse,
@@ -41,6 +42,8 @@ public:
     static void loadGamepadMappings();
 
     void registerCallbacks();
+
+    void startSendEvents();
 
     void markRequeueGamepadInput() { needsQueueGamepadInput = true; }
 
