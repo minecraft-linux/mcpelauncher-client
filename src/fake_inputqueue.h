@@ -42,9 +42,9 @@ public:
 
     FakeInputQueue() {
         // Should avoid a crash caused by a lot of events from gamepad's analog sticks
-        motionEvents.resize(40);
+        motionEvents.resize(100);
         motionEvents.clear();
-        keyEvents.resize(10);
+        keyEvents.resize(100);
         keyEvents.clear();
     }
 
