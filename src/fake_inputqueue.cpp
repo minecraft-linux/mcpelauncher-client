@@ -12,7 +12,11 @@ static float _AMotionEvent_getY(const AInputEvent *event, size_t pointerIndex) {
 }
 
 static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, size_t pointerIndex) {
-    return ((const FakeMotionEvent *)(const void *)event)->axisFunction(axis);
+    auto axisFunction = ((const FakeMotionEvent *)(const void *)event)->axisFunction;
+    if(axisFunction) {
+        return axisFunction(axis);
+    }
+    return 0;
 }
 
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {

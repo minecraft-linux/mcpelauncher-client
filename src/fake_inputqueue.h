@@ -18,6 +18,7 @@ struct FakeKeyEvent : FakeInputEvent {
 
     FakeKeyEvent(int32_t action, int32_t keyCode) : FakeInputEvent(AINPUT_SOURCE_KEYBOARD, AINPUT_EVENT_TYPE_KEY), action(action), keyCode(keyCode) {}
     FakeKeyEvent(int32_t source, int32_t deviceId, int32_t action, int32_t keyCode) : FakeInputEvent(source, AINPUT_EVENT_TYPE_KEY, deviceId), action(action), keyCode(keyCode) {}
+    FakeKeyEvent() : FakeKeyEvent(0, 0) {}
 };
 
 struct FakeMotionEvent : FakeInputEvent {
@@ -28,6 +29,7 @@ struct FakeMotionEvent : FakeInputEvent {
 
     FakeMotionEvent(int32_t action, int32_t pointerId, float x, float y) : FakeInputEvent(AINPUT_SOURCE_TOUCHSCREEN, AINPUT_EVENT_TYPE_MOTION), action(action), pointerId(pointerId), x(x), y(y) {}
     FakeMotionEvent(int32_t source, int32_t deviceId, int32_t action, int32_t pointerId, float x, float y, std::function<float(int32_t axis)> axisFunction) : FakeInputEvent(source, AINPUT_EVENT_TYPE_MOTION, deviceId), action(action), pointerId(pointerId), x(x), y(y), axisFunction(std::move(axisFunction)) {}
+    FakeMotionEvent() : FakeMotionEvent(0, 0, 0, 0) {}
 };
 
 class FakeInputQueue {
@@ -37,6 +39,14 @@ private:
 
 public:
     static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);
+
+    FakeInputQueue() {
+        // Should avoid a crash caused by a lot of events from gamepad's analog sticks
+        motionEvents.resize(40);
+        motionEvents.clear();
+        keyEvents.resize(10);
+        keyEvents.clear();
+    }
 
     bool hasEvents() const { return !keyEvents.empty() || !motionEvents.empty(); }
 
