@@ -215,7 +215,9 @@ public:
         if(textInput)
             textInput->disable();
     }
-
+    FakeJni::JBoolean hasHardwareKeyboard() {
+        return true;
+    }
     void updateTextboxText(std::shared_ptr<FakeJni::JString> newText) {
         if(textInput)
             textInput->update(newText->asStdString());
