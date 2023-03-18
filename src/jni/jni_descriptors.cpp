@@ -221,10 +221,6 @@ BEGIN_NATIVE_DESCRIPTOR(NotificationListenerService){FakeJni::Function<&Notifica
     {Function<&HttpClientWebSocket::disconnect>{}, "disconnect"},
     END_NATIVE_DESCRIPTOR
 
-    BEGIN_NATIVE_DESCRIPTOR(HttpClientWebSocket){Constructor<HttpClientWebSocket>{}},
-    {Function<&HttpClientWebSocket::connect>{}, "connect"},
-    END_NATIVE_DESCRIPTOR
-
     BEGIN_NATIVE_DESCRIPTOR(HttpClientResponse){Function<&HttpClientResponse::getNumHeaders>{}, "getNumHeaders"},
     {Function<&HttpClientResponse::getHeaderNameAtIndex>{}, "getHeaderNameAtIndex"},
     {Function<&HttpClientResponse::getHeaderValueAtIndex>{}, "getHeaderValueAtIndex"},
