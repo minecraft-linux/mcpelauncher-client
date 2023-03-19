@@ -16,6 +16,8 @@ void SymbolsHelper::initSymbols(void *handle) {
     }
     Mouse::feed = (void (*)(char, char, short, short, short, short))MouseFeedSym;
 
+    // Checks if the version requires legacy keyboard input
+    // This is unreliable on 1.17.40 arm betas, 1.18.10 betas, and 1.18.20 betas
     if(linker::dlsym(handle, "bgfx_init")) {
         Keyboard::useLegacyKeyboard = false;
     } else {
