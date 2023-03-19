@@ -205,15 +205,6 @@ int main(int argc, char* argv[]) {
     SplitscreenPatch::install(handle);
     ShaderErrorPatch::install(handle);
 #endif
-    // If this Minecraft versions contains this bgfx symbol
-    // it is using the renderdragon engine
-    if(linker::dlsym(handle, "bgfx_init")) {
-        // The directinput mode is incompatible with the most of renderdragon enabled games
-        // Hide the availability of these symbols, until the bug is fixed
-        Keyboard::_states = nullptr;
-        Keyboard::_gameControllerId = nullptr;
-        Keyboard::_inputs = nullptr;
-    }
     if(options.graphicsApi == GraphicsApi::OPENGL) {
         try {
             GLCorePatch::install(handle);
