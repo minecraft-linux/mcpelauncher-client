@@ -4,6 +4,7 @@
 #include "lib_http_client.h"
 #include <utility>
 #include <jnivm/bytebuffer.h>
+#include <curl/curl.h>
 
 class HttpClientWebSocket : public FakeJni::JObject {
     FakeJni::JLong owner = 0;
@@ -16,6 +17,10 @@ public:
     FakeJni::JBoolean sendMessage(std::shared_ptr<FakeJni::JString>);
     FakeJni::JBoolean sendBinaryMessage(std::shared_ptr<jnivm::ByteBuffer>);
     void disconnect(int id);
+    static size_t write_callback_wrapper(char *ptr, size_t size, size_t nmemb, void *userdata) {
+        auto *self = static_cast<HttpClientWebSocket *>(userdata);
+        return self->write_callback(ptr, size, nmemb);
+    }
     
 private:
     void *curl;
@@ -25,5 +30,9 @@ private:
     size_t write_callback(char *ptr, size_t size, size_t nmemb);
     static size_t writecb(char *buffer, size_t size, size_t nitems, void* data);
     static int prereq_callback(void *clientp, char *conn_primary_ip, char *conn_local_ip, int conn_primary_port, int conn_local_port);
+    static int closesocket(void *clientp, curl_socket_t item);
     void sendOpened();
+    void sendClosed();
+    std::vector<signed char> response;
+    std::vector<ResponseHeader> headers;
 };

@@ -10,7 +10,9 @@ HttpClientWebSocket::HttpClientWebSocket(FakeJni::JLong owner) {
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(curl, CURLOPT_PREREQDATA, this);
+    curl_easy_setopt(curl, CURLOPT_CLOSESOCKETDATA, this);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writecb);
+    curl_easy_setopt(curl, CURLOPT_CLOSESOCKETFUNCTION, closesocket);
     curl_easy_setopt(curl, CURLOPT_PREREQFUNCTION, prereq_callback);
 
     jvm = (void*)&FakeJni::JniEnvContext().getJniEnv().getVM();
@@ -27,6 +29,9 @@ void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::sh
     auto ret = curl_easy_perform(curl);
     if(ret == CURLE_OK) {
     } else {
+        FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
+        auto method = getClass().getMethod("()V", "onFailure");
+        method->invoke(frame.getJniEnv(), this);
         Log::error("HTTPClientWebSocket", "Opening websocket conenction failed");
     }
     }).detach();
@@ -78,4 +83,16 @@ void HttpClientWebSocket::sendOpened() {
         auto method = getClass().getMethod("()V", "onOpen");
         method->invoke(frame.getJniEnv(), this);
     }
+}
+
+int HttpClientWebSocket::closesocket(void *clientp, curl_socket_t item) {
+    ((HttpClientWebSocket*)clientp)->sendClosed();
+    return 0;
+}
+
+void HttpClientWebSocket::sendClosed() {
+    FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
+    auto method = getClass().getMethod("(I)V", "onClose");
+    method->invoke(frame.getJniEnv(), this, 0);
+    connected = false;
 }
