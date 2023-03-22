@@ -8,7 +8,7 @@
 
 WindowCallbacks::WindowCallbacks(GameWindow& window, JniSupport& jniSupport, FakeInputQueue& inputQueue) : window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
     useDirectMouseInput = true;
-    useDirectKeyboardInput = (Keyboard::_states && Keyboard::_inputs && Keyboard::_gameControllerId);
+    useDirectKeyboardInput = (Keyboard::_states && (Keyboard::_inputs || Keyboard::_inputsLegacy) && Keyboard::_gameControllerId);
 }
 
 void WindowCallbacks::registerCallbacks() {
@@ -136,7 +136,7 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
 #endif
             modCTRL = (action != KeyAction::RELEASE);
 
-        if(modCTRL && key == KeyCode::C) {
+        if(modCTRL && key == KeyCode::C && jniSupport.getTextInputHandler().getCopyText() != "") {
             window.setClipboardText(jniSupport.getTextInputHandler().getCopyText());
         } else {
             jniSupport.getTextInputHandler().onKeyPressed(key, action);
@@ -146,12 +146,24 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
             window.setFullscreen(fullscreen = !fullscreen);
 
         if(useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
-            Keyboard::InputEvent evData{};
-            evData.key = (unsigned int)key & 0xff;
-            evData.event = (action == KeyAction::PRESS ? 1 : 0);
-            evData.controllerId = *Keyboard::_gameControllerId;
-            Keyboard::_inputs->push_back(evData);
-            Keyboard::_states[(int)key & 0xff] = evData.event;
+            if (Keyboard::useLegacyKeyboard) {
+                Keyboard::LegacyInputEvent evData{};
+                evData.key = (unsigned int)key & 0xff;
+                evData.event = (action == KeyAction::PRESS ? 1 : 0);
+                evData.controllerId = *Keyboard::_gameControllerId;
+                Keyboard::_inputsLegacy->push_back(evData);
+                Keyboard::_states[(int)key & 0xff] = evData.event;
+            } else {
+                Keyboard::InputEvent evData{};
+                evData.modShift = Keyboard::_states[16];
+                evData.modCtrl = Keyboard::_states[17];
+                evData.modAlt = Keyboard::_states[18];
+                evData.key = (unsigned int)key & 0xff;
+                evData.event = (action == KeyAction::PRESS ? 1 : 0);
+                evData.controllerId = *Keyboard::_gameControllerId;
+                Keyboard::_inputs->push_back(evData);
+                Keyboard::_states[(int)key & 0xff] = evData.event;
+            }
             return;
         }
 
