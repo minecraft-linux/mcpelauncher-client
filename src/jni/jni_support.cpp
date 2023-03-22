@@ -107,7 +107,7 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
                     symResolver);
     registerNatives(JellyBeanDeviceManager::getDescriptor(), {{"onInputDeviceAddedNative", "(I)V"}, {"onInputDeviceRemovedNative", "(I)V"}}, symResolver);
     registerNatives(HttpClientRequest::getDescriptor(), {{"OnRequestCompleted", "(JLcom/xbox/httpclient/HttpClientResponse;)V"}, {"OnRequestFailed", "(JLjava/lang/String;)V"}}, symResolver);
-    registerNatives(HttpClientWebSocket::getDescriptor(), {{"onMessage", "(Ljava/lang/String;)V"}}, symResolver);
+    registerNatives(HttpClientWebSocket::getDescriptor(), {{"onMessage", "(Ljava/lang/String;)V"}, {"onOpen", "()V"}}, symResolver);
     registerNatives(WebView::getDescriptor(), {
                                                   {"urlOperationSucceeded", "(JLjava/lang/String;ZLjava/lang/String;)V"},
                                               },
