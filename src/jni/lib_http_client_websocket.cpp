@@ -93,9 +93,11 @@ void HttpClientWebSocket::disconnect(int id) {
 #ifndef NDEBUG
     Log::trace("HttpClientWebSocket", "disconnect called, id: %d", id);
 #endif
+#ifdef ENABLE_WEBSOCKETS
     connected = false;
     size_t sent;
     curl_ws_send(curl, "", 0, &sent, 0, CURLWS_CLOSE);
+#endif
 }
 
 size_t HttpClientWebSocket::write_callback(char *ptr, size_t size, size_t nmemb) {
