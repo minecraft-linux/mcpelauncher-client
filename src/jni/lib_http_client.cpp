@@ -27,6 +27,9 @@ std::shared_ptr<HttpClientRequest> HttpClientRequest::createClientRequest() {
 }
 
 void HttpClientRequest::setHttpUrl(std::shared_ptr<FakeJni::JString> url) {
+#ifndef NDEBUG
+    Log::trace("HttpClient", "URL: %s", url->asStdString().c_str());
+#endif
     curl_easy_setopt(curl, CURLOPT_URL, url->asStdString().c_str());
 }
 
@@ -77,7 +80,9 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
         FakeJni::LocalFrame frame;
         auto read = stream->Read(this->body.data(), contentLength);
         this->body[read] = '\0';
-        //Log::debug("XboxHttp", "%s", this->body.data());
+#ifndef NDEBUG
+        Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s, body: %s", this->method.c_str(), this->body.data());
+#endif
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, read);
     }
@@ -89,6 +94,9 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
 }
 
 void HttpClientRequest::setHttpHeader(std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> value) {
+#ifndef NDEBUG
+    Log::trace("HttpClient", "setHttpHeader called, name: %s, value: %s", name->asStdString().c_str(), value->asStdString().c_str());
+#endif
     header = curl_slist_append(header, (name->asStdString() + ": " + value->asStdString()).c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
 }
@@ -105,6 +113,9 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
             FakeJni::LocalFrame frame(*jvm);
             if(ret == CURLE_OK) {
+#ifndef NDEBUG
+                Log::trace("HttpClient", "Response: code: %d, body: %s", response_code, response.data());
+#endif
                 auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
                 method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(sourceCall, response_code, response, headers)));
             } else {

@@ -28,6 +28,9 @@ HttpClientWebSocket::~HttpClientWebSocket() {
 }
 
 void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::shared_ptr<FakeJni::JString> wst) {
+#ifndef NDEBUG
+    Log::trace("HttpClientWebSocket", "connect called, url: %s, wst: %s", url->asStdString().c_str(), wst->asStdString().c_str());
+#endif
     std::thread([=]() {
 #ifdef ENABLE_WEBSOCKETS
         curl_easy_setopt(curl, CURLOPT_URL, url->asStdString().c_str());
@@ -52,32 +55,44 @@ void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::sh
 }
 
 void HttpClientWebSocket::addHeader(std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> value) {
+#ifndef NDEBUG
+    Log::trace("HttpClientWebSocket", "addHeader called, name: %s, value: %s", name->asStdString().c_str(), value->asStdString().c_str());
+#endif
     header = curl_slist_append(header, (name->asStdString() + ": " + value->asStdString()).c_str());
 }
 
-FakeJni::JBoolean HttpClientWebSocket::sendMessage(std::shared_ptr<FakeJni::JString> foo) {
+FakeJni::JBoolean HttpClientWebSocket::sendMessage(std::shared_ptr<FakeJni::JString> msg) {
+#ifndef NDEBUG
+    Log::trace("HttpClientWebSocket", "sendMessage called, message: %s", msg->asStdString().c_str());
+#endif
 #ifdef ENABLE_WEBSOCKETS
     if(!connected) {
         return false;
     }
     size_t sent = 0;
-    curl_ws_send(curl, foo->asStdString().c_str(), foo->asStdString().length(), &sent, 0, CURLWS_TEXT);
+    curl_ws_send(curl, msg->asStdString().c_str(), msg->asStdString().length(), &sent, 0, CURLWS_TEXT);
 #endif
     return true;
 }
 
-FakeJni::JBoolean HttpClientWebSocket::sendBinaryMessage(std::shared_ptr<jnivm::ByteBuffer> foo) {
+FakeJni::JBoolean HttpClientWebSocket::sendBinaryMessage(std::shared_ptr<jnivm::ByteBuffer> msg) {
+#ifndef NDEBUG
+    Log::trace("HttpClientWebSocket", "sendBinaryMessage called");
+#endif
 #ifdef ENABLE_WEBSOCKETS
     if(!connected) {
         return false;
     }
     size_t sent = 0;
-    curl_ws_send(curl, foo->buffer, foo->capacity, &sent, 0, CURLWS_BINARY);
+    curl_ws_send(curl, msg->buffer, msg->capacity, &sent, 0, CURLWS_BINARY);
 #endif
     return true;
 }
 
 void HttpClientWebSocket::disconnect(int id) {
+#ifndef NDEBUG
+    Log::trace("HttpClientWebSocket", "disconnect called, id: %d", id);
+#endif
     connected = false;
     size_t sent;
     curl_ws_send(curl, "", 0, &sent, 0, CURLWS_CLOSE);
@@ -91,10 +106,16 @@ size_t HttpClientWebSocket::write_callback(char *ptr, size_t size, size_t nmemb)
     auto frame = curl_ws_meta(curl);
     if(frame->flags & CURLWS_TEXT) {
         std::string cont((const char*)ptr, nmemb);
+#ifndef NDEBUG
+        Log::trace("HttpClientWebSocket", "Got message: %s", cont.c_str());
+#endif
         FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
         auto method = getClass().getMethod("(Ljava/lang/String;)V", "onMessage");
         method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(cont)));
     } else if(frame->flags & CURLWS_BINARY) {
+#ifndef NDEBUG
+        Log::trace("HttpClientWebSocket", "Got binary message");
+#endif
         FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
         auto method = getClass().getMethod("(Ljava/nio/ByteBuffer;)V", "onBinaryMessage");
         method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<jnivm::ByteBuffer>(ptr, nmemb)));
@@ -109,6 +130,9 @@ size_t HttpClientWebSocket::writecb(char *buffer, size_t size, size_t nitems, vo
 }
 
 void HttpClientWebSocket::sendOpened() {
+#ifndef NDEBUG
+    Log::trace("HttpClientWebSocket", "Sending onOpen");
+#endif
     FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
     auto method = getClass().getMethod("()V", "onOpen");
     method->invoke(frame.getJniEnv(), this);
@@ -116,6 +140,9 @@ void HttpClientWebSocket::sendOpened() {
 }
 
 void HttpClientWebSocket::sendClosed() {
+#ifndef NDEBUG
+    Log::trace("HttpClientWebSocket", "Sending onClose");
+#endif
     connected = false;
     FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
     auto method = getClass().getMethod("(I)V", "onClose");
