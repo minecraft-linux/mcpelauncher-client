@@ -38,7 +38,7 @@ void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::sh
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
         auto ret = curl_easy_perform(curl);
         if(ret == CURLE_OK) {
-            Log::error("HTTPClientWebSocket", "websocket connection closed");
+            Log::trace("HTTPClientWebSocket", "websocket connection closed");
             sendClosed();
         } else {
             Log::error("HTTPClientWebSocket", "websocket connection closed with an error");
