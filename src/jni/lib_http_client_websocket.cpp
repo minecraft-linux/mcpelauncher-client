@@ -18,7 +18,7 @@ HttpClientWebSocket::HttpClientWebSocket(FakeJni::JLong owner) {
     jvm = (void*)&FakeJni::JniEnvContext().getJniEnv().getVM();
 }
 HttpClientWebSocket::~HttpClientWebSocket() {
-    //curl_easy_cleanup(curl);
+    curl_easy_cleanup(curl);
 }
 
 void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::shared_ptr<FakeJni::JString> wst) {
