@@ -98,15 +98,21 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
     FakeJni::LocalFrame frame;
     auto&& jvm = &frame.getJniEnv().getVM();
     std::thread([=]() {
-        auto anotherme = me;
-        auto ret = curl_easy_perform(curl);
-        long response_code;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-        FakeJni::LocalFrame frame(*jvm);
-        if(ret == CURLE_OK) {
-            auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
-            method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(sourceCall, response_code, response, headers)));
-        } else {
+        try {
+            auto anotherme = me;
+            auto ret = curl_easy_perform(curl);
+            long response_code;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+            FakeJni::LocalFrame frame(*jvm);
+            if(ret == CURLE_OK) {
+                auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
+                method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(sourceCall, response_code, response, headers)));
+            } else {
+                auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
+                method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
+            }
+        } catch(...) {
+            FakeJni::LocalFrame frame(*jvm);
             auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
             method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
         }
