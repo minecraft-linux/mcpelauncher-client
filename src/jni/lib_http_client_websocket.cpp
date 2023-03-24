@@ -16,6 +16,8 @@ HttpClientWebSocket::HttpClientWebSocket(FakeJni::JLong owner) {
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writecb);
+    curl_easy_setopt(curl, CURLOPT_PREREQDATA, this);
+    curl_easy_setopt(curl, CURLOPT_PREREQFUNCTION, prereq_callback);
 #endif
 
     jvm = (void*)&FakeJni::JniEnvContext().getJniEnv().getVM();
@@ -38,7 +40,9 @@ void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::sh
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
         auto ret = curl_easy_perform(curl);
         if(ret == CURLE_OK) {
+#ifndef NDEBUG
             Log::trace("HTTPClientWebSocket", "websocket connection closed");
+#endif
             sendClosed();
         } else {
             Log::error("HTTPClientWebSocket", "websocket connection closed with an error");
@@ -102,9 +106,6 @@ void HttpClientWebSocket::disconnect(int id) {
 
 size_t HttpClientWebSocket::write_callback(char *ptr, size_t size, size_t nmemb) {
 #ifdef ENABLE_WEBSOCKETS
-    if(!connected) {
-        sendOpened();
-    }
     auto frame = curl_ws_meta(curl);
     if(frame->flags & CURLWS_TEXT) {
         std::string cont((const char*)ptr, nmemb);
@@ -139,6 +140,11 @@ void HttpClientWebSocket::sendOpened() {
     auto method = getClass().getMethod("()V", "onOpen");
     method->invoke(frame.getJniEnv(), this);
     connected = true;
+}
+
+int HttpClientWebSocket::prereq_callback(void *clientp, char *conn_primary_ip, char *conn_local_ip, int conn_primary_port, int conn_local_port) {
+    ((HttpClientWebSocket*)clientp)->sendOpened();
+return CURL_PREREQFUNC_OK;
 }
 
 void HttpClientWebSocket::sendClosed() {

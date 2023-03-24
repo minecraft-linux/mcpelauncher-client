@@ -25,6 +25,7 @@ private:
     struct curl_slist *header = nullptr;
     size_t write_callback(char *ptr, size_t size, size_t nmemb);
     static size_t writecb(char *buffer, size_t size, size_t nitems, void* data);
+    static int prereq_callback(void *clientp, char *conn_primary_ip, char *conn_local_ip, int conn_primary_port, int conn_local_port);
     void sendOpened();
     void sendClosed();
 };
