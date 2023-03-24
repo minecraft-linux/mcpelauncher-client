@@ -10,7 +10,7 @@ public:
     using TextCallback = std::function<void(std::string)>;
 
 private:
-    bool enabled = false, multiline = false, shiftPressed = false;
+    bool enabled = false, multiline = false, shiftPressed = false, altPressed = false;
     std::string currentText;
     size_t currentTextPosition = 0;
     size_t currentTextPositionUTF = 0;
@@ -38,3 +38,4 @@ public:
 
     int getCursorPosition() const { return currentTextPositionUTF; }
 };
+

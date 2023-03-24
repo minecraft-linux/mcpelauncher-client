@@ -55,24 +55,44 @@ void TextInputHandler::onTextInput(std::string const &text) {
 void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
     if(key == KeyCode::LEFT_SHIFT || key == KeyCode::RIGHT_SHIFT)
         shiftPressed = (action != KeyAction::RELEASE);
-
+    if(key == KeyCode::LEFT_ALT || key == KeyCode::RIGHT_ALT)
+        altPressed = (action != KeyAction::RELEASE);
+    
     if(action != KeyAction::PRESS && action != KeyAction::REPEAT)
         return;
     if(key == KeyCode::RIGHT) {
         if(currentTextPosition >= currentText.size())
             return;
-        currentTextPosition++;
-        while(currentTextPosition < currentText.size() &&
-              (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+        if (altPressed) {
+            if (currentText.substr(currentTextPosition + 1, currentText.size()).find(" ") == std::string::npos) {
+                currentTextPosition = currentText.size();
+            } else {
+                currentTextPosition += currentText.substr(currentTextPosition + 1, currentText.size()).find_first_of(" ") + 1;
+            }
+            currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
+        } else {
             currentTextPosition++;
-        currentTextPositionUTF++;
+            while(currentTextPosition < currentText.size() &&
+                (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+                currentTextPosition++;
+            currentTextPositionUTF++;
+        }
     } else if(key == KeyCode::LEFT) {
         if(currentTextPosition <= 0)
             return;
-        currentTextPosition--;
-        while(currentTextPosition > 0 && (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+        if (altPressed) {
+            if (currentText.substr(0, currentTextPosition - 1).find(" ") == std::string::npos) {
+                currentTextPosition = 0;
+            } else {
+                currentTextPosition = currentText.substr(0, currentTextPosition - 1).find_last_of(" ") + 1;
+            }
+            currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
+        } else {
             currentTextPosition--;
-        currentTextPositionUTF--;
+            while(currentTextPosition > 0 && (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+                currentTextPosition--;
+            currentTextPositionUTF--;
+        }
     } else if(key == KeyCode::HOME) {
         currentTextPosition = 0;
         currentTextPositionUTF = 0;
@@ -93,3 +113,4 @@ std::string TextInputHandler::getCopyText() const {
         return currentText;
     }
 }
+
