@@ -144,7 +144,11 @@ void HttpClientWebSocket::sendOpened() {
 
 int HttpClientWebSocket::prereq_callback(void *clientp, char *conn_primary_ip, char *conn_local_ip, int conn_primary_port, int conn_local_port) {
     ((HttpClientWebSocket*)clientp)->sendOpened();
-return CURL_PREREQFUNC_OK;
+#ifdef ENABLE_WEBSOCKETS
+    return CURL_PREREQFUNC_OK;
+#else
+    return 0;
+#endif
 }
 
 void HttpClientWebSocket::sendClosed() {
