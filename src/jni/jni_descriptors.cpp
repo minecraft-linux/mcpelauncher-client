@@ -211,8 +211,14 @@ BEGIN_NATIVE_DESCRIPTOR(NotificationListenerService){FakeJni::Function<&Notifica
     {Function<&HttpClientRequest::doRequestAsync>{}, "doRequestAsync"},
     END_NATIVE_DESCRIPTOR
 
-    BEGIN_NATIVE_DESCRIPTOR(HttpClientWebSocket){Constructor<HttpClientWebSocket>{}},
+    BEGIN_NATIVE_DESCRIPTOR(HttpClientWebSocket){Constructor<HttpClientWebSocket, JLong>{}},
+    {FakeJni::Field<&HttpClientWebSocket::owner>{}, "owner", FakeJni::JFieldID::PUBLIC },
+
     {Function<&HttpClientWebSocket::connect>{}, "connect"},
+    {Function<&HttpClientWebSocket::addHeader>{}, "addHeader"},
+    {Function<&HttpClientWebSocket::sendMessage>{}, "sendMessage"},
+    {Function<&HttpClientWebSocket::sendBinaryMessage>{}, "sendBinaryMessage"},
+    {Function<&HttpClientWebSocket::disconnect>{}, "disconnect"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(HttpClientResponse){Function<&HttpClientResponse::getNumHeaders>{}, "getNumHeaders"},
