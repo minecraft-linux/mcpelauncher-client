@@ -70,9 +70,7 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
     }
     // }
-#ifndef NDEBUG
-        Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s, body: %s", this->method.c_str(), this->body.data());
-#endif
+
     if(contentLength > 0) {
         // static auto ___callback = (void*)+[](char *ptr, size_t size, size_t nmemb, void *userdata) -> size_t {
         //     auto stream = (NativeInputStream*)userdata;
@@ -89,6 +87,13 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
         this->body[read] = '\0';
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, read);
+#ifndef NDEBUG
+        Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s, body: %s", this->method.c_str(), this->body.data());
+#endif
+    } else {
+#ifndef NDEBUG
+        Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s", this->method.c_str());
+#endif
     }
     header = curl_slist_append(header, ("Content-Length: " + std::to_string(contentLength)).c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
