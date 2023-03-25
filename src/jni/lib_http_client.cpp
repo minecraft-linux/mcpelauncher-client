@@ -37,7 +37,11 @@ void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> m
                                              std::shared_ptr<FakeJni::JString> contentType,
                                              std::shared_ptr<FakeJni::JByteArray> body) {
     this->method = method->asStdString();
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
+    if (this->method == "HEAD") {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+    } else {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
+    }
     this->body = body ? std::vector<char>((char *)body->getArray(), (char *)body->getArray() + body->getSize()) : std::vector<char>{};
     if(this->body.size()) {
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
@@ -66,6 +70,9 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
     }
     // }
+#ifndef NDEBUG
+        Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s, body: %s", this->method.c_str(), this->body.data());
+#endif
     if(contentLength > 0) {
         // static auto ___callback = (void*)+[](char *ptr, size_t size, size_t nmemb, void *userdata) -> size_t {
         //     auto stream = (NativeInputStream*)userdata;
@@ -80,12 +87,11 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
         FakeJni::LocalFrame frame;
         auto read = stream->Read(this->body.data(), contentLength);
         this->body[read] = '\0';
-#ifndef NDEBUG
-        Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s, body: %s", this->method.c_str(), this->body.data());
-#endif
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, read);
     }
+    header = curl_slist_append(header, ("Content-Length: " + std::to_string(contentLength)).c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
     auto conttype = contentType->asStdString();
     if(conttype.length()) {
         header = curl_slist_append(header, ("Content-Type: " + conttype).c_str());
