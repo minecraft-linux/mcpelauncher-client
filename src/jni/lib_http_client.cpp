@@ -120,7 +120,7 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
             FakeJni::LocalFrame frame(*jvm);
             if(ret == CURLE_OK) {
 #ifndef NDEBUG
-                Log::trace("HttpClient", "Response: code: %d, body: %s", response_code, response.data());
+                Log::trace("HttpClient", "Response: code: %ld, body: %s", response_code, response.data());
 #endif
                 auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
                 method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(sourceCall, response_code, response, headers)));
