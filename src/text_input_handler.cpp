@@ -30,8 +30,18 @@ void TextInputHandler::onTextInput(std::string const &text) {
     if(text.size() == 1 && text[0] == 8) {  // backspace
         if(currentTextPositionUTF <= 0)
             return;
-        currentTextPositionUTF--;
         auto deleteStart = currentTextPosition - 1;
+        if (altPressed) {
+            if (currentText.substr(0, currentTextPosition - 1).find(" ") == std::string::npos) {
+                deleteStart = 0;
+            } else {
+                deleteStart = currentText.substr(0, currentTextPosition - 1).find_last_of(" ") + 1;
+            }
+            currentTextPositionUTF = deleteStart;
+        } else {
+            deleteStart = currentTextPosition - 1;
+            currentTextPositionUTF--;
+        }
         while(deleteStart > 0 && (currentText[deleteStart] & 0b11000000) == 0b10000000)
             deleteStart--;
         currentText.erase(currentText.begin() + deleteStart, currentText.begin() + currentTextPosition);
