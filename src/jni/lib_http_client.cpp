@@ -134,9 +134,7 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
                 method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
             }
         } catch(...) {
-            FakeJni::LocalFrame frame(*jvm);
-            auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
-            method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
+            _Exit(0);
         }
     }).detach();
 }
