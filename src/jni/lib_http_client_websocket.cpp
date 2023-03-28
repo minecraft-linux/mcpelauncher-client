@@ -11,6 +11,7 @@
 
 HttpClientWebSocket::HttpClientWebSocket(FakeJni::JLong owner) {
     HttpClientWebSocket::owner = owner;
+    classInited = true;
 
 #ifdef ENABLE_WEBSOCKETS
     curl = curl_easy_init();
@@ -21,6 +22,7 @@ HttpClientWebSocket::HttpClientWebSocket(FakeJni::JLong owner) {
     jvm = (void*)&FakeJni::JniEnvContext().getJniEnv().getVM();
 }
 HttpClientWebSocket::~HttpClientWebSocket() {
+    classInited = false;
 #ifdef ENABLE_WEBSOCKETS
     curl_slist_free_all(header);
     curl_easy_cleanup(curl);
@@ -43,11 +45,13 @@ void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::sh
 #endif
             sendClosed();
         } else {
-            Log::error("HTTPClientWebSocket", "websocket connection closed with an error");
-            connected = false;
-            FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
-            auto method = getClass().getMethod("()V", "onFailure");
-            method->invoke(frame.getJniEnv(), this);
+            if (classInited) {
+                Log::error("HTTPClientWebSocket", "websocket connection closed with an error");
+                connected = false;
+                FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
+                auto method = getClass().getMethod("()V", "onFailure");
+                method->invoke(frame.getJniEnv(), this);
+            }
         }
 #else
         Log::error("HTTPClientWebSocket", "Missing curl websocket support");
@@ -152,3 +156,4 @@ void HttpClientWebSocket::sendClosed() {
     auto method = getClass().getMethod("(I)V", "onClose");
     method->invoke(frame.getJniEnv(), this, 0);
 }
+

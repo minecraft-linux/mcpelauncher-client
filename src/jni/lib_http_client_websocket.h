@@ -22,9 +22,11 @@ private:
     void *curl;
     void *jvm;
     bool connected = false;
+    bool classInited = false;
     struct curl_slist *header = nullptr;
     size_t write_callback(char *ptr, size_t size, size_t nmemb);
     static size_t writecb(char *buffer, size_t size, size_t nitems, void* data);
     void sendOpened();
     void sendClosed();
 };
+
