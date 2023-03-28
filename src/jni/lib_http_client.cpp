@@ -187,7 +187,7 @@ HttpClientResponse::HttpClientResponse(FakeJni::JLong call_handle, int response_
                                                                                                                                                             call_handle(call_handle) {}
 
 size_t HttpClientRequest::write_callback(char *ptr, size_t size, size_t nmemb) {
-    //response.insert(response.end(), ptr, ptr + nmemb);
+    response.insert(response.end(), ptr, ptr + nmemb); // Unused in 1.18.30+, kept for compatibility with older versions
     auto byteArray = std::make_shared<FakeJni::JByteArray>(nmemb);
     memcpy(byteArray->getArray(), ptr, nmemb);
     std::make_shared<NativeOutputStream>(call_handle)->WriteAll(byteArray);
@@ -234,5 +234,7 @@ NativeOutputStream::NativeOutputStream(FakeJni::JLong call_handle) : call_handle
 void NativeOutputStream::WriteAll(std::shared_ptr<FakeJni::JByteArray> data) {
     FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
     auto method = getClass().getMethod("(J[BII)V", "nativeWrite");
-    method->invoke(frame.getJniEnv(), this, call_handle, frame.getJniEnv().createLocalReference(data), (FakeJni::JInt)0, (FakeJni::JInt)data->getSize());
+    if (method) {
+        method->invoke(frame.getJniEnv(), this, call_handle, frame.getJniEnv().createLocalReference(data), (FakeJni::JInt)0, (FakeJni::JInt)data->getSize());
+    }
 }
