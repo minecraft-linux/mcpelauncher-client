@@ -22,11 +22,13 @@ public:
     NativeInputStream(FakeJni::JLong call_handle);
     size_t Read(void *buffer, size_t size);
 };
+    inline void *jvm;
 
 class HttpClientRequest : public FakeJni::JObject {
     std::shared_ptr<NativeInputStream> inputStream;
 
 public:
+
     DEFINE_CLASS_NAME("com/xbox/httpclient/HttpClientRequest")
     HttpClientRequest();
     ~HttpClientRequest();
@@ -55,11 +57,11 @@ private:
     std::vector<ResponseHeader> headers;
     std::vector<char> body;
     std::string method;
+    FakeJni::JLong call_handle;
 
     size_t write_callback(char *ptr, size_t size, size_t nmemb);
     size_t header_callback(char *buffer, size_t size, size_t nitems);
 };
-
 class HttpClientResponse : public FakeJni::JObject {
     FakeJni::JLong call_handle;
 
