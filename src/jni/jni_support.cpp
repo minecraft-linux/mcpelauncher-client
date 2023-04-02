@@ -214,7 +214,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
     if (!options.importFilePath.empty()) {
         importFile(options.importFilePath);
     }
-
+#if !defined(XAL_WEBVIEW_USE_CLI)
     std::thread([=]() {
         for (std::string line; std::getline(std::cin, line);) {
             if (std::filesystem::exists(line)) {
@@ -222,6 +222,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
             }
         }
     }).detach();
+#endif
 
 }
 
