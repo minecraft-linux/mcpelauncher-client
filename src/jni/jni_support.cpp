@@ -22,6 +22,10 @@
 #include "uuid.h"
 #include "shahasher.h"
 #include "securerandom.h"
+#include <filesystem>
+#include "../main.h"
+#include <thread>
+#include <iostream>
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<File>();
@@ -97,7 +101,7 @@ void JniSupport::registerJniClasses() {
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
-    registerNatives(MainActivity::getDescriptor(), {{"nativeRegisterThis", "()V"}, {"nativeWaitCrashManagementSetupComplete", "()V"}, {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"}, {"nativeShutdown", "()V"}, {"nativeUnregisterThis", "()V"}, {"nativeStopThis", "()V"}, {"nativeOnDestroy", "()V"}, {"nativeResize", "(II)V"}, {"nativeSetTextboxText", "(Ljava/lang/String;)V"}, {"nativeReturnKeyPressed", "()V"}, {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"}, {"nativeOnPickImageCanceled", "(J)V"}, {"nativeOnPickFileSuccess", "(Ljava/lang/String;)V"}, {"nativeOnPickFileCanceled", "()V"}, {"nativeInitializeXboxLive", "(JJ)V"}, {"nativeinitializeLibHttpClient", "(J)J"}, {"nativeInitializeLibHttpClient", "(J)J"}}, symResolver);
+    registerNatives(MainActivity::getDescriptor(), {{"nativeRegisterThis", "()V"}, {"nativeWaitCrashManagementSetupComplete", "()V"}, {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"}, {"nativeShutdown", "()V"}, {"nativeUnregisterThis", "()V"}, {"nativeStopThis", "()V"}, {"nativeOnDestroy", "()V"}, {"nativeResize", "(II)V"}, {"nativeSetTextboxText", "(Ljava/lang/String;)V"}, {"nativeReturnKeyPressed", "()V"}, {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"}, {"nativeOnPickImageCanceled", "(J)V"}, {"nativeOnPickFileSuccess", "(Ljava/lang/String;)V"}, {"nativeOnPickFileCanceled", "()V"}, {"nativeInitializeXboxLive", "(JJ)V"}, {"nativeinitializeLibHttpClient", "(J)J"}, {"nativeInitializeLibHttpClient", "(J)J"}, {"nativeProcessIntentUriQuery", "(Ljava/lang/String;Ljava/lang/String;)V"}}, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
                                                               {"onStoreInitialized", "(JZ)V"},
                                                               {"onPurchaseFailed", "(JLjava/lang/String;)V"},
@@ -207,6 +211,39 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
     nativeActivityCallbacks.onStart(&nativeActivity);
     nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, window);
     // nativeActivityCallbacks.onResume(&nativeActivity);
+    if (!options.importFilePath.empty()) {
+        importFile(options.importFilePath);
+    }
+
+    std::thread([=]() {
+        for (std::string line; std::getline(std::cin, line);) {
+            if (std::filesystem::exists(line)) {
+                importFile(line);
+            }
+        }
+    }).detach();
+
+}
+
+void JniSupport::importFile(std::string path) {
+    std::string fileExt = path.substr(path.find_last_of(".") + 1);
+    if (fileExt == "mcworld" || fileExt == "mcpack" || fileExt == "mcaddon" || fileExt == "mctemplate") {
+        FakeJni::LocalFrame frame(vm);
+        try {
+            std::filesystem::path importPath = path;
+            if (importPath.filename().generic_string().find("&") == std::string::npos) {
+                std::filesystem::copy(importPath, std::filesystem::temp_directory_path() / importPath.filename(), std::filesystem::copy_options::overwrite_existing); // We have to copy it to the temp folder because the game will delete the archive if importing succeeds.
+                auto fileOpen = activity->getClass().getMethod("(Ljava/lang/String;Ljava/lang/String;)V", "nativeProcessIntentUriQuery");
+                fileOpen->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>("contentIntent"), std::make_shared<FakeJni::JString>((std::filesystem::temp_directory_path() / importPath.filename()).generic_string() + "&" + (std::filesystem::temp_directory_path() / importPath.filename()).generic_string()));
+            } else {
+                Log::warn("JniSupport", "Not importing file at %s; file name cannot contain &", path.c_str());
+            }
+        } catch (std::exception& e) {
+            Log::error("JniSupport", "Failed to import file at %s: %s", path.c_str(), e.what());
+        }
+    } else {
+        Log::warn("JniSupport", "Not importing file at %s; file extension must be .mcworld, .mcpack, .mcaddon, or .mctemplate", path.c_str());
+    }
 }
 
 void JniSupport::stopGame() {
