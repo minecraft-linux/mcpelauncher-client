@@ -25,12 +25,12 @@
 #include "../main.h"
 #include <thread>
 #include <iostream>
-#if __cplusplus >= 201703L
-    #include <filesystem>
-    namespace fs = std::filesystem;
+#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 8
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 #else
-    #include <experimental/filesystem>
-    namespace fs = std::experimental::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 #endif
 
 
