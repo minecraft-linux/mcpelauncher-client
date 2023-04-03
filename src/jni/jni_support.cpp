@@ -25,12 +25,13 @@
 #include "../main.h"
 #include <thread>
 #include <iostream>
-#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE <= 8
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
+#include <fstream>
+#include <sys/stat.h>
+#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE > 8
 #include <filesystem>
-namespace fs = std::filesystem;
+std::string tmpDir = std::filesystem::temp_directory_path().generic_string();
+#else
+std::string tmpDir = "/tmp";
 #endif
 
 
@@ -224,7 +225,8 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
 #if !defined(XAL_WEBVIEW_USE_CLI)
     std::thread([=]() {
         for (std::string line; std::getline(std::cin, line);) {
-            if (fs::exists(line)) {
+            struct stat buffer;
+            if ((stat (line.c_str(), &buffer) == 0)) {
                 importFile(line);
             }
         }
@@ -238,11 +240,14 @@ void JniSupport::importFile(std::string path) {
     if (fileExt == "mcworld" || fileExt == "mcpack" || fileExt == "mcaddon" || fileExt == "mctemplate") {
         FakeJni::LocalFrame frame(vm);
         try {
-            fs::path importPath = path;
-            if (importPath.generic_string().find("&") == std::string::npos) {
-                fs::copy(importPath, fs::temp_directory_path() / importPath.filename(), fs::copy_options::overwrite_existing); // We have to copy it to the temp folder because the game will delete the archive if importing succeeds.
+            std::string fileName = path.substr(path.find_last_of("/") + 1);
+            if (path.find("&") == std::string::npos) {
+                std::ifstream src(path, std::ios::binary);
+                std::ofstream dest(tmpDir + "/" + fileName, std::ios::binary);
+                dest << src.rdbuf(); // We have to copy it to the temp folder because the game will delete the archive if importing succeeds.
+
                 auto fileOpen = activity->getClass().getMethod("(Ljava/lang/String;Ljava/lang/String;)V", "nativeProcessIntentUriQuery");
-                fileOpen->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>("contentIntent"), std::make_shared<FakeJni::JString>(importPath.generic_string() + "&" + (fs::temp_directory_path() / importPath.filename()).generic_string()));
+                fileOpen->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>("contentIntent"), std::make_shared<FakeJni::JString>(path + "&" + tmpDir + "/" + fileName));
             } else {
                 Log::warn("JniSupport", "Not importing file at %s; file path cannot contain &", path.c_str());
             }
