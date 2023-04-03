@@ -232,12 +232,12 @@ void JniSupport::importFile(std::string path) {
         FakeJni::LocalFrame frame(vm);
         try {
             std::filesystem::path importPath = path;
-            if (importPath.filename().generic_string().find("&") == std::string::npos) {
+            if (importPath.generic_string().find("&") == std::string::npos) {
                 std::filesystem::copy(importPath, std::filesystem::temp_directory_path() / importPath.filename(), std::filesystem::copy_options::overwrite_existing); // We have to copy it to the temp folder because the game will delete the archive if importing succeeds.
                 auto fileOpen = activity->getClass().getMethod("(Ljava/lang/String;Ljava/lang/String;)V", "nativeProcessIntentUriQuery");
-                fileOpen->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>("contentIntent"), std::make_shared<FakeJni::JString>((std::filesystem::temp_directory_path() / importPath.filename()).generic_string() + "&" + (std::filesystem::temp_directory_path() / importPath.filename()).generic_string()));
+                fileOpen->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>("contentIntent"), std::make_shared<FakeJni::JString>(importPath.generic_string() + "&" + (std::filesystem::temp_directory_path() / importPath.filename()).generic_string()));
             } else {
-                Log::warn("JniSupport", "Not importing file at %s; file name cannot contain &", path.c_str());
+                Log::warn("JniSupport", "Not importing file at %s; file path cannot contain &", path.c_str());
             }
         } catch (std::exception& e) {
             Log::error("JniSupport", "Failed to import file at %s: %s", path.c_str(), e.what());
