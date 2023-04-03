@@ -224,7 +224,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
 #if !defined(XAL_WEBVIEW_USE_CLI)
     std::thread([=]() {
         for (std::string line; std::getline(std::cin, line);) {
-            if (std::filesystem::exists(line)) {
+            if (fs::exists(line)) {
                 importFile(line);
             }
         }
