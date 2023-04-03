@@ -22,10 +22,20 @@
 #include "uuid.h"
 #include "shahasher.h"
 #include "securerandom.h"
-#include <filesystem>
 #include "../main.h"
 #include <thread>
 #include <iostream>
+#include <version>
+#ifdef __cpp_lib_filesystem
+    #include <filesystem>
+    namespace fs = std::filesystem;
+#elif __cpp_lib_experimental_filesystem
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
+#else
+    #error "no filesystem support ='("
+#endif
+
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<File>();
@@ -231,11 +241,11 @@ void JniSupport::importFile(std::string path) {
     if (fileExt == "mcworld" || fileExt == "mcpack" || fileExt == "mcaddon" || fileExt == "mctemplate") {
         FakeJni::LocalFrame frame(vm);
         try {
-            std::filesystem::path importPath = path;
+            fs::path importPath = path;
             if (importPath.generic_string().find("&") == std::string::npos) {
-                std::filesystem::copy(importPath, std::filesystem::temp_directory_path() / importPath.filename(), std::filesystem::copy_options::overwrite_existing); // We have to copy it to the temp folder because the game will delete the archive if importing succeeds.
+                fs::copy(importPath, fs::temp_directory_path() / importPath.filename(), fs::copy_options::overwrite_existing); // We have to copy it to the temp folder because the game will delete the archive if importing succeeds.
                 auto fileOpen = activity->getClass().getMethod("(Ljava/lang/String;Ljava/lang/String;)V", "nativeProcessIntentUriQuery");
-                fileOpen->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>("contentIntent"), std::make_shared<FakeJni::JString>(importPath.generic_string() + "&" + (std::filesystem::temp_directory_path() / importPath.filename()).generic_string()));
+                fileOpen->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>("contentIntent"), std::make_shared<FakeJni::JString>(importPath.generic_string() + "&" + (fs::temp_directory_path() / importPath.filename()).generic_string()));
             } else {
                 Log::warn("JniSupport", "Not importing file at %s; file path cannot contain &", path.c_str());
             }
