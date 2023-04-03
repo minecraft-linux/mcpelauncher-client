@@ -25,7 +25,7 @@
 #include "../main.h"
 #include <thread>
 #include <iostream>
-#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 8
+#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE <= 8
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 #else
