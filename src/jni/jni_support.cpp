@@ -25,15 +25,12 @@
 #include "../main.h"
 #include <thread>
 #include <iostream>
-#include <version>
-#ifdef __cpp_lib_filesystem
+#if __cplusplus >= 201703L
     #include <filesystem>
     namespace fs = std::filesystem;
-#elif __cpp_lib_experimental_filesystem
+#else
     #include <experimental/filesystem>
     namespace fs = std::experimental::filesystem;
-#else
-    #error "no filesystem support ='("
 #endif
 
 
