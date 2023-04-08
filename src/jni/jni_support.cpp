@@ -233,7 +233,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
 }
 
 void JniSupport::importFile(std::string path) {
-#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE > 8
+#if !defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE > 8
     std::string tmpDir = std::filesystem::temp_directory_path().generic_string();
 #else
     std::string tmpDir = "/tmp";
