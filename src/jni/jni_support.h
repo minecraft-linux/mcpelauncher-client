@@ -43,6 +43,8 @@ public:
     void startGame(ANativeActivity_createFunc *activityOnCreate,
                    void *stbiLoadFromMemory, void *stbiImageFree);
 
+    void importFile(std::string path);
+
     void stopGame();
 
     void waitForGameExit();
