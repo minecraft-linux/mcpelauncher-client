@@ -105,7 +105,11 @@ void WindowCallbacks::onMouseRelativePosition(double x, double y) {
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     if(hasInputMode(InputMode::Mouse)) {
+#ifdef __APPLE__
+        signed char cdy = (signed char)std::max(std::min((dx + dy) * 127.0, 127.0), -127.0);
+#else
         signed char cdy = (signed char)std::max(std::min(dy * 127.0, 127.0), -127.0);
+#endif
         if(useDirectMouseInput)
             Mouse::feed(4, (char&)cdy, 0, 0, (short)x, (short)y);
     }
