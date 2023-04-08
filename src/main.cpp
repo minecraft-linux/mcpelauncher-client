@@ -51,11 +51,13 @@ int main(int argc, char* argv[]) {
     argparser::arg<std::string> gameDir(p, "--game-dir", "-dg", "Directory with the game and assets");
     argparser::arg<std::string> dataDir(p, "--data-dir", "-dd", "Directory to use for the data");
     argparser::arg<std::string> cacheDir(p, "--cache-dir", "-dc", "Directory to use for cache");
+    argparser::arg<std::string> importFilePath(p, "--import-file-path", "-ifp", "File to import to the game");
     argparser::arg<int> windowWidth(p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight(p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod(p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
     argparser::arg<bool> forceEgl(p, "--force-opengles", "-fes", "Force creating an OpenGL ES surface instead of using the glcorepatch hack", !GLCorePatch::mustUseDesktopGL());
     argparser::arg<bool> texturePatch(p, "--texture-patch", "-tp", "Rewrite textures of the game for Minecraft 1.16.210 - 1.17.4X", false);
+    argparser::arg<bool> stdinImpt(p, "--stdin-import", "-si", "Use stdin for file import", false);
 
     if(!p.parse(argc, (const char**)argv))
         return 1;
@@ -63,9 +65,11 @@ int main(int argc, char* argv[]) {
         printVersionInfo();
         return 0;
     }
+    options.importFilePath = importFilePath;
     options.windowWidth = windowWidth;
     options.windowHeight = windowHeight;
     options.graphicsApi = forceEgl.get() ? GraphicsApi::OPENGL_ES2 : GraphicsApi::OPENGL;
+    options.useStdinImport = stdinImpt;
 
     FakeEGL::enableTexturePatch = texturePatch.get();
     if(!gameDir.get().empty())
