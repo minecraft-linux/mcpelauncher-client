@@ -27,7 +27,7 @@
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
-#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE > 8
+#if !defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE > 8
 #include <filesystem>
 #endif
 
