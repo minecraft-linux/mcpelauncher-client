@@ -29,9 +29,6 @@
 #include <sys/stat.h>
 #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE > 8
 #include <filesystem>
-std::string tmpDir = std::filesystem::temp_directory_path().generic_string();
-#else
-std::string tmpDir = "/tmp";
 #endif
 
 
@@ -236,6 +233,11 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
 }
 
 void JniSupport::importFile(std::string path) {
+#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE > 8
+    std::string tmpDir = std::filesystem::temp_directory_path().generic_string();
+#else
+    std::string tmpDir = "/tmp";
+#endif
     std::string fileExt = path.substr(path.find_last_of(".") + 1);
     if (fileExt == "mcworld" || fileExt == "mcpack" || fileExt == "mcaddon" || fileExt == "mctemplate") {
         FakeJni::LocalFrame frame(vm);
