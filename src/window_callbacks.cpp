@@ -9,6 +9,9 @@
 WindowCallbacks::WindowCallbacks(GameWindow& window, JniSupport& jniSupport, FakeInputQueue& inputQueue) : window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
     useDirectMouseInput = true;
     useDirectKeyboardInput = (Keyboard::_states && (Keyboard::_inputs || Keyboard::_inputsLegacy) && Keyboard::_gameControllerId);
+    if (fullscreen) {
+        window.setFullscreen(true);
+    }
 }
 
 void WindowCallbacks::registerCallbacks() {
@@ -146,7 +149,7 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
             jniSupport.getTextInputHandler().onKeyPressed(key, action);
         }
 
-        if(key == KeyCode::FN11 && action == KeyAction::PRESS)
+        if(key == KeyCode::FN11 && action == KeyAction::PRESS && usesLegacyFullscreen)
             window.setFullscreen(fullscreen = !fullscreen);
 
         if(useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
