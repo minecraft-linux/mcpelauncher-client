@@ -16,6 +16,7 @@ HttpClientRequest::HttpClientRequest() {
 }
 
 HttpClientRequest::~HttpClientRequest() {
+    curl_slist_free_all(header);
     curl_easy_cleanup(curl);
 }
 
