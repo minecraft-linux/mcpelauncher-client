@@ -75,34 +75,17 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
     }
 
     if(contentLength > 0) {
-        // static auto ___callback = (void*)+[](char *ptr, size_t size, size_t nmemb, void *userdata) -> size_t {
-        //     auto stream = (NativeInputStream*)userdata;
-        //     return stream->Read(ptr, size * nmemb);
-        // };
-        // this->inputStream = std::make_shared<NativeInputStream>(callHandle);
-        // curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
-        // curl_easy_setopt(curl, CURLOPT_READDATA, this->inputStream.get());
-        // curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) contentLength);
+        this->inputStream = std::make_shared<NativeInputStream>(callHandle);
+        curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+        curl_easy_setopt(curl, CURLOPT_READDATA, this->inputStream.get());
         if (this->method == "POST") {
-            this->body.resize(contentLength + 1);
-            auto stream = std::make_shared<NativeInputStream>(callHandle);
-            FakeJni::LocalFrame frame;
-            auto read = stream->Read(this->body.data(), contentLength);
-            this->body[read] = '\0';
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, read);
-#ifndef NDEBUG
-            Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s, body: %s", this->method.c_str(), this->body.data());
-#endif
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) contentLength);
         } else if (this->method == "PUT") {
-            this->inputStream = std::make_shared<NativeInputStream>(callHandle);
-            curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
-            curl_easy_setopt(curl, CURLOPT_READDATA, this->inputStream.get());
             curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t) contentLength);
-#ifndef NDEBUG
-            Log::trace("HttpClient", "setHttpMethodAndBody2 called, sent PUT request");
-#endif
         }
+#ifndef NDEBUG
+        Log::trace("HttpClient", "setHttpMethodAndBody2 called, sent request");
+#endif
     } else {
         if (this->method == "POST") {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
