@@ -141,7 +141,7 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
 
 JniSupport::JniSupport() : textInput([this](std::string const &str) { return onSetTextboxText(str); })
 #if defined(__APPLE__) && defined(__aarch64__)
-    vm([]((baron::JVM *jvm) -> {
+    , vm([](Baron::Jvm *jvm) {
         auto lib = linker::dlopen(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libjnivmsupport.so").c_str(), 0);
         if(lib == nullptr) {
             Log::error("LAUNCHER", "Failed to load arm64 variadic compat libjnivmsupport.so Original Error: %s", linker::dlerror());
@@ -152,16 +152,16 @@ JniSupport::JniSupport() : textInput([this](std::string const &str) { return onS
             Log::error("LAUNCHER", "Failed to get GetJMethodIDSignature Original Error: %s", linker::dlerror());
             return;
         }
-        *GetJMethodIDSignature = (void*)&jnivm::GetJMethodIDSignature;
-        void(*PatchJNINativeInterface)(JNINativeInterface& interface) = (void(*)(JNINativeInterface& interface))linker::dlsym(lib, "GetJMethodIDSignature");
+        *GetJMethodIDSignature = (void*)jnivm::GetJMethodIDSignature;
+        void(*PatchJNINativeInterface)(JNINativeInterface& interface) = (void(*)(JNINativeInterface& interface))linker::dlsym(lib, "PatchJNINativeInterface");
         if(PatchJNINativeInterface == nullptr) {
             Log::error("LAUNCHER", "Failed to get PatchJNINativeInterface Original Error: %s", linker::dlerror());
             return;
         }
-        jvm->AddHook([PatchJNINativeInterface](JNINativeInterface& in) -> {
+        jvm->AddHook([PatchJNINativeInterface](JNINativeInterface& in) {
             PatchJNINativeInterface(in);
         });
-    }))
+    })
 #endif
 {
     registerJniClasses();
