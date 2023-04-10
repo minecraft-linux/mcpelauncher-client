@@ -131,6 +131,24 @@ int main(int argc, char* argv[]) {
         Log::error("LAUNCHER", "Failed to load armhf compat libm.so Original Error: %s", linker::dlerror());
         return 1;
     }
+#elif defined(__APPLE__) && defined(__aarch64__)
+    MinecraftUtils::loadLibM();
+    android_dlextinfo extinfo;
+    std::vector<mcpelauncher_hook_t> hooks;
+    for(auto&& entry : libC) {
+        hooks.emplace_back(mcpelauncher_hook_t{entry.first.data(), entry.second});
+    }
+    hooks.emplace_back(mcpelauncher_hook_t{nullptr, nullptr});
+    extinfo.flags = ANDROID_DLEXT_MCPELAUNCHER_HOOKS;
+    extinfo.mcpelauncher_hooks = hooks.data();
+    if(linker::dlopen_ext(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libc.so").c_str(), 0, &extinfo) == nullptr) {
+        Log::error("LAUNCHER", "Failed to load arm64 variadic compat libc.so Original Error: %s", linker::dlerror());
+        return 1;
+    }
+    if(linker::dlopen(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/liblog.so").c_str(), 0) == nullptr) {
+        Log::error("LAUNCHER", "Failed to load arm64 variadic compat liblog.so Original Error: %s", linker::dlerror());
+        return 1;
+    }
 #else
     linker::load_library("libc.so", libC);
     MinecraftUtils::loadLibM();
