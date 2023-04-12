@@ -77,6 +77,7 @@ void FakeLooper::prepare() {
     associatedWindowCallbacks->registerCallbacks();
 
     CorePatches::setGameWindow(associatedWindow);
+    CorePatches::setGameWindowCallbacks(associatedWindowCallbacks);
 
     associatedWindow->show();
     FakeEGL::setupGLOverrides();

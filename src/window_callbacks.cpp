@@ -51,6 +51,11 @@ void WindowCallbacks::onClose() {
     jniSupport.onWindowClosed();
 }
 
+void WindowCallbacks::setFullscreen(bool isFs) {
+    window.setFullscreen(isFs);
+    fullscreen = isFs;
+}
+
 bool WindowCallbacks::hasInputMode(WindowCallbacks::InputMode want, bool changeMode) {
     if(!sendEvents) {
         return false;
@@ -149,8 +154,19 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
             jniSupport.getTextInputHandler().onKeyPressed(key, action);
         }
 
-        if(key == KeyCode::FN11 && action == KeyAction::PRESS && usesLegacyFullscreen)
-            window.setFullscreen(fullscreen = !fullscreen);
+        if (key == KeyCode::LEFT_ALT || key == KeyCode::RIGHT_ALT) {
+            modAlt = (action != KeyAction::RELEASE);
+        }
+        if (key == KeyCode::LEFT_SHIFT || key == KeyCode::RIGHT_SHIFT) {
+            modShift = (action != KeyAction::RELEASE);
+        }
+
+        if (modCTRL && modAlt && modShift && key == KeyCode::NUM_3) {
+            printf("Ctrl + Alt + Shift + 3 pressed, crashing...\n");
+            abort();
+        }  
+        if(key == KeyCode::FN11 && action == KeyAction::PRESS)
+            setFullscreen(!fullscreen);
 
         if(useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
             if (Keyboard::useLegacyKeyboard) {
