@@ -10,5 +10,3 @@ struct LauncherOptions {
     std::string importFilePath;
 };
 extern LauncherOptions options;
-
-inline bool usesLegacyFullscreen = false;
