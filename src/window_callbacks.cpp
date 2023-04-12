@@ -146,7 +146,7 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
 #else
         if(key == KeyCode::LEFT_CTRL || key == KeyCode::RIGHT_CTRL)
 #endif
-            modCTRL = (action != KeyAction::RELEASE);
+        modCTRL = (action != KeyAction::RELEASE);
 
         if(modCTRL && key == KeyCode::C && jniSupport.getTextInputHandler().getCopyText() != "") {
             window.setClipboardText(jniSupport.getTextInputHandler().getCopyText());
@@ -154,17 +154,6 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
             jniSupport.getTextInputHandler().onKeyPressed(key, action);
         }
 
-        if (key == KeyCode::LEFT_ALT || key == KeyCode::RIGHT_ALT) {
-            modAlt = (action != KeyAction::RELEASE);
-        }
-        if (key == KeyCode::LEFT_SHIFT || key == KeyCode::RIGHT_SHIFT) {
-            modShift = (action != KeyAction::RELEASE);
-        }
-
-        if (modCTRL && modAlt && modShift && key == KeyCode::NUM_3) {
-            printf("Ctrl + Alt + Shift + 3 pressed, crashing...\n");
-            abort();
-        }  
         if(key == KeyCode::FN11 && action == KeyAction::PRESS)
             setFullscreen(!fullscreen);
 
