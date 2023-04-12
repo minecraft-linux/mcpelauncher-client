@@ -52,8 +52,10 @@ void WindowCallbacks::onClose() {
 }
 
 void WindowCallbacks::setFullscreen(bool isFs) {
-    window.setFullscreen(isFs);
-    fullscreen = isFs;
+    if(fullscreen != isFs) {
+        window.setFullscreen(isFs);
+        fullscreen = isFs;
+    }
 }
 
 bool WindowCallbacks::hasInputMode(WindowCallbacks::InputMode want, bool changeMode) {
