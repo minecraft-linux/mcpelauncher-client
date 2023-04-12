@@ -22,8 +22,6 @@ private:
     std::unordered_map<int, GamepadData> gamepads;
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
-    bool modAlt = false;
-    bool modShift = false;
     bool needsQueueGamepadInput = true;
     bool fullscreen = options.fullscreen;
     bool sendEvents = false;
