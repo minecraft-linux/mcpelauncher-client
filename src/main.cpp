@@ -199,9 +199,6 @@ int main(int argc, char* argv[]) {
     }
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%" PRIXPTR, (uintptr_t)MinecraftUtils::getLibraryBase(handle));
-    if(linker::dlsym(handle, "_ZTV21AppPlatform_android23")) {
-        usesLegacyFullscreen = true;
-    }
     base = MinecraftUtils::getLibraryBase(handle);
 
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
