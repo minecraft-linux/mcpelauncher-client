@@ -148,7 +148,7 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
 #else
         if(key == KeyCode::LEFT_CTRL || key == KeyCode::RIGHT_CTRL)
 #endif
-        modCTRL = (action != KeyAction::RELEASE);
+            modCTRL = (action != KeyAction::RELEASE);
 
         if(modCTRL && key == KeyCode::C && jniSupport.getTextInputHandler().getCopyText() != "") {
             window.setClipboardText(jniSupport.getTextInputHandler().getCopyText());
