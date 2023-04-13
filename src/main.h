@@ -5,6 +5,7 @@
 struct LauncherOptions {
     int windowWidth, windowHeight;
     bool useStdinImport;
+    bool fullscreen;
     GraphicsApi graphicsApi;
     std::string importFilePath;
 };
