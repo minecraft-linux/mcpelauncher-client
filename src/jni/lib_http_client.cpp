@@ -9,7 +9,6 @@ using namespace std::placeholders;
 HttpClientRequest::HttpClientRequest() {
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpClientRequest::write_callback_wrapper);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, this);
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpClientRequest::header_callback_wrapper);
     jvm = (void*)&FakeJni::JniEnvContext().getJniEnv().getVM();
@@ -39,11 +38,16 @@ void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> m
                                              std::shared_ptr<FakeJni::JString> contentType,
                                              std::shared_ptr<FakeJni::JByteArray> body) {
     this->method = method->asStdString();
-    if (this->method == "HEAD") {
+    if (this->method == "GET") {
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+    } else if (this->method == "POST") {
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    } else if (this->method == "HEAD") {
         curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
     } else {
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
     }
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpClientRequest::write_callback_wrapper_old);
     this->body = body ? std::vector<char>((char *)body->getArray(), (char *)body->getArray() + body->getSize()) : std::vector<char>{};
     if(this->body.size()) {
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, this->body.data());
@@ -74,6 +78,7 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
     } else {
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, this->method.c_str());
     }
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpClientRequest::write_callback_wrapper);
 
     if(contentLength > 0) {
         this->inputStream = std::make_shared<NativeInputStream>(callHandle);
@@ -119,12 +124,13 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
     FakeJni::LocalFrame frame;
     auto&& jvm = &frame.getJniEnv().getVM();
     std::thread([=]() {
+        FakeJni::JniEnvContext ctx(*jvm);
         try {
             auto anotherme = me;
             auto ret = curl_easy_perform(curl);
             long response_code;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-            FakeJni::LocalFrame frame(*jvm);
+            FakeJni::LocalFrame frame;
             if(ret == CURLE_OK) {
 #ifndef NDEBUG
                 Log::trace("HttpClient", "Response: code: %ld", response_code);
@@ -136,7 +142,9 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
                 method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
             }
         } catch(...) {
-            _Exit(0);
+            FakeJni::LocalFrame frame(*jvm);
+            auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
+            method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
         }
     }).detach();
 }
@@ -158,7 +166,6 @@ std::shared_ptr<FakeJni::JByteArray> HttpClientResponse::getResponseBodyBytes() 
 }
 
 void HttpClientResponse::getResponseBodyBytes2() {
-    //std::make_shared<NativeOutputStream>(call_handle)->WriteAll(getResponseBodyBytes());
 }
 
 FakeJni::JInt HttpClientResponse::getResponseCode() {
@@ -171,18 +178,17 @@ HttpClientResponse::HttpClientResponse(FakeJni::JLong call_handle, int response_
                                                                                                                                                             call_handle(call_handle) {}
 
 size_t HttpClientRequest::write_callback(char *ptr, size_t size, size_t nmemb) {
-    response.insert(response.end(), ptr, ptr + nmemb); // Unused in 1.18.30+, kept for compatibility with older versions
     auto byteArray = std::make_shared<FakeJni::JByteArray>(nmemb);
     memcpy(byteArray->getArray(), ptr, nmemb);
     std::make_shared<NativeOutputStream>(call_handle)->WriteAll(byteArray);
     return size * nmemb;
 }
 
-/*
-size_t HttpClientRequest::write_callback(char *ptr, size_t size, size_t nmemb) {
+// Unused in 1.18.30+, kept for compatibility with older versions
+size_t HttpClientRequest::write_callback_old(char *ptr, size_t size, size_t nmemb) {
     response.insert(response.end(), ptr, ptr + nmemb);
     return size * nmemb;
-}*/
+}
 
 size_t HttpClientRequest::header_callback(char *buffer, size_t size, size_t nitems) {
     auto string = std::string(buffer, nitems);
@@ -201,7 +207,7 @@ NativeInputStream::NativeInputStream(FakeJni::JLong call_handle) : call_handle(c
 }
 
 size_t NativeInputStream::Read(void *buffer, size_t size) {
-    FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
+    FakeJni::LocalFrame frame;
     auto method = getClass().getMethod("(JJ[BJJ)I", "nativeRead");
     auto buf = std::make_shared<FakeJni::JByteArray>((size_t)std::numeric_limits<jsize>::max() < size ? std::numeric_limits<jsize>::max() : (jsize)size);
     jvalue ret = method->invoke(frame.getJniEnv(), this, call_handle, offset, frame.getJniEnv().createLocalReference(buf), (FakeJni::JLong)0, (FakeJni::JLong)buf->getSize());
@@ -216,9 +222,7 @@ NativeOutputStream::NativeOutputStream(FakeJni::JLong call_handle) : call_handle
 }
 
 void NativeOutputStream::WriteAll(std::shared_ptr<FakeJni::JByteArray> data) {
-    FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
+    FakeJni::LocalFrame frame;
     auto method = getClass().getMethod("(J[BII)V", "nativeWrite");
-    if (method) {
-        method->invoke(frame.getJniEnv(), this, call_handle, frame.getJniEnv().createLocalReference(data), (FakeJni::JInt)0, (FakeJni::JInt)data->getSize());
-    }
+    method->invoke(frame.getJniEnv(), this, call_handle, frame.getJniEnv().createLocalReference(data), (FakeJni::JInt)0, (FakeJni::JInt)data->getSize());
 }
