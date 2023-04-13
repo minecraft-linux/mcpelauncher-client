@@ -11,7 +11,6 @@ HttpClientRequest::HttpClientRequest() {
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, this);
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpClientRequest::header_callback_wrapper);
-    jvm = (void*)&FakeJni::JniEnvContext().getJniEnv().getVM();
 }
 
 HttpClientRequest::~HttpClientRequest() {
