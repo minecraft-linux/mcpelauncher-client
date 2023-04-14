@@ -9,6 +9,8 @@ using namespace std::placeholders;
 HttpClientRequest::HttpClientRequest() {
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
+    // Fallback if neither setHttpMethodAndBody or setHttpMethodAndBody2 has been called
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpClientRequest::write_callback_wrapper_old);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, this);
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpClientRequest::header_callback_wrapper);
 }
@@ -165,6 +167,10 @@ std::shared_ptr<FakeJni::JByteArray> HttpClientResponse::getResponseBodyBytes() 
 }
 
 void HttpClientResponse::getResponseBodyBytes2() {
+    // Just in case setHttpMethodAndBody2 has been skipped and we have a response body
+    if(!body.empty()) {
+        std::make_shared<NativeOutputStream>(call_handle)->WriteAll(getResponseBodyBytes());
+    }
 }
 
 FakeJni::JInt HttpClientResponse::getResponseCode() {
