@@ -5,6 +5,7 @@
 #include "jni/jni_support.h"
 #include "fake_inputqueue.h"
 #include <chrono>
+#include "main.h"
 
 class WindowCallbacks {
 private:
@@ -22,7 +23,7 @@ private:
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
-    bool fullscreen = false;
+    bool fullscreen = options.fullscreen;
     bool sendEvents = false;
     enum class InputMode {
         Touch,
@@ -50,6 +51,8 @@ public:
     void onWindowSizeCallback(int w, int h);
 
     void onClose();
+
+    void setFullscreen(bool isFs);
 
     void onMouseButton(double x, double y, int btn, MouseButtonAction action);
     void onMousePosition(double x, double y);

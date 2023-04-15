@@ -33,6 +33,8 @@
 #include "symbols.h"
 #include "core_patches.h"
 #include "thread_mover.h"
+#include <properties/property.h>
+#include <fstream>
 // For getpid
 #include <unistd.h>
 
@@ -40,6 +42,8 @@ static size_t base;
 LauncherOptions options;
 
 void printVersionInfo();
+
+bool checkFullscreen();
 
 int main(int argc, char* argv[]) {
     auto windowManager = GameWindowManager::getManager();
@@ -88,6 +92,7 @@ int main(int argc, char* argv[]) {
         PathHelper::setCacheDir(cacheDir);
 
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
+    options.fullscreen = checkFullscreen();
 #if defined(__i386__) || defined(__x86_64__)
     {
         CpuId cpuid;
@@ -200,7 +205,7 @@ int main(int argc, char* argv[]) {
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
 
     Log::trace("Launcher", "Loading Minecraft library");
-    static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
+    static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer), reinterpret_cast<void*>(&CorePatches::setFullscreen));
     if(!handle && options.graphicsApi == GraphicsApi::OPENGL) {
         // Old game version or renderdragon
         options.graphicsApi = GraphicsApi::OPENGL_ES2;
@@ -212,7 +217,7 @@ int main(int argc, char* argv[]) {
         FakeLooper::initWindow();
         MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
         // Try load the game again
-        handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer));
+        handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer), reinterpret_cast<void*>(&CorePatches::setFullscreen));
     }
     if(!handle) {
         Log::error("Launcher", "Failed to load Minecraft library, please reinstall or wait for an update to support the new release");
@@ -294,4 +299,14 @@ void printVersionInfo() {
     printf("GL Renderer: %s\n", glGetString(0x1F01 /* GL_RENDERER */));
     printf("GL Version: %s\n", glGetString(0x1F02 /* GL_VERSION */));
     printf("MSA daemon path: %s\n", XboxLiveHelper::findMsa().c_str());
+}
+
+bool checkFullscreen() {
+    properties::property_list properties(':');
+    properties::property<bool> fullscreen(properties, "gfx_fullscreen", /* default if not defined*/ false);
+    std::ifstream propertiesFile(PathHelper::getPrimaryDataDirectory() + "/games/com.mojang/minecraftpe/options.txt");
+    if (propertiesFile) {
+        properties.load(propertiesFile);
+    }
+    return fullscreen;
 }
