@@ -6,6 +6,8 @@
 
 std::shared_ptr<GameWindow> CorePatches::currentGameWindow;
 
+std::shared_ptr<WindowCallbacks> CorePatches::currentGameWindowCallbacks;
+
 void CorePatches::install(void* handle) {
     // void* ptr = linker::dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
     // PatchUtils::patchCallInstruction(ptr, (void*) +[]() { return true; }, true);
@@ -29,6 +31,14 @@ void CorePatches::hideMousePointer() {
     currentGameWindow->setCursorDisabled(true);
 }
 
+void CorePatches::setFullscreen(void* t, bool fullscreen) {
+    currentGameWindowCallbacks->setFullscreen(fullscreen);
+}
+
 void CorePatches::setGameWindow(std::shared_ptr<GameWindow> gameWindow) {
     currentGameWindow = gameWindow;
+}
+
+void CorePatches::setGameWindowCallbacks(std::shared_ptr<WindowCallbacks> gameWindowCallbacks) {
+    currentGameWindowCallbacks = gameWindowCallbacks;
 }
