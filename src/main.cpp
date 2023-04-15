@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 #else
         ""
 #endif
-    );
+    );https://github.dev/minecraft-linux/macos-builder/tree/main/.github/workflows
     argparser::arg<int> windowWidth(p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight(p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod(p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
         V8SetFlagsFromString = (decltype(V8SetFlagsFromString))linker::dlsym(handle, "_ZN2v82V818SetFlagsFromStringEPKc");
         if(V8SetFlagsFromString) {
             Log::info("V8", "Applying v8-flags %s", v8Flags.get().data());
-            SetFlagsFromString(v8Flags.get().data(), v8Flags.get().size());
+            V8SetFlagsFromString(v8Flags.get().data(), v8Flags.get().size());
         } else {
             Log::warn("V8", "Couldn't apply v8-flags %s to the game", v8Flags.get().data());
         }
