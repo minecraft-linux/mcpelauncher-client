@@ -52,6 +52,14 @@ int main(int argc, char* argv[]) {
     argparser::arg<std::string> dataDir(p, "--data-dir", "-dd", "Directory to use for the data");
     argparser::arg<std::string> cacheDir(p, "--cache-dir", "-dc", "Directory to use for cache");
     argparser::arg<std::string> importFilePath(p, "--import-file-path", "-ifp", "File to import to the game");
+    argparser::arg<std::string> v8Flags(p, "--v8-flags", "-v8f", "Flags to pass to the v8 engine of the game",
+#if defined(__APPLE__) && defined(__aarch64__)
+        // Due to problems with running JIT compiled code without using apple specfic workarounds, we just run javascript via jitless
+        "--jitless"
+#else
+        ""
+#endif
+    );
     argparser::arg<int> windowWidth(p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight(p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod(p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
@@ -219,6 +227,16 @@ int main(int argc, char* argv[]) {
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
 
     Log::info("Launcher", "Applying patches");
+    if(v8Flags.get().size()) {
+        void (*V8SetFlagsFromString)(const char * str, int length);
+        V8SetFlagsFromString = (decltype(V8SetFlagsFromString))linker::dlsym(handle, "_ZN2v82V818SetFlagsFromStringEPKc");
+        if(V8SetFlagsFromString) {
+            Log::info("V8", "Applying v8-flags %s", v8Flags.get().data());
+            SetFlagsFromString(v8Flags.get().data(), v8Flags.get().size());
+        } else {
+            Log::warn("V8", "Couldn't apply v8-flags %s to the game", v8Flags.get().data());
+        }
+    }
     SymbolsHelper::initSymbols(handle);
     CorePatches::install(handle);
 #ifdef __i386__
