@@ -32,10 +32,11 @@ void TextInputHandler::onTextInput(std::string const &text) {
             return;
         auto deleteStart = currentTextPosition - 1;
         if (altPressed) {
-            if (currentText.substr(0, currentTextPosition - 1).find(" ") == std::string::npos) {
-                deleteStart = 0;
-            } else {
-                deleteStart = currentText.substr(0, currentTextPosition - 1).find_last_of(" ") + 1;
+            while (deleteStart > 0) {
+                deleteStart--;
+                if (std::isspace(currentText[deleteStart])) {
+                    break;
+                }
             }
             currentTextPositionUTF = deleteStart;
         } else {
@@ -74,10 +75,11 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
         if(currentTextPosition >= currentText.size())
             return;
         if (altPressed) {
-            if (currentText.substr(currentTextPosition + 1, currentText.size()).find(" ") == std::string::npos) {
-                currentTextPosition = currentText.size();
-            } else {
-                currentTextPosition += currentText.substr(currentTextPosition + 1, currentText.size()).find_first_of(" ") + 1;
+            while (currentTextPosition <= currentText.size()) {
+                currentTextPosition++;
+                if (std::isspace(currentText[currentTextPosition])) {
+                    break;
+                }
             }
             currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
         } else {
@@ -91,10 +93,11 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
         if(currentTextPosition <= 0)
             return;
         if (altPressed) {
-            if (currentText.substr(0, currentTextPosition - 1).find(" ") == std::string::npos) {
-                currentTextPosition = 0;
-            } else {
-                currentTextPosition = currentText.substr(0, currentTextPosition - 1).find_last_of(" ") + 1;
+            while (currentTextPosition > 0) {
+                currentTextPosition--;
+                if (std::isspace(currentText[currentTextPosition - 1])) {
+                    break;
+                }
             }
             currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
         } else {
@@ -123,4 +126,3 @@ std::string TextInputHandler::getCopyText() const {
         return currentText;
     }
 }
-
