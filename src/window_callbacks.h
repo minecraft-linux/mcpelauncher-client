@@ -25,6 +25,7 @@ private:
     bool needsQueueGamepadInput = true;
     bool fullscreen = options.fullscreen;
     bool useLegacyFullscreen = true;
+    bool hasUsedLegacyFullscreen = false;
     bool sendEvents = false;
     enum class InputMode {
         Touch,
