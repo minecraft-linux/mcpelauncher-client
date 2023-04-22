@@ -32,15 +32,22 @@ void TextInputHandler::onTextInput(std::string const &text) {
             return;
         auto deleteStart = currentTextPosition - 1;
         if (altPressed) {
+            if (strchr(spaces, currentText[deleteStart])) {
+                while (deleteStart > 0) {
+                    deleteStart--;
+                    if (deleteStart < 1 || !strchr(spaces, currentText[deleteStart - 1]) || !strchr(spaces, currentText[deleteStart])) {
+                        break;
+                    }
+                }
+            }
             while (deleteStart > 0) {
                 deleteStart--;
-                if (deleteStart < 1 || strchr(spaces, currentText[deleteStart - 1])) {
+                if (deleteStart < 1 || strchr(spaces, currentText[deleteStart - 1]) || strchr(spaces, currentText[deleteStart])) {
                     break;
                 }
             }
             currentTextPositionUTF = deleteStart;
         } else {
-            deleteStart = currentTextPosition - 1;
             currentTextPositionUTF--;
         }
         while(deleteStart > 0 && (currentText[deleteStart] & 0b11000000) == 0b10000000)
@@ -75,6 +82,14 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
         if(currentTextPosition >= currentText.size())
             return;
         if (altPressed) {
+            if (strchr(spaces, currentText[currentTextPosition])) {
+                while (currentTextPosition < currentText.size()) {
+                    currentTextPosition++;
+                    if (currentTextPosition >= currentText.size() || !strchr(spaces, currentText[currentTextPosition])) {
+                        break;
+                    }
+                }
+            }
             while (currentTextPosition < currentText.size()) {
                 currentTextPosition++;
                 if (currentTextPosition >= currentText.size() || strchr(spaces, currentText[currentTextPosition])) {
@@ -93,6 +108,14 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
         if(currentTextPosition <= 0)
             return;
         if (altPressed) {
+            if (strchr(spaces, currentText[currentTextPosition - 1])) {
+                while (currentTextPosition > 0) {
+                    currentTextPosition--;
+                    if (currentTextPosition < 1 || !strchr(spaces, currentText[currentTextPosition - 1])) {
+                        break;
+                    }
+                }
+            }
             while (currentTextPosition > 0) {
                 currentTextPosition--;
                 if (currentTextPosition < 1 || strchr(spaces, currentText[currentTextPosition - 1])) {
