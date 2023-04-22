@@ -34,7 +34,7 @@ void TextInputHandler::onTextInput(std::string const &text) {
         if (altPressed) {
             while (deleteStart > 0) {
                 deleteStart--;
-                if (strchr(spaces, currentText[deleteStart - 1])) {
+                if (deleteStart < 1 || strchr(spaces, currentText[deleteStart - 1])) {
                     break;
                 }
             }
