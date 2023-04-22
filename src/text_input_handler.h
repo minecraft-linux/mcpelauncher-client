@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string.h>
 #include <functional>
 #include <key_mapping.h>
 #include <game_window.h>
@@ -16,6 +17,7 @@ private:
     size_t currentTextPositionUTF = 0;
     size_t currentTextCopyPosition = 0;
     TextCallback textUpdateCallback;
+    constexpr static char spaces[6] = {' ', '-', '_', '#', '/', '\\'};
 
 public:
     explicit TextInputHandler(TextCallback cb) : textUpdateCallback(std::move(cb)) {}
@@ -38,4 +40,3 @@ public:
 
     int getCursorPosition() const { return currentTextPositionUTF; }
 };
-

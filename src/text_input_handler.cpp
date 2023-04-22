@@ -34,7 +34,7 @@ void TextInputHandler::onTextInput(std::string const &text) {
         if (altPressed) {
             while (deleteStart > 0) {
                 deleteStart--;
-                if (std::isspace(currentText[deleteStart])) {
+                if (strchr(spaces, currentText[deleteStart - 1])) {
                     break;
                 }
             }
@@ -75,9 +75,9 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
         if(currentTextPosition >= currentText.size())
             return;
         if (altPressed) {
-            while (currentTextPosition <= currentText.size()) {
+            while (currentTextPosition < currentText.size()) {
                 currentTextPosition++;
-                if (std::isspace(currentText[currentTextPosition])) {
+                if (strchr(spaces, currentText[currentTextPosition])) {
                     break;
                 }
             }
@@ -95,7 +95,7 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
         if (altPressed) {
             while (currentTextPosition > 0) {
                 currentTextPosition--;
-                if (std::isspace(currentText[currentTextPosition - 1])) {
+                if (strchr(spaces, currentText[currentTextPosition - 1])) {
                     break;
                 }
             }
