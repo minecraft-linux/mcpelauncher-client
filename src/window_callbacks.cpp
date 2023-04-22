@@ -51,10 +51,13 @@ void WindowCallbacks::onClose() {
     jniSupport.onWindowClosed();
 }
 
-void WindowCallbacks::setFullscreen(bool isFs) {
-    if(fullscreen != isFs) {
+void WindowCallbacks::setFullscreen(bool isFs, bool calledFromSymbol) {
+    if(fullscreen != isFs && !(calledFromSymbol && useLegacyFullscreen)) {
         window.setFullscreen(isFs);
         fullscreen = isFs;
+    }
+    if (calledFromSymbol) {
+        useLegacyFullscreen = false;
     }
 }
 
@@ -156,7 +159,7 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
             jniSupport.getTextInputHandler().onKeyPressed(key, action);
         }
 
-        if(key == KeyCode::FN11 && action == KeyAction::PRESS)
+        if(key == KeyCode::FN11 && action == KeyAction::PRESS && useLegacyFullscreen)
             setFullscreen(!fullscreen);
 
         if(useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {

@@ -24,6 +24,7 @@ private:
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
     bool fullscreen = options.fullscreen;
+    bool useLegacyFullscreen = true;
     bool sendEvents = false;
     enum class InputMode {
         Touch,
@@ -52,7 +53,7 @@ public:
 
     void onClose();
 
-    void setFullscreen(bool isFs);
+    void setFullscreen(bool isFs, bool calledFromSymbol = false);
 
     void onMouseButton(double x, double y, int btn, MouseButtonAction action);
     void onMousePosition(double x, double y);

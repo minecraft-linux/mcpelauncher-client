@@ -32,7 +32,7 @@ void CorePatches::hideMousePointer() {
 }
 
 void CorePatches::setFullscreen(void* t, bool fullscreen) {
-    currentGameWindowCallbacks->setFullscreen(fullscreen);
+    currentGameWindowCallbacks->setFullscreen(fullscreen, true);
 }
 
 void CorePatches::setGameWindow(std::shared_ptr<GameWindow> gameWindow) {
