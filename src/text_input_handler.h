@@ -17,7 +17,7 @@ private:
     size_t currentTextPositionUTF = 0;
     size_t currentTextCopyPosition = 0;
     TextCallback textUpdateCallback;
-    constexpr static char spaces[] = " -_#/\\";
+    constexpr static char spaces[] = " -_#/\\!@$%^&*();:'\"?.,";
 
 public:
     explicit TextInputHandler(TextCallback cb) : textUpdateCallback(std::move(cb)) {}
