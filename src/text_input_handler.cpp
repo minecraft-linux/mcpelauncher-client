@@ -77,7 +77,7 @@ void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
         if (altPressed) {
             while (currentTextPosition < currentText.size()) {
                 currentTextPosition++;
-                if (strchr(spaces, currentText[currentTextPosition])) {
+                if (currentTextPosition >= currentText.size() || strchr(spaces, currentText[currentTextPosition])) {
                     break;
                 }
             }
