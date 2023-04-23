@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string.h>
 #include <functional>
 #include <key_mapping.h>
 #include <game_window.h>
@@ -10,12 +11,13 @@ public:
     using TextCallback = std::function<void(std::string)>;
 
 private:
-    bool enabled = false, multiline = false, shiftPressed = false;
+    bool enabled = false, multiline = false, shiftPressed = false, altPressed = false;
     std::string currentText;
     size_t currentTextPosition = 0;
     size_t currentTextPositionUTF = 0;
     size_t currentTextCopyPosition = 0;
     TextCallback textUpdateCallback;
+    constexpr static char spaces[] = " -_#/\\!@$%^&*();:'\"?.,";
 
 public:
     explicit TextInputHandler(TextCallback cb) : textUpdateCallback(std::move(cb)) {}

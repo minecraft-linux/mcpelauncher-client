@@ -30,8 +30,26 @@ void TextInputHandler::onTextInput(std::string const &text) {
     if(text.size() == 1 && text[0] == 8) {  // backspace
         if(currentTextPositionUTF <= 0)
             return;
-        currentTextPositionUTF--;
         auto deleteStart = currentTextPosition - 1;
+        if (altPressed) {
+            if (strchr(spaces, currentText[deleteStart])) {
+                while (deleteStart > 0) {
+                    deleteStart--;
+                    if (deleteStart < 1 || !strchr(spaces, currentText[deleteStart - 1]) || !strchr(spaces, currentText[deleteStart])) {
+                        break;
+                    }
+                }
+            }
+            while (deleteStart > 0) {
+                deleteStart--;
+                if (deleteStart < 1 || strchr(spaces, currentText[deleteStart - 1]) || strchr(spaces, currentText[deleteStart])) {
+                    break;
+                }
+            }
+            currentTextPositionUTF = deleteStart;
+        } else {
+            currentTextPositionUTF--;
+        }
         while(deleteStart > 0 && (currentText[deleteStart] & 0b11000000) == 0b10000000)
             deleteStart--;
         currentText.erase(currentText.begin() + deleteStart, currentText.begin() + currentTextPosition);
@@ -55,24 +73,62 @@ void TextInputHandler::onTextInput(std::string const &text) {
 void TextInputHandler::onKeyPressed(KeyCode key, KeyAction action) {
     if(key == KeyCode::LEFT_SHIFT || key == KeyCode::RIGHT_SHIFT)
         shiftPressed = (action != KeyAction::RELEASE);
-
+    if(key == KeyCode::LEFT_ALT || key == KeyCode::RIGHT_ALT)
+        altPressed = (action != KeyAction::RELEASE);
+    
     if(action != KeyAction::PRESS && action != KeyAction::REPEAT)
         return;
     if(key == KeyCode::RIGHT) {
         if(currentTextPosition >= currentText.size())
             return;
-        currentTextPosition++;
-        while(currentTextPosition < currentText.size() &&
-              (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+        if (altPressed) {
+            if (strchr(spaces, currentText[currentTextPosition])) {
+                while (currentTextPosition < currentText.size()) {
+                    currentTextPosition++;
+                    if (currentTextPosition >= currentText.size() || !strchr(spaces, currentText[currentTextPosition])) {
+                        break;
+                    }
+                }
+            }
+            while (currentTextPosition < currentText.size()) {
+                currentTextPosition++;
+                if (currentTextPosition >= currentText.size() || strchr(spaces, currentText[currentTextPosition])) {
+                    break;
+                }
+            }
+            currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
+        } else {
             currentTextPosition++;
-        currentTextPositionUTF++;
+            while(currentTextPosition < currentText.size() &&
+                (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+                currentTextPosition++;
+            currentTextPositionUTF++;
+        }
     } else if(key == KeyCode::LEFT) {
         if(currentTextPosition <= 0)
             return;
-        currentTextPosition--;
-        while(currentTextPosition > 0 && (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+        if (altPressed) {
+            if (strchr(spaces, currentText[currentTextPosition - 1])) {
+                while (currentTextPosition > 0) {
+                    currentTextPosition--;
+                    if (currentTextPosition < 1 || !strchr(spaces, currentText[currentTextPosition - 1])) {
+                        break;
+                    }
+                }
+            }
+            while (currentTextPosition > 0) {
+                currentTextPosition--;
+                if (currentTextPosition < 1 || strchr(spaces, currentText[currentTextPosition - 1])) {
+                    break;
+                }
+            }
+            currentTextPositionUTF = UTF8Util::getLength(currentText.c_str(), currentTextPosition);
+        } else {
             currentTextPosition--;
-        currentTextPositionUTF--;
+            while(currentTextPosition > 0 && (currentText[currentTextPosition] & 0b11000000) == 0b10000000)
+                currentTextPosition--;
+            currentTextPositionUTF--;
+        }
     } else if(key == KeyCode::HOME) {
         currentTextPosition = 0;
         currentTextPositionUTF = 0;
