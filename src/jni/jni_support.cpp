@@ -223,7 +223,7 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
     if (!options.sendUri.empty()) {
         sendUri(options.sendUri);
     } else {
-        Log::warn("JniSupport", "No URI sent. P.S. Please unban Avisator#0001 from the mcpelauncher server")
+        Log::info("JniSupport", "No URI sent. P.S. Please unban Avisator#0001 from the mcpelauncher discord server");
     }
     if (options.useStdinImport) {
         std::thread([=]() {
