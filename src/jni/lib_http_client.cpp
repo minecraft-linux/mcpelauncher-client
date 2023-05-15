@@ -63,7 +63,15 @@ void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> m
 
 static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
     auto stream = (NativeInputStream *)userdata;
-    return stream->Read(ptr, size * nmemb);
+    try {
+        return stream->Read(ptr, size * nmemb);
+    } catch(...) {
+#ifdef CURL_READFUNC_ABORT
+        return CURL_READFUNC_ABORT;
+#else
+        return 0;
+#endif
+    }
 }
 
 void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> method, FakeJni::JLong callHandle, std::shared_ptr<FakeJni::JString> contentType, FakeJni::JLong contentLength) {
@@ -183,10 +191,18 @@ HttpClientResponse::HttpClientResponse(FakeJni::JLong call_handle, int response_
                                                                                                                                                             call_handle(call_handle) {}
 
 size_t HttpClientRequest::write_callback(char *ptr, size_t size, size_t nmemb) {
-    auto byteArray = std::make_shared<FakeJni::JByteArray>(nmemb);
-    memcpy(byteArray->getArray(), ptr, nmemb);
-    std::make_shared<NativeOutputStream>(call_handle)->WriteAll(byteArray);
-    return size * nmemb;
+    try {
+        auto byteArray = std::make_shared<FakeJni::JByteArray>(nmemb);
+        memcpy(byteArray->getArray(), ptr, nmemb);
+        std::make_shared<NativeOutputStream>(call_handle)->WriteAll(byteArray);
+        return size * nmemb;
+    } catch(...) {
+#ifdef CURL_WRITEFUNC_ERROR
+        return CURL_WRITEFUNC_ERROR;
+#else
+        return 0;
+#endif
+    }
 }
 
 // Unused in 1.18.30+, kept for compatibility with older versions
