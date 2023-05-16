@@ -27,6 +27,7 @@
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
+#include <curl/curl.h>
 #if !defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE > 8
 #include <filesystem>
 #endif
@@ -219,6 +220,9 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
     if (!options.importFilePath.empty()) {
         importFile(options.importFilePath);
     }
+    if (!options.sendUri.empty()) {
+        sendUri(options.sendUri);
+    }
     if (options.useStdinImport) {
         std::thread([=]() {
             for (std::string line; std::getline(std::cin, line);) {
@@ -258,6 +262,33 @@ void JniSupport::importFile(std::string path) {
         }
     } else {
         Log::warn("JniSupport", "Not importing file at %s; file extension must be .mcworld, .mcpack, .mcaddon, or .mctemplate", path.c_str());
+    }
+}
+
+void JniSupport::sendUri(std::string uri) {
+    if (uri.find("minecraft://") != std::string::npos) {
+        FakeJni::LocalFrame frame(vm);
+        CURLU *uriParse = curl_url();
+        curl_url_set(uriParse, CURLUPART_URL, ("http" + uri.substr(9)).c_str(), 0); // Curl refuses to parse the url if minecraft:// is the protocol, so we replace it with http
+        char *host;
+        char *query;
+        curl_url_get(uriParse, CURLUPART_HOST, &host, 0);
+        curl_url_get(uriParse, CURLUPART_QUERY, &query, 0);
+        if (!host) {
+            curl_url_set(uriParse, CURLUPART_URL, ("http://minecraft" + uri.substr(6)).c_str(), 0); // Curl refuses to parse if the host is empty
+            curl_url_get(uriParse, CURLUPART_QUERY, &query, 0);
+        }
+        if (!host) {
+            host = (char*)"";
+        }
+        if (!query) {
+            query = (char*)"";
+        }
+        auto urlLaunch = activity->getClass().getMethod("(Ljava/lang/String;Ljava/lang/String;)V", "nativeProcessIntentUriQuery");
+        urlLaunch->invoke(frame.getJniEnv(), activity.get(), std::make_shared<FakeJni::JString>(host), std::make_shared<FakeJni::JString>(query)); // The game expects it to be parsed using the java getHost() and getQuery() methods
+        curl_url_cleanup(uriParse);
+    } else {
+        Log::warn("JniSupport", "Not sending URI %s, not a valid Minecraft URI", uri.c_str());
     }
 }
 

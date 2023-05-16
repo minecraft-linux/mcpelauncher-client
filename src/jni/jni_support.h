@@ -45,6 +45,8 @@ public:
 
     void importFile(std::string path);
 
+    void sendUri(std::string uri);
+
     void stopGame();
 
     void waitForGameExit();

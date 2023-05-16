@@ -8,5 +8,6 @@ struct LauncherOptions {
     bool fullscreen;
     GraphicsApi graphicsApi;
     std::string importFilePath;
+    std::string sendUri;
 };
 extern LauncherOptions options;
