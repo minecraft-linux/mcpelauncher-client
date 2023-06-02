@@ -37,6 +37,17 @@
 #include <fstream>
 // For getpid
 #include <unistd.h>
+#include <simpleipc/client/service_client.h>
+#include <daemon_utils/auto_shutdown_service.h>
+
+struct RpcCallbackServer : daemon_utils::auto_shutdown_service {
+    RpcCallbackServer(const std::string &path) : daemon_utils::auto_shutdown_service(path, daemon_utils::shutdown_policy::never) {
+        add_handler_async("mcpelauncher-client/sendfile", [this](simpleipc::connection& conn, std::string const& method, nlohmann::json const& data, result_handler const& cb) {
+            std::vector<std::string> files = data;
+            cb(simpleipc::rpc_json_result::response({}));
+        });
+    }
+};
 
 static size_t base;
 LauncherOptions options;
@@ -46,7 +57,22 @@ void printVersionInfo();
 bool checkFullscreen();
 
 int main(int argc, char* argv[]) {
-    auto windowManager = GameWindowManager::getManager();
+    if(argc == 2 && argv[1][0] != '-') {
+        Log::info("Sendfile", "sending file");
+        simpleipc::client::service_client sc(PathHelper::getPrimaryDataDirectory() + "/file_handler");
+        std::vector<std::string> files = { argv[1] };
+        static std::mutex mlock;
+        mlock.lock();
+        auto call = simpleipc::client::rpc_call<int>(sc.rpc("mcpelauncher-client/sendfile", files), [](const nlohmann::json &res) {
+            Log::info("Sendfile", "success");
+            mlock.unlock();
+            return 0;
+        });
+        call.call();
+        mlock.lock();
+        return 0;
+    }
+
     CrashHandler::registerCrashHandler();
     MinecraftUtils::workaroundLocaleBug();
 
@@ -84,6 +110,8 @@ int main(int argc, char* argv[]) {
     options.useStdinImport = stdinImpt;
 
     FakeEGL::enableTexturePatch = texturePatch.get();
+
+    auto defaultDataDir = PathHelper::getPrimaryDataDirectory();
     if(!gameDir.get().empty())
         PathHelper::setGameDir(gameDir);
     if(!dataDir.get().empty())
@@ -102,8 +130,12 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
+    RpcCallbackServer server(defaultDataDir + "/file_handler");
     Log::trace("Launcher", "Loading hybris libraries");
     linker::init();
+    Log::trace("Launcher", "linker loaded");
+    auto windowManager = GameWindowManager::getManager();
+
     // Fix saving to internal storage without write access to /data/*
     // TODO research how this path is constructed
     auto pid = getpid();

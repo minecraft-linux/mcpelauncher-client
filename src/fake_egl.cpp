@@ -169,6 +169,11 @@ void FakeEGL::setupGLOverrides() {
 #ifdef USE_ARMHF_SUPPORT
     ArmhfSupport::install(fake_egl::hostProcOverrides);
 #endif
+    // MESA 23.1 blackscreen Workaround Start for 1.18.30+, bgfy will disable the extension and the game works
+    fake_egl::hostProcOverrides["glDrawElementsInstancedOES"] = nullptr;
+    fake_egl::hostProcOverrides["glDrawArraysInstancedOES"] = nullptr;
+    fake_egl::hostProcOverrides["glVertexAttribDivisorOES"] = nullptr;
+    // MESA 23.1 blackscreen Workaround End
     fake_egl::hostProcOverrides["glInvalidateFramebuffer"] = (void *)+[]() {};  // Stub for a NVIDIA bug
     if(FakeEGL::enableTexturePatch) {
         // Minecraft Intel/Amd Texture Bug 1.16.210-1.17.2 and beyond
