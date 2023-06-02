@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 #else
         ""
 #endif
-    );https://github.dev/minecraft-linux/macos-builder/tree/main/.github/workflows
+    );
     argparser::arg<int> windowWidth(p, "--width", "-ww", "Window width", 720);
     argparser::arg<int> windowHeight(p, "--height", "-wh", "Window height", 480);
     argparser::arg<bool> disableFmod(p, "--disable-fmod", "-df", "Disables usage of the FMod audio library");
