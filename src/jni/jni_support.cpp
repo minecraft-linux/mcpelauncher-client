@@ -46,6 +46,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<HardwareInfo>();
     vm.registerClass<Activity>();
     vm.registerClass<NativeActivity>();
+    vm.registerClass<NetworkMonitor>();
     vm.registerClass<MainActivity>();
     vm.registerClass<AccountManager>();
     vm.registerClass<Account>();
@@ -107,6 +108,7 @@ void JniSupport::registerJniClasses() {
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
     registerNatives(MainActivity::getDescriptor(), {{"nativeRegisterThis", "()V"}, {"nativeWaitCrashManagementSetupComplete", "()V"}, {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"}, {"nativeShutdown", "()V"}, {"nativeUnregisterThis", "()V"}, {"nativeStopThis", "()V"}, {"nativeOnDestroy", "()V"}, {"nativeResize", "(II)V"}, {"nativeSetTextboxText", "(Ljava/lang/String;)V"}, {"nativeReturnKeyPressed", "()V"}, {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"}, {"nativeOnPickImageCanceled", "(J)V"}, {"nativeOnPickFileSuccess", "(Ljava/lang/String;)V"}, {"nativeOnPickFileCanceled", "()V"}, {"nativeInitializeXboxLive", "(JJ)V"}, {"nativeinitializeLibHttpClient", "(J)J"}, {"nativeInitializeLibHttpClient", "(J)J"}, {"nativeProcessIntentUriQuery", "(Ljava/lang/String;Ljava/lang/String;)V"}}, symResolver);
+    registerNatives(NetworkMonitor::getDescriptor(), {{"nativeUpdateNetworkStatus", "(ZZZ)V"}}, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
                                                               {"onStoreInitialized", "(JZ)V"},
                                                               {"onPurchaseFailed", "(JLjava/lang/String;)V"},
@@ -216,6 +218,13 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate,
     nativeActivityCallbacks.onStart(&nativeActivity);
     nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, window);
     // nativeActivityCallbacks.onResume(&nativeActivity);
+
+    std::shared_ptr<NetworkMonitor> network;
+    network = std::make_shared<NetworkMonitor>();
+    auto updateNetworkStatus = network->getClass().getMethod("(ZZZ)V", "nativeUpdateNetworkStatus");
+    if(updateNetworkStatus)
+        updateNetworkStatus->invoke(frame.getJniEnv(), network.get(), true, true, true);
+
     if (!options.importFilePath.empty()) {
         importFile(options.importFilePath);
     }
