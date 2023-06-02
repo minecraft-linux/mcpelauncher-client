@@ -70,6 +70,9 @@ END_NATIVE_DESCRIPTOR
 BEGIN_NATIVE_DESCRIPTOR(NativeActivity)
 END_NATIVE_DESCRIPTOR
 
+BEGIN_NATIVE_DESCRIPTOR(NetworkMonitor)
+END_NATIVE_DESCRIPTOR
+
 BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {Function<&MainActivity::getAndroidVersion>{}, "getAndroidVersion"},
     {Function<&MainActivity::getScreenHeight>{}, "getScreenHeight"},
