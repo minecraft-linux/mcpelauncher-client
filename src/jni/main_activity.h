@@ -71,6 +71,11 @@ public:
     DEFINE_CLASS_NAME("android/app/NativeActivity", Activity)
 };
 
+class NetworkMonitor : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/mojang/minecraftpe/NetworkMonitor")
+};
+
 class HardwareInfo : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/HardwareInformation")
