@@ -64,7 +64,7 @@ bool checkFullscreen();
 int main(int argc, char* argv[]) {
     if(argc == 2 && argv[1][0] != '-') {
         Log::info("Sendfile", "sending file");
-        simpleipc::client::service_client sc(PathHelper::getPrimaryDataDirectory() + "/file_handler");
+        simpleipc::client::service_client sc(PathHelper::getPrimaryDataDirectory() + "file_handler");
         std::vector<std::string> files = { argv[1] };
         static std::mutex mlock;
         mlock.lock();
@@ -311,8 +311,8 @@ int main(int argc, char* argv[]) {
 
     std::unique_ptr<RpcCallbackServer> file_handler;
     try {
-        FileUtil::mkdirRecursive(defaultDataDir + "test/");
-        file_handler = std::make_unique<RpcCallbackServer>(defaultDataDir + "/file_handler", support);
+        FileUtil::mkdirRecursive(defaultDataDir);
+        file_handler = std::make_unique<RpcCallbackServer>(defaultDataDir + "file_handler", support);
     } catch(const std::exception& ex) {
         Log::error("Launcher", "Failed to bind file_handler, you may be unable to import files: %s", ex.what());
     }
