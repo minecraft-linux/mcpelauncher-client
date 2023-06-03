@@ -33,6 +33,7 @@
 #include "symbols.h"
 #include "core_patches.h"
 #include "thread_mover.h"
+#include <FileUtil.h>
 #include <properties/property.h>
 #include <fstream>
 // For getpid
@@ -41,9 +42,13 @@
 #include <daemon_utils/auto_shutdown_service.h>
 
 struct RpcCallbackServer : daemon_utils::auto_shutdown_service {
-    RpcCallbackServer(const std::string &path) : daemon_utils::auto_shutdown_service(path, daemon_utils::shutdown_policy::never) {
-        add_handler_async("mcpelauncher-client/sendfile", [this](simpleipc::connection& conn, std::string const& method, nlohmann::json const& data, result_handler const& cb) {
+
+    RpcCallbackServer(const std::string &path, JniSupport& support) : daemon_utils::auto_shutdown_service(path, daemon_utils::shutdown_policy::never) {
+        add_handler_async("mcpelauncher-client/sendfile", [this, &support](simpleipc::connection& conn, std::string const& method, nlohmann::json const& data, result_handler const& cb) {
             std::vector<std::string> files = data;
+            for(auto&& file : files) {
+                support.importFile(file);
+            }
             cb(simpleipc::rpc_json_result::response({}));
         });
     }
@@ -130,7 +135,6 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    RpcCallbackServer server(defaultDataDir + "/file_handler");
     Log::trace("Launcher", "Loading hybris libraries");
     linker::init();
     Log::trace("Launcher", "linker loaded");
@@ -304,6 +308,14 @@ int main(int argc, char* argv[]) {
         linker::dlclose(handle);
     });
     startThread.detach();
+
+    std::unique_ptr<RpcCallbackServer> file_handler;
+    try {
+        FileUtil::mkdirRecursive(defaultDataDir + "test/");
+        file_handler = std::make_unique<RpcCallbackServer>(defaultDataDir + "/file_handler", support);
+    } catch(const std::exception& ex) {
+        Log::error("Launcher", "Failed to bind file_handler, you may be unable to import files: %s", ex.what());
+    }
 
     Log::info("Launcher", "Executing main thread");
     ThreadMover::executeMainThread();
