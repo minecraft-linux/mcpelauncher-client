@@ -66,6 +66,7 @@ void FakeLooper::initializeWindow() {
     Log::info("Launcher", "Creating window");
     associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
                                                                      options.windowWidth, options.windowHeight, options.graphicsApi);
+    FakeEGL::setupGLOverrides();
 }
 
 void FakeLooper::prepare() {
@@ -80,7 +81,6 @@ void FakeLooper::prepare() {
     CorePatches::setGameWindowCallbacks(associatedWindowCallbacks);
 
     associatedWindow->show();
-    FakeEGL::setupGLOverrides();
     SplitscreenPatch::onGLContextCreated();
     ShaderErrorPatch::onGLContextCreated();
     associatedWindow->makeCurrent(false);
