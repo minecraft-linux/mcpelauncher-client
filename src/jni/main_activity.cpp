@@ -117,6 +117,13 @@ void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xbl
     FakeJni::LocalFrame frame;
     method->invoke(frame.getJniEnv(), this, xalinit, xblinit);
 }
+
+void MainActivity::requestIntegrityToken(std::shared_ptr<FakeJni::JString> str) {
+    auto method = getClass().getMethod("(Ljava/lang/String;)V", "nativeSetIntegrityToken");
+    FakeJni::LocalFrame frame;
+    method->invoke(frame.getJniEnv(), this, createUUID());
+}
+
 void MainActivity::launchUri(std::shared_ptr<FakeJni::JString> url) {
     int pid;
     if ((pid = fork())) {
