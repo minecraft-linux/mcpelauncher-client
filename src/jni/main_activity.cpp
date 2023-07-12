@@ -121,7 +121,6 @@ void MainActivity::initializeXboxLive(FakeJni::JLong xalinit, FakeJni::JLong xbl
 void MainActivity::requestIntegrityToken(std::shared_ptr<FakeJni::JString> str) {
     auto method = getClass().getMethod("(Ljava/lang/String;)V", "nativeSetIntegrityToken");
     FakeJni::LocalFrame frame;
-    printf("%s\n", str->asStdString().c_str());
     method->invoke(frame.getJniEnv(), this, createUUID());
 }
 
