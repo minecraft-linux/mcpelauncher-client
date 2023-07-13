@@ -25,17 +25,16 @@ void GLCorePatch::install(void *handle) {
     void *ptr = PatchUtils::patternSearch(handle, "53 83 EC 18 E8 00 00 00 00 5B 81 C3 ?? ?? ?? ?? 8B 83 ?? ?? ?? ?? 85 C0 79 5F 8D 44 24 08 89 04 24 E8 ?? ?? ?? ?? 83 EC 04 8B 44 24 08 83 F8 02");
 #elif __x86_64__
     void *ptr = PatchUtils::patternSearch(handle, "8B 15 ?? ?? ?? ?? 85 D2 78 07 83 FA 01 0F 94 C0 C3 50 E8 ?? ?? ?? ?? C1 EA 10 F7 D2 83 E2 01 89");
+    if(!ptr) {
+        ptr = PatchUtils::patternSearch(handle, "50 ?? ?? ?? ?? ?? ?? 85 d2 ?? ?? ?? ?? ?? ?? ?? c1 ea 10 f7 d2 83 e2 01"); // Pattern for 1.17-1.18.12
+    }
 #else
     void *ptr = nullptr;
 #endif
     if(!ptr) {
         ptr = linker::dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
     }
-#if __x86_64__
-    if(!ptr) {
-        ptr = PatchUtils::patternSearch(handle, "50 ?? ?? ?? ?? ?? ?? 85 d2 ?? ?? ?? ?? ?? ?? ?? c1 ea 10 f7 d2 83 e2 01");
-    }
-#endif
+
     if(!ptr)
         throw std::runtime_error("Failed to find gl::supportsImmediateMode");
     unsigned char replace[6] = {0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3};
