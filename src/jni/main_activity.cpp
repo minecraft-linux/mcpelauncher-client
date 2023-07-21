@@ -15,7 +15,7 @@
 
 #include <log.h>
 
-FakeJni::JInt BuildVersion::SDK_INT = 27;
+FakeJni::JInt BuildVersion::SDK_INT = 28;
 std::shared_ptr<FakeJni::JString> BuildVersion::RELEASE = std::make_shared<FakeJni::JString>("AndroidX");
 
 std::shared_ptr<FakeJni::JString> MainActivity::createUUID() {
