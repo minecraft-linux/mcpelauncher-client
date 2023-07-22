@@ -109,7 +109,7 @@ public:
     GameWindow *window;
 
     int getAndroidVersion() {
-        return 28;
+        return 32;
     }
 
     int getScreenWidth() {
