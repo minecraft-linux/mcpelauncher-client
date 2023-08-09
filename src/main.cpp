@@ -140,6 +140,62 @@ int main(int argc, char* argv[]) {
     Log::trace("Launcher", "linker loaded");
     auto windowManager = GameWindowManager::getManager();
 
+    // Fake /proc/cpuinfo
+    // https://github.com/pytorch/cpuinfo depends on this file for linux builds
+    auto fakeproc = PathHelper::getPrimaryDataDirectory() + "proc/";
+    FileUtil::mkdirRecursive(fakeproc);
+    std::ofstream fake_cpuinfo(fakeproc + "/cpuinfo", std::ios::binary | std::ios::trunc);
+    if(fake_cpuinfo.is_open()) {
+#if defined(__i386__) || defined(__x86_64__) 
+        fake_cpuinfo << R"(processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 142
+model name	: Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+stepping	: 10
+microcode	: 0xffffffff
+cpu MHz		: 1991.999
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 0
+cpu cores	: 4
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology cpuid pni pclmulqdq vmx ssse3 fma cx16 pcid sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi ept vpid ept_ad fsgsbase bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves flush_l1d arch_capabilities
+vmx flags	: vnmi invvpid ept_x_only ept_ad ept_1gb tsc_offset vtpr ept vpid unrestricted_guest ept_mode_based_exec
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs itlb_multihit srbds
+bogomips	: 3983.99
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+
+)";
+#elif defined(__arm__) || defined(__aarch64__)
+        fake_cpuinfo << R"(Processor	: AArch64 Processor rev 4 (aarch64)
+processor	: 0
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32
+CPU implementer	: 0x51
+CPU architecture: 8
+CPU variant	: 0xa
+CPU part	: 0x801
+CPU revision	: 4
+
+Hardware	: Qualcomm Technologies, Inc MSM8998
+
+)";
+#endif
+        fake_cpuinfo.close();
+    }
+
+
     // Fix saving to internal storage without write access to /data/*
     // TODO research how this path is constructed
     auto pid = getpid();
@@ -156,6 +212,8 @@ int main(int argc, char* argv[]) {
     shim::rewrite_filesystem_access.emplace_back("/data/data", PathHelper::getPrimaryDataDirectory());
     // vanilla_music isn't loaded via AAssetManager, it uses libc-shim via relative filepath
     shim::rewrite_filesystem_access.emplace_back(".", PathHelper::getGameDir() + "assets/");
+    // fake proc fs needed for macOS and windows
+    shim::rewrite_filesystem_access.emplace_back("/proc", fakeproc);
     for(auto&& redir : shim::rewrite_filesystem_access) {
         Log::trace("REDIRECT", "%s to %s", redir.first.data(), redir.second.data());
     }
