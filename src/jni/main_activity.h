@@ -236,6 +236,11 @@ public:
         ignoreNextHideKeyboard = true;
     }
 
+    void setTextBoxBackend(std::shared_ptr<FakeJni::JString> newText) {
+        if(textInput)
+            textInput->update(newText->asStdString());
+    }
+
     FakeJni::JInt getCursorPosition() {
         ignoreNextHideKeyboard = false;
         if(textInput)
