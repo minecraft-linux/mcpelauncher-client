@@ -243,6 +243,16 @@ public:
         return -1;
     }
 
+    std::shared_ptr<FakeJni::JString> getTextBoxBackend() {
+        if(textInput)
+            return std::make_shared<FakeJni::JString>(textInput->getText());
+        return std::make_shared<FakeJni::JString>("");
+    }
+
+    void setCaretPosition(FakeJni::JInt pos);
+
+    FakeJni::JInt getCaretPosition();
+
     void lockCursor() {
         window->setCursorDisabled(true);
     }
