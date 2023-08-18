@@ -38,5 +38,12 @@ public:
 
     std::string getCopyText() const;
 
+    std::string getText() const { return currentText; };
+
     int getCursorPosition() const { return currentTextPositionUTF; }
+
+    void setCursorPosition(int pos) { 
+        currentTextPositionUTF = pos;
+        currentTextPosition = pos;
+    }
 };
