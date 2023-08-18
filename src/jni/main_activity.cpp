@@ -156,6 +156,24 @@ void MainActivity::share(std::shared_ptr<FakeJni::JString> title, std::shared_pt
     }
 }
 
+FakeJni::JInt MainActivity::getCaretPosition() {
+    ignoreNextHideKeyboard = false;
+    if(textInput) {
+        auto method = getClass().getMethod("(I)V", "nativeCaretPosition");
+        if (method) {
+            FakeJni::LocalFrame frame;
+            method->invoke(frame.getJniEnv(), this, textInput->getCursorPosition());
+        }
+        return textInput->getCursorPosition();
+    }
+    return -1;
+}
+
+void MainActivity::setCaretPosition(FakeJni::JInt pos) {
+    if(textInput)
+        textInput->setCursorPosition(pos);
+}
+
 FakeJni::JLong MainActivity::initializeXboxLive2(FakeJni::JLong xalinit, FakeJni::JLong xblinit) {
     auto method = getClass().getMethod("(JJ)V", "nativeInitializeXboxLive");
     FakeJni::LocalFrame frame;
