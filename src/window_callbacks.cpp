@@ -5,6 +5,26 @@
 #include <game_window_manager.h>
 #include <log.h>
 #include <mcpelauncher/path_helper.h>
+#include <cstdlib>
+#include <string>
+
+static bool ReadEnvFlag(const char* name, bool def = false) {
+    auto val = getenv(name);
+    if(!val) {
+        return def;
+    }
+    std::string sval = val;
+    return sval == "true" || sval == "1" || sval == "on";
+}
+
+static bool ReadEnvInt(const char* name, int def = 0) {
+    auto val = getenv(name);
+    if(!val) {
+        return def;
+    }
+    std::string sval = val;
+    return std::stoi(sval);
+}
 
 WindowCallbacks::WindowCallbacks(GameWindow& window, JniSupport& jniSupport, FakeInputQueue& inputQueue) : window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
     useDirectMouseInput = true;
@@ -12,6 +32,9 @@ WindowCallbacks::WindowCallbacks(GameWindow& window, JniSupport& jniSupport, Fak
     if (fullscreen) {
         window.setFullscreen(true);
     }
+    useRawInput = ReadEnvFlag("MCPELAUNCHER_CLIENT_RAW_INPUT");
+    forcedMode = (InputMode)ReadEnvInt("MCPELAUNCHER_CLIENT_FORCED_INPUT_MODE", (int)forcedMode));
+    inputModeSwitchDelay = ReadEnvInt("MCPELAUNCHER_CLIENT_INPUT_SWITCH_DELAY", inputModeSwitchDelay);
 }
 
 void WindowCallbacks::registerCallbacks() {
@@ -62,8 +85,14 @@ bool WindowCallbacks::hasInputMode(WindowCallbacks::InputMode want, bool changeM
     if(!sendEvents) {
         return false;
     }
+    if(useRawInput) {
+        return true;
+    }
+    if(forcedMode != InputMode::Unknown) {
+        return want == forcedMode;
+    }
     auto now = std::chrono::high_resolution_clock::now();
-    if(inputMode == want || (changeMode && ((int)want < (int)inputMode || (now - lastUpdated) > std::chrono::seconds(2)))) {
+    if(inputMode == want || (changeMode && ((int)want < (int)inputMode || (now - lastUpdated) > std::chrono::milliseconds(inputModeSwitchDelay)))) {
         if(inputMode != want) {
 #ifndef NDEBUG
             printf("Input Mode changed to %d\n", (int)want);
