@@ -31,6 +31,9 @@ private:
         Gamepad,
         Unknown,
     };
+    bool useRawInput = false;
+    InputMode forcedMode = InputMode::Unknown;
+    int inputModeSwitchDelay = 100;
     InputMode inputMode = InputMode::Unknown;
     std::chrono::high_resolution_clock::time_point lastUpdated;
     bool hasInputMode(InputMode want = InputMode::Unknown, bool changeMode = true);
