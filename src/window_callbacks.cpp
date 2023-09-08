@@ -33,7 +33,7 @@ WindowCallbacks::WindowCallbacks(GameWindow& window, JniSupport& jniSupport, Fak
         window.setFullscreen(true);
     }
     useRawInput = ReadEnvFlag("MCPELAUNCHER_CLIENT_RAW_INPUT");
-    forcedMode = (InputMode)ReadEnvInt("MCPELAUNCHER_CLIENT_FORCED_INPUT_MODE", (int)forcedMode));
+    forcedMode = (InputMode)ReadEnvInt("MCPELAUNCHER_CLIENT_FORCED_INPUT_MODE", (int)forcedMode);
     inputModeSwitchDelay = ReadEnvInt("MCPELAUNCHER_CLIENT_INPUT_SWITCH_DELAY", inputModeSwitchDelay);
 }
 
