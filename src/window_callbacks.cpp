@@ -17,7 +17,7 @@ static bool ReadEnvFlag(const char* name, bool def = false) {
     return sval == "true" || sval == "1" || sval == "on";
 }
 
-static bool ReadEnvInt(const char* name, int def = 0) {
+static int ReadEnvInt(const char* name, int def = 0) {
     auto val = getenv(name);
     if(!val) {
         return def;
