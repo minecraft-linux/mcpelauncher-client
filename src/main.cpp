@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
     Log::trace("Launcher", "linker loaded");
     auto windowManager = GameWindowManager::getManager();
 
-#if !defined(__linux__)
+//#if !defined(__linux__)
     // Fake /proc/cpuinfo
     // https://github.com/pytorch/cpuinfo depends on this file for linux builds
     auto fakeproc = PathHelper::getPrimaryDataDirectory() + "proc/";
@@ -198,7 +198,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     // cpuinfo for arm64 fails if these are missing...
     auto fakesys = PathHelper::getPrimaryDataDirectory() + "sys/";
     auto fake_cpu = fakesys + "devices/system/cpu/";
-    FileUtil::mkdirRecursive(fakesys);
+    FileUtil::mkdirRecursive(fake_cpu);
     std::ofstream fake_cpu_present(fake_cpu + "/present", std::ios::binary | std::ios::trunc);
     if(fake_cpu_present.is_open()) {
         fake_cpu_present << R"(0-3)";
@@ -209,7 +209,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
         fake_cpu_possible << R"(0-3)";
         fake_cpu_possible.close();
     }
-#endif
+// #endif
 
     // Fix saving to internal storage without write access to /data/*
     // TODO research how this path is constructed
