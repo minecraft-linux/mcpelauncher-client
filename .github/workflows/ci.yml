@@ -22,4 +22,3 @@ jobs:
             "ref": ${{ tojson(github.sha) }}
           }
         ]
-      build-m1: true

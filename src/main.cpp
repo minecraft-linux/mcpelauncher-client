@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
     Log::trace("Launcher", "linker loaded");
     auto windowManager = GameWindowManager::getManager();
 
-//#if !defined(__linux__)
+#if !defined(__linux__)
     // Fake /proc/cpuinfo
     // https://github.com/pytorch/cpuinfo depends on this file for linux builds
     auto fakeproc = PathHelper::getPrimaryDataDirectory() + "proc/";
@@ -209,7 +209,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
         fake_cpu_possible << R"(0-3)";
         fake_cpu_possible.close();
     }
-// #endif
+#endif
 
     // Fix saving to internal storage without write access to /data/*
     // TODO research how this path is constructed
@@ -227,11 +227,11 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     shim::rewrite_filesystem_access.emplace_back("/data/data", PathHelper::getPrimaryDataDirectory());
     // vanilla_music isn't loaded via AAssetManager, it uses libc-shim via relative filepath
     shim::rewrite_filesystem_access.emplace_back(".", PathHelper::getGameDir() + "assets/");
-//#if !defined(__linux__)
+#if !defined(__linux__)
     // fake proc fs needed for macOS and windows
     shim::rewrite_filesystem_access.emplace_back("/proc", fakeproc);
     shim::rewrite_filesystem_access.emplace_back("/sys", fakesys);
-//#endif
+#endif
     for(auto&& redir : shim::rewrite_filesystem_access) {
         Log::trace("REDIRECT", "%s to %s", redir.first.data(), redir.second.data());
     }
