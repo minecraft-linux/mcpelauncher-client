@@ -159,11 +159,6 @@ void MainActivity::share(std::shared_ptr<FakeJni::JString> title, std::shared_pt
 FakeJni::JInt MainActivity::getCaretPosition() {
     ignoreNextHideKeyboard = false;
     if(textInput) {
-        auto method = getClass().getMethod("(I)V", "nativeCaretPosition");
-        if (method) {
-            FakeJni::LocalFrame frame;
-            method->invoke(frame.getJniEnv(), this, textInput->getCursorPosition());
-        }
         return textInput->getCursorPosition();
     }
     return -1;
