@@ -195,6 +195,20 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
 #endif
         fake_cpuinfo.close();
     }
+    // cpuinfo for arm64 fails if these are missing...
+    auto fakesys = PathHelper::getPrimaryDataDirectory() + "sys/";
+    auto fake_cpu = fakesys + "devices/system/cpu/";
+    FileUtil::mkdirRecursive(fake_cpu);
+    std::ofstream fake_cpu_present(fake_cpu + "/present", std::ios::binary | std::ios::trunc);
+    if(fake_cpu_present.is_open()) {
+        fake_cpu_present << R"(0-3)";
+        fake_cpu_present.close();
+    }
+    std::ofstream fake_cpu_possible(fake_cpu + "/possible", std::ios::binary | std::ios::trunc);
+    if(fake_cpu_possible.is_open()) {
+        fake_cpu_possible << R"(0-3)";
+        fake_cpu_possible.close();
+    }
 #endif
 
     // Fix saving to internal storage without write access to /data/*
@@ -216,6 +230,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
 #if !defined(__linux__)
     // fake proc fs needed for macOS and windows
     shim::rewrite_filesystem_access.emplace_back("/proc", fakeproc);
+    shim::rewrite_filesystem_access.emplace_back("/sys", fakesys);
 #endif
     for(auto&& redir : shim::rewrite_filesystem_access) {
         Log::trace("REDIRECT", "%s to %s", redir.first.data(), redir.second.data());
