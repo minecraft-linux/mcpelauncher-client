@@ -236,12 +236,27 @@ public:
         ignoreNextHideKeyboard = true;
     }
 
+    void setTextBoxBackend(std::shared_ptr<FakeJni::JString> newText) {
+        if(textInput)
+            textInput->update(newText->asStdString());
+    }
+
     FakeJni::JInt getCursorPosition() {
         ignoreNextHideKeyboard = false;
         if(textInput)
             return textInput->getCursorPosition();
         return -1;
     }
+
+    std::shared_ptr<FakeJni::JString> getTextBoxBackend() {
+        if(textInput)
+            return std::make_shared<FakeJni::JString>(textInput->getText());
+        return std::make_shared<FakeJni::JString>("");
+    }
+
+    void setCaretPosition(FakeJni::JInt pos);
+
+    FakeJni::JInt getCaretPosition();
 
     void lockCursor() {
         window->setCursorDisabled(true);
