@@ -84,7 +84,7 @@ AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname) {
     auto ret = new AAssetDir;
     ret->dir = d;
     ret->ent = nullptr;
-    ret->dirname = dirname;
+    ret->dirname = fullPath;
     return ret;
 }
 
