@@ -174,9 +174,9 @@ const char *AAssetDir_getNextFileName(AAssetDir *assetDir) {
     if(cname == "." || cname == "..") {
         return AAssetDir_getNextFileName(assetDir);
     }
-    assetDir->currentFileName = assetDir->dirname + "/" + cname;
+    assetDir->currentFileName = cname;
 #ifndef NDEBUG
-    Log::trace("AAssetDir", "getNextFileName '%s'\n", assetDir->currentFileName.data());
+    Log::trace("AAssetDir", "'%s' getNextFileName '%s'\n", assetDir->dirname.data(), assetDir->currentFileName.data());
 #endif
     return assetDir->currentFileName.data();
 }
