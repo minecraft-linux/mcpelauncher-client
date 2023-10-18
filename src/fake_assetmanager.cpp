@@ -40,8 +40,7 @@ AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mod
     if(filename[0] != '/') {
         fullPath = amgr->rootDir + filename;
     } else {
-        // Ignore full paths, the game tries to open user data files with the AAssetManager
-        return nullptr;
+        fullPath = filename;
     }
 
 #ifndef NDEBUG
@@ -69,8 +68,7 @@ AAssetDir *AAssetManager_openDir(FakeAssetManager *amgr, const char *dirname) {
     if(dirname[0] != '/') {
         fullPath = amgr->rootDir + dirname;
     } else {
-        // Ignore full paths, the game tries to open user data files with the AAssetManager
-        return nullptr;
+        fullPath = dirname;
     }
 
 #ifndef NDEBUG
