@@ -352,6 +352,8 @@ int WindowCallbacks::mapMouseButtonToAndroid(int btn) {
 int WindowCallbacks::mapMinecraftToAndroidKey(KeyCode code) {
     if(code >= KeyCode::NUM_0 && code <= KeyCode::NUM_9)
         return (int)code - (int)KeyCode::NUM_0 + AKEYCODE_0;
+    if(code >= KeyCode::NUMPAD_0 && code <= KeyCode::NUMPAD_9)
+        return (int)code - (int)KeyCode::NUMPAD_0 + AKEYCODE_NUMPAD_0;
     if(code >= KeyCode::A && code <= KeyCode::Z)
         return (int)code - (int)KeyCode::A + AKEYCODE_A;
     if(code >= KeyCode::FN1 && code <= KeyCode::FN12)
