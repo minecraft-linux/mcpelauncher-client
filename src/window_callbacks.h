@@ -71,6 +71,7 @@ public:
     void onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed);
     void onGamepadAxis(int gamepad, GamepadAxisId ax, float value);
 
+    static int mapMouseButtonToAndroid(int btn);
     static int mapMinecraftToAndroidKey(KeyCode code);
     static int mapGamepadToAndroidKey(GamepadButtonId btn);
 };

@@ -16,8 +16,13 @@ static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, 
     if(axisFunction) {
         return axisFunction(axis);
     }
+    int32_t dy = ((const FakeMotionEvent *)(const void *)event)->dy;
+    if(dy)
+        return dy;
     return 0;
 }
+
+int32_t mouseButtons = 0;
 
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     syms["AInputQueue_getEvent"] = (void *)+[](AInputQueue *queue, AInputEvent **outEvent) {
@@ -57,7 +62,12 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
         return 1;
     };
     syms["AMotionEvent_getButtonState"] = (void *)+[](const AInputEvent *event) {
-        return 0;
+        if(((const FakeMotionEvent *)(const void *)event)->action == AMOTION_EVENT_ACTION_BUTTON_PRESS) {
+            mouseButtons|=((const FakeMotionEvent *)(const void *)event)->btn;
+        } else if (((const FakeMotionEvent *)(const void *)event)->action == AMOTION_EVENT_ACTION_BUTTON_RELEASE) {
+            mouseButtons = mouseButtons & ~((const FakeMotionEvent *)(const void *)event)->btn;
+        }
+        return mouseButtons;
     };
     syms["AMotionEvent_getPointerId"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeMotionEvent *)(const void *)event)->pointerId;

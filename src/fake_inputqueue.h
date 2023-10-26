@@ -26,10 +26,15 @@ struct FakeMotionEvent : FakeInputEvent {
     int32_t pointerId;
     float x, y;
     std::function<float(int32_t axis)> axisFunction;
+    int32_t btn, dy;
 
-    FakeMotionEvent(int32_t action, int32_t pointerId, float x, float y) : FakeInputEvent(AINPUT_SOURCE_TOUCHSCREEN, AINPUT_EVENT_TYPE_MOTION), action(action), pointerId(pointerId), x(x), y(y) {}
+    FakeMotionEvent(int32_t source, int32_t action, int32_t pointerId, float x, float y) : FakeInputEvent(source, AINPUT_EVENT_TYPE_MOTION), action(action), pointerId(pointerId), x(x), y(y) {}
+
+    FakeMotionEvent(int32_t source, int32_t action, int32_t pointerId, float x, float y, int32_t btn, int32_t dy) : FakeInputEvent(source, AINPUT_EVENT_TYPE_MOTION), action(action), pointerId(pointerId), x(x), y(y), btn(btn), dy(dy) {}
+
     FakeMotionEvent(int32_t source, int32_t deviceId, int32_t action, int32_t pointerId, float x, float y, std::function<float(int32_t axis)> axisFunction) : FakeInputEvent(source, AINPUT_EVENT_TYPE_MOTION, deviceId), action(action), pointerId(pointerId), x(x), y(y), axisFunction(std::move(axisFunction)) {}
-    FakeMotionEvent() : FakeMotionEvent(0, 0, 0, 0) {}
+
+    FakeMotionEvent() : FakeMotionEvent(0, 0, 0, 0, 0) {}
 };
 
 class FakeInputQueue {

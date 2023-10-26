@@ -27,7 +27,7 @@ static int ReadEnvInt(const char* name, int def = 0) {
 }
 
 WindowCallbacks::WindowCallbacks(GameWindow& window, JniSupport& jniSupport, FakeInputQueue& inputQueue) : window(window), jniSupport(jniSupport), inputQueue(inputQueue) {
-    useDirectMouseInput = true;
+    useDirectMouseInput = Mouse::feed;
     useDirectKeyboardInput = (Keyboard::_states && (Keyboard::_inputs || Keyboard::_inputsLegacy) && Keyboard::_gameControllerId);
     if (fullscreen) {
         window.setFullscreen(true);
@@ -121,17 +121,16 @@ void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonActi
         if(useDirectMouseInput)
             Mouse::feed((char)btn, (char)(action == MouseButtonAction::PRESS ? 1 : 0), (short)x, (short)y, 0, 0);
         else if(action == MouseButtonAction::PRESS)
-            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, 0, x, y));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_PRESS, 0, x, y, mapMouseButtonToAndroid(btn), 0));
         else if(action == MouseButtonAction::RELEASE)
-            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, 0, x, y));
-    }
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_RELEASE, 0, x, y, mapMouseButtonToAndroid(btn), 0));    }
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
     if(hasInputMode(InputMode::Mouse)) {
         if(useDirectMouseInput)
             Mouse::feed(0, 0, (short)x, (short)y, 0, 0);
         else
-            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y));
     }
 }
 void WindowCallbacks::onMouseRelativePosition(double x, double y) {
@@ -139,7 +138,7 @@ void WindowCallbacks::onMouseRelativePosition(double x, double y) {
         if(useDirectMouseInput)
             Mouse::feed(0, 0, 0, 0, (short)x, (short)y);
         else
-            inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, 0, x, y));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE_RELATIVE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y));
     }
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
@@ -151,21 +150,23 @@ void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
 #endif
         if(useDirectMouseInput)
             Mouse::feed(4, (char&)cdy, 0, 0, (short)x, (short)y);
+        else
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_SCROLL, 0, 0, 0, -1, cdy));
     }
 }
 void WindowCallbacks::onTouchStart(int id, double x, double y) {
     if(hasInputMode(InputMode::Touch)) {
-        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_DOWN, id, x, y));
+        inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_TOUCHSCREEN, AMOTION_EVENT_ACTION_DOWN, id, x, y));
     }
 }
 void WindowCallbacks::onTouchUpdate(int id, double x, double y) {
     if(hasInputMode(InputMode::Touch)) {
-        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_MOVE, id, x, y));
+        inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_TOUCHSCREEN, AMOTION_EVENT_ACTION_MOVE, id, x, y));
     }
 }
 void WindowCallbacks::onTouchEnd(int id, double x, double y) {
     if(hasInputMode(InputMode::Touch)) {
-        inputQueue.addEvent(FakeMotionEvent(AMOTION_EVENT_ACTION_UP, id, x, y));
+        inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_TOUCHSCREEN, AMOTION_EVENT_ACTION_UP, id, x, y));
     }
 }
 void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
@@ -335,6 +336,17 @@ WindowCallbacks::GamepadData::GamepadData() {
     for(int i = 0; i < 6; i++)
         axis[i] = 0.f;
     memset(button, 0, sizeof(button));
+}
+
+int WindowCallbacks::mapMouseButtonToAndroid(int btn) {
+    switch(btn) {
+        case 1: return AMOTION_EVENT_BUTTON_PRIMARY;
+        case 2: return AMOTION_EVENT_BUTTON_SECONDARY;
+        case 3: return AMOTION_EVENT_BUTTON_TERTIARY;
+        case 8: return AMOTION_EVENT_BUTTON_BACK;
+        case 9: return AMOTION_EVENT_BUTTON_FORWARD;
+    }
+    return btn;
 }
 
 int WindowCallbacks::mapMinecraftToAndroidKey(KeyCode code) {
