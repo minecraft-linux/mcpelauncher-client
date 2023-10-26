@@ -77,6 +77,10 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
     syms["AMotionEvent_getRawX"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
     syms["AMotionEvent_getRawY"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getY));
     syms["AMotionEvent_getAxisValue"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getAxisValue));
+
+    syms["AMotionEvent_getHistorySize"] = (void *)+[](const AInputEvent *event) {
+        return 0;
+    };
 }
 
 int FakeInputQueue::getEvent(FakeInputEvent **event) {
