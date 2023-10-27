@@ -52,7 +52,7 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
         return (int32_t)0;
     };
     syms["AKeyEvent_getMetaState"] = (void *)+[](const AInputEvent *event) {
-        return (int32_t)2;
+        return (int32_t)0;
     };
     syms["AMotionEvent_getAction"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeMotionEvent *)(const void *)event)->action;
