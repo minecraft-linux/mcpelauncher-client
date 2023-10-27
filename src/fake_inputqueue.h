@@ -26,7 +26,7 @@ struct FakeMotionEvent : FakeInputEvent {
     int32_t pointerId;
     float x, y;
     std::function<float(int32_t axis)> axisFunction;
-    int32_t btn, dy;
+    int32_t btn = 0, dy = 0;
 
     FakeMotionEvent(int32_t source, int32_t action, int32_t pointerId, float x, float y) : FakeInputEvent(source, AINPUT_EVENT_TYPE_MOTION), action(action), pointerId(pointerId), x(x), y(y) {}
 
