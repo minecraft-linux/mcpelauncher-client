@@ -16,8 +16,12 @@ static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, 
     if(axisFunction) {
         return axisFunction(axis);
     }
+    int32_t dy = ((const FakeMotionEvent *)(const void *)event)->dy;
+    if(dy)
+        return dy;
     return 0;
 }
+
 
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     syms["AInputQueue_getEvent"] = (void *)+[](AInputQueue *queue, AInputEvent **outEvent) {
@@ -57,11 +61,18 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
         return 1;
     };
     syms["AMotionEvent_getButtonState"] = (void *)+[](const AInputEvent *event) {
+        if(((const FakeMotionEvent *)(const void *)event)->btn)
+            return ((const FakeMotionEvent *)(const void *)event)->btn;
         return 0;
     };
     syms["AMotionEvent_getPointerId"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeMotionEvent *)(const void *)event)->pointerId;
     };
+    
+    syms["AMotionEvent_getHistorySize"] = (void *)+[](const AInputEvent *event) {
+        return 0;
+    };
+
     syms["AMotionEvent_getX"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
     syms["AMotionEvent_getY"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getY));
     syms["AMotionEvent_getRawX"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
