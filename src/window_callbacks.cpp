@@ -120,17 +120,21 @@ void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonActi
         }
         if(useDirectMouseInput)
             Mouse::feed((char)btn, (char)(action == MouseButtonAction::PRESS ? 1 : 0), (short)x, (short)y, 0, 0);
-        else if(action == MouseButtonAction::PRESS)
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_PRESS, 0, x, y, mapMouseButtonToAndroid(btn), 0));
-        else if(action == MouseButtonAction::RELEASE)
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_RELEASE, 0, x, y, mapMouseButtonToAndroid(btn), 0));    }
+        else if(action == MouseButtonAction::PRESS) {
+            buttonState|=mapMouseButtonToAndroid(btn);
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_PRESS, 0, x, y, buttonState, 0));
+        } else if(action == MouseButtonAction::RELEASE) {
+            buttonState = buttonState & ~mapMouseButtonToAndroid(btn);
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_RELEASE, 0, x, y, buttonState, 0));
+        }
+    }
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
     if(hasInputMode(InputMode::Mouse)) {
         if(useDirectMouseInput)
             Mouse::feed(0, 0, (short)x, (short)y, 0, 0);
         else
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y, buttonState, 0));
     }
 }
 void WindowCallbacks::onMouseRelativePosition(double x, double y) {
@@ -138,7 +142,7 @@ void WindowCallbacks::onMouseRelativePosition(double x, double y) {
         if(useDirectMouseInput)
             Mouse::feed(0, 0, 0, 0, (short)x, (short)y);
         else
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE_RELATIVE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE_RELATIVE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y, buttonState, 0));
     }
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
@@ -151,7 +155,7 @@ void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
         if(useDirectMouseInput)
             Mouse::feed(4, (char&)cdy, 0, 0, (short)x, (short)y);
         else
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_SCROLL, 0, 0, 0, -1, cdy));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_SCROLL, 0, x, y, buttonState, cdy));
     }
 }
 void WindowCallbacks::onTouchStart(int id, double x, double y) {
@@ -415,8 +419,18 @@ int WindowCallbacks::mapMinecraftToAndroidKey(KeyCode code) {
         return AKEYCODE_COMMA;
     case KeyCode::MINUS:
         return AKEYCODE_MINUS;
+    case KeyCode::NUMPAD_ADD:
+        return AKEYCODE_NUMPAD_ADD;
+    case KeyCode::NUMPAD_SUBTRACT:
+        return AKEYCODE_NUMPAD_SUBTRACT;
+    case KeyCode::NUMPAD_MULTIPLY:
+        return AKEYCODE_NUMPAD_MULTIPLY;
+    case KeyCode::NUMPAD_DIVIDE:
+        return AKEYCODE_NUMPAD_DIVIDE;
     case KeyCode::PERIOD:
         return AKEYCODE_PERIOD;
+    case KeyCode::NUMPAD_DECIMAL:
+        return AKEYCODE_NUMPAD_DOT;
     case KeyCode::SLASH:
         return AKEYCODE_SLASH;
     case KeyCode::GRAVE:

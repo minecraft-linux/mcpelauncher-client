@@ -22,7 +22,6 @@ static float _AMotionEvent_getAxisValue(const AInputEvent *event, int32_t axis, 
     return 0;
 }
 
-int32_t mouseButtons = 0;
 
 void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     syms["AInputQueue_getEvent"] = (void *)+[](AInputQueue *queue, AInputEvent **outEvent) {
@@ -53,7 +52,7 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
         return (int32_t)0;
     };
     syms["AKeyEvent_getMetaState"] = (void *)+[](const AInputEvent *event) {
-        return (int32_t)0;
+        return (int32_t)2;
     };
     syms["AMotionEvent_getAction"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeMotionEvent *)(const void *)event)->action;
@@ -62,12 +61,9 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
         return 1;
     };
     syms["AMotionEvent_getButtonState"] = (void *)+[](const AInputEvent *event) {
-        if(((const FakeMotionEvent *)(const void *)event)->action == AMOTION_EVENT_ACTION_BUTTON_PRESS) {
-            mouseButtons|=((const FakeMotionEvent *)(const void *)event)->btn;
-        } else if (((const FakeMotionEvent *)(const void *)event)->action == AMOTION_EVENT_ACTION_BUTTON_RELEASE) {
-            mouseButtons = mouseButtons & ~((const FakeMotionEvent *)(const void *)event)->btn;
-        }
-        return mouseButtons;
+        if(((const FakeMotionEvent *)(const void *)event)->btn)
+            return ((const FakeMotionEvent *)(const void *)event)->btn;
+        return 0;
     };
     syms["AMotionEvent_getPointerId"] = (void *)+[](const AInputEvent *event) {
         return ((const FakeMotionEvent *)(const void *)event)->pointerId;
@@ -77,10 +73,6 @@ void FakeInputQueue::initHybrisHooks(std::unordered_map<std::string, void *> &sy
     syms["AMotionEvent_getRawX"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getX));
     syms["AMotionEvent_getRawY"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getY));
     syms["AMotionEvent_getAxisValue"] = reinterpret_cast<void *>(ARMHFREWRITE(_AMotionEvent_getAxisValue));
-
-    syms["AMotionEvent_getHistorySize"] = (void *)+[](const AInputEvent *event) {
-        return 0;
-    };
 }
 
 int FakeInputQueue::getEvent(FakeInputEvent **event) {

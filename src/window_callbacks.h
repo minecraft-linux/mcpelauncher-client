@@ -20,6 +20,7 @@ private:
     JniSupport &jniSupport;
     FakeInputQueue &inputQueue;
     std::unordered_map<int, GamepadData> gamepads;
+    int32_t buttonState;
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
