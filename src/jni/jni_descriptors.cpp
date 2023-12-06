@@ -124,6 +124,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {Function<&MainActivity::saveFile>{}, "saveFile"},
     {Function<&MainActivity::setClipboard>{}, "setClipboard"},
     {Function<&MainActivity::hasHardwareKeyboard>{}, "hasHardwareKeyboard"},
+    {Function<&MainActivity::runNativeCallbackOnUiThread>{}, "runNativeCallbackOnUiThread"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(AccountManager){Function<&AccountManager::get>{}, "get"},
