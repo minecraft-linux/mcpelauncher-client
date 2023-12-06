@@ -204,6 +204,13 @@ public:
         return std::make_shared<FakeJni::JArray<FakeJni::JString>>();
     }
 
+    void runNativeCallbackOnUiThread(FakeJni::JLong h) {
+        auto method = getClass().getMethod("(J)V", "nativeRunNativeCallbackOnUiThread");
+        FakeJni::LocalFrame frame;
+        method->invoke(frame.getJniEnv(), this, h);
+
+    }
+
     void requestIntegrityToken(std::shared_ptr<FakeJni::JString>);
 
     void launchUri(std::shared_ptr<FakeJni::JString>);
