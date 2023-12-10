@@ -37,6 +37,9 @@ std::string XalWebViewQt::exec_get_stdout(std::string path, std::string title, s
     pipe(pipes[PIPE_STDIN]);
     int pid;
     if(!(pid = fork())) {
+#ifndef __APPLE__
+        setenv("LD_PRELOAD", "", 1);
+#endif
         auto argv = buildCommandLine(path, title, description);
         auto argvc = convertToC(argv);
         dup2(pipes[PIPE_STDOUT][PIPE_WRITE], STDOUT_FILENO);
