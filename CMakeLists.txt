@@ -54,5 +54,25 @@ if(USE_SNMALLOC)
     target_sources(mcpelauncher-client PRIVATE ${snmalloc_ext_SOURCE_DIR}/src/snmalloc/override/new.cc)
 endif()
 
+target_sources(mcpelauncher-client PRIVATE 
+${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui_demo.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui_draw.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui_tables.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui_widgets.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/../imgui/backends/imgui_impl_opengl3.cpp
+)
+
+target_include_directories(mcpelauncher-client PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../imgui
+  ${CMAKE_CURRENT_SOURCE_DIR}/../imgui/backends
+)
+
+target_compile_definitions(mcpelauncher-client PRIVATE
+  IMGUI_IMPL_OPENGL_ES3
+)
+
+target_link_libraries(mcpelauncher-client PRIVATE GLESv2)
+
 install(TARGETS mcpelauncher-client RUNTIME COMPONENT mcpelauncher-client DESTINATION bin)
 include(CPackSettings.cmake)
