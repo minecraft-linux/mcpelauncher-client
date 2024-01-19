@@ -12,6 +12,7 @@ private:
     static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
     bool prepared = false;
+    bool textInput = false;
 
     struct EventEntry {
         int fd, ident, events;
