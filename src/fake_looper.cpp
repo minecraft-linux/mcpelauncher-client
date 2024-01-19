@@ -111,6 +111,15 @@ void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void
 
 int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData) {
     associatedWindowCallbacks->startSendEvents();
+    if(textInput != jniSupport->getTextInputHandler().isEnabled()) {
+        textInput = jniSupport->getTextInputHandler().isEnabled();
+        if(textInput) {
+            associatedWindow->startTextInput();
+        } else {
+            associatedWindow->stopTextInput();
+        }
+    }
+    
     if(androidEvent) {
         pollfd f;
         f.fd = androidEvent.fd;
