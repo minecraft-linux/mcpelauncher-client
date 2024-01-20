@@ -12,6 +12,9 @@
 #ifdef HAVE_PULSEAUDIO
 #include "pulseaudio.h"
 #endif
+#ifdef HAVE_SDL3AUDIO
+#include "sdl3audio.h"
+#endif
 #include "accounts.h"
 #include "ecdsa.h"
 #include "webview.h"
@@ -101,7 +104,7 @@ void JniSupport::registerJniClasses() {
 
     vm.registerClass<PlayIntegrity>();
 
-#ifdef HAVE_PULSEAUDIO
+#if defined(HAVE_PULSEAUDIO) || defined(HAVE_SDL3AUDIO)
     vm.registerClass<AudioDevice>();
 #endif
 }
