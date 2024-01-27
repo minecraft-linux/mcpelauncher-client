@@ -32,9 +32,9 @@ public:
 
     void generateKey(std::shared_ptr<FakeJni::JString> unique_id);
 
-    static EC_KEY* eckey;
-    static EC_GROUP* ecgroup;
-    static std::shared_ptr<FakeJni::JString> unique_id;
+    EC_KEY* eckey = NULL;
+    EC_GROUP* ecgroup = NULL;
+    std::shared_ptr<FakeJni::JString> unique_id = std::make_shared<FakeJni::JString>();
 
     std::shared_ptr<FakeJni::JByteArray> sign(std::shared_ptr<FakeJni::JByteArray> a);
 

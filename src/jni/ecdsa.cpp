@@ -1,14 +1,27 @@
 #include "ecdsa.h"
 
+// TODO migrate to OPENSSL 3 API
+
 Ecdsa::Ecdsa() = default;
 
-EC_KEY *Ecdsa::eckey = NULL;
-EC_GROUP *Ecdsa::ecgroup = NULL;
-std::shared_ptr<FakeJni::JString> Ecdsa::unique_id = NULL;
+class defer
+{
+    std::function<void()> exec;
+public:
+    defer(std::function<void()> exec) {
+        this->exec = exec;
+    }
+    ~defer() {
+        exec();
+    }
+};
+
 
 Ecdsa::~Ecdsa() {
     EC_KEY_free(eckey);
+    eckey = nullptr;
     EC_GROUP_free(ecgroup);
+    ecgroup = nullptr;
 }
 
 void Ecdsa::generateKey(std::shared_ptr<FakeJni::JString> unique_id) {
@@ -22,10 +35,10 @@ void Ecdsa::generateKey(std::shared_ptr<FakeJni::JString> unique_id) {
         throw std::runtime_error("OpenSSL failed to allocate eckey");
     }
     if(EC_KEY_set_group(eckey, ecgroup) != 1) {
-        throw std::runtime_error("OpenSSL failed to get affine coordinates");
+        throw std::runtime_error("OpenSSL failed to EC_KEY_set_group");
     }
     if(EC_KEY_generate_key(eckey) != 1) {
-        throw std::runtime_error("OpenSSL failed to get affine coordinates");
+        throw std::runtime_error("OpenSSL failed to EC_KEY_generate_key");
     }
 }
 
@@ -34,6 +47,9 @@ std::shared_ptr<FakeJni::JByteArray> Ecdsa::sign(std::shared_ptr<FakeJni::JByteA
     if(!sig) {
         throw std::runtime_error("OpenSSL failed to sign bytearray");
     }
+    defer _s([&]() {
+        ECDSA_SIG_free(sig);
+    });
     auto n = (EC_GROUP_order_bits(ecgroup) + 7) / 8;
     const BIGNUM *r = ECDSA_SIG_get0_r(sig);
     if(!r) {
@@ -45,12 +61,11 @@ std::shared_ptr<FakeJni::JByteArray> Ecdsa::sign(std::shared_ptr<FakeJni::JByteA
     }
     auto buf = std::make_shared<FakeJni::JByteArray>(2 * n);
     if(BN_bn2binpad(r, (unsigned char *)buf->getArray(), n) != n) {
-        throw std::runtime_error("OpenSSL failed to export bignum");
+        throw std::runtime_error("OpenSSL failed to export bignum r");
     }
     if(BN_bn2binpad(s, (unsigned char *)buf->getArray() + n, n) != n) {
-        throw std::runtime_error("OpenSSL failed to export bignum");
+        throw std::runtime_error("OpenSSL failed to export bignum s");
     }
-    ECDSA_SIG_free(sig);
     return buf;
 }
 
@@ -63,10 +78,7 @@ std::shared_ptr<FakeJni::JString> Ecdsa::getUniqueId() {
 }
 
 std::shared_ptr<Ecdsa> Ecdsa::restoreKeyAndId(std::shared_ptr<Context> ctx) {
-    if(eckey == NULL || ecgroup == NULL) {
-        return nullptr;
-    }
-    return std::make_shared<Ecdsa>();
+    return nullptr;
 }
 
 EcdsaPublicKey::EcdsaPublicKey(EC_KEY *eckey, EC_GROUP *ecgroup) {
@@ -75,6 +87,10 @@ EcdsaPublicKey::EcdsaPublicKey(EC_KEY *eckey, EC_GROUP *ecgroup) {
         throw std::runtime_error("OpenSSL failed to get ecdsa public key");
     }
     BIGNUM *x = BN_new(), *y = BN_new();
+    defer _s([&]() {
+        BN_free(x);
+        BN_free(y);
+    });
     if(!x || !y) {
         throw std::runtime_error("OpenSSL failed to allocate bignum");
     }
