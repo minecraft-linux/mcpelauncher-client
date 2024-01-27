@@ -9,6 +9,9 @@
 #ifdef HAVE_PULSEAUDIO
 #include "pulseaudio.h"
 #endif
+#ifdef HAVE_SDL3AUDIO
+#include "sdl3audio.h"
+#endif
 #include "java_types.h"
 #include "accounts.h"
 #include "ecdsa.h"
@@ -308,7 +311,7 @@ BEGIN_NATIVE_DESCRIPTOR(HTTPResponse){Function<&HTTPResponse::getStatus>{}, "get
     {Constructor<HTTPRequest>{}},
     END_NATIVE_DESCRIPTOR
 
-#ifdef HAVE_PULSEAUDIO
+#if defined(HAVE_PULSEAUDIO) || defined(HAVE_SDL3AUDIO)
     BEGIN_NATIVE_DESCRIPTOR(AudioDevice){Constructor<AudioDevice>{}},
     {Function<&AudioDevice::init>{}, "init"},
     {Function<&AudioDevice::write>{}, "write"},
