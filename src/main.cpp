@@ -328,6 +328,8 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
         // GLFW needs a window to let eglGetProcAddress return symbols
         FakeLooper::initWindow();
         MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
+        // preinit Mods using libGLESv2 can only load now
+        modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
         // Try load the game again
         handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer), reinterpret_cast<void*>(&CorePatches::setFullscreen));
     }
