@@ -3,6 +3,9 @@
 #include <log.h>
 #include <curl/curl.h>
 #include <thread>
+#ifndef HTTPCLIENT_NDEBUG
+#include <iostream>
+#endif
 
 using namespace std::placeholders;
 
@@ -29,7 +32,8 @@ std::shared_ptr<HttpClientRequest> HttpClientRequest::createClientRequest() {
 }
 
 void HttpClientRequest::setHttpUrl(std::shared_ptr<FakeJni::JString> url) {
-#ifndef NDEBUG
+#ifndef HTTPCLIENT_NDEBUG
+    this->url = url->asStdString();
     Log::trace("HttpClient", "URL: %s", url->asStdString().c_str());
 #endif
     curl_easy_setopt(curl, CURLOPT_URL, url->asStdString().c_str());
@@ -64,7 +68,9 @@ void HttpClientRequest::setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> m
 static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
     auto stream = (NativeInputStream *)userdata;
     try {
-        return stream->Read(ptr, size * nmemb);
+        auto ret = stream->Read(ptr, size * nmemb);
+        std::cout << "HTTPContent:\n" << std::string_view(ptr, ret) << "\n";
+        return ret;
     } catch(...) {
 #ifdef CURL_READFUNC_ABORT
         return CURL_READFUNC_ABORT;
@@ -98,7 +104,7 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
         } else if (this->method == "PUT") {
             curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t) contentLength);
         }
-#ifndef NDEBUG
+#ifndef HTTPCLIENT_NDEBUG
         Log::trace("HttpClient", "setHttpMethodAndBody2 called, sent request");
 #endif
     } else {
@@ -106,7 +112,7 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 0);
         }
-#ifndef NDEBUG
+#ifndef HTTPCLIENT_NDEBUG
         Log::trace("HttpClient", "setHttpMethodAndBody2 called, method: %s", this->method.c_str());
 #endif
     }
@@ -120,8 +126,11 @@ void HttpClientRequest::setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString> 
 }
 
 void HttpClientRequest::setHttpHeader(std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> value) {
-#ifndef NDEBUG
-    Log::trace("HttpClient", "setHttpHeader called, name: %s, value: %s", name->asStdString().c_str(), value->asStdString().c_str());
+#ifndef HTTPCLIENT_NDEBUG
+    Log::trace("HttpClient", "%s setHttpHeader called, name: %s, value: %s", url.data(), name->asStdString().c_str(), value->asStdString().c_str());
+    if(name->asStdString() == "Authorization") {
+        Log::trace("HttpClient", "Auth");
+    }
 #endif
     header = curl_slist_append(header, (name->asStdString() + ": " + value->asStdString()).c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
@@ -141,7 +150,7 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
             FakeJni::LocalFrame frame;
             if(ret == CURLE_OK) {
-#ifndef NDEBUG
+#ifndef HTTPCLIENT_NDEBUG
                 Log::trace("HttpClient", "Response: code: %ld", response_code);
 #endif
                 auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
@@ -192,6 +201,9 @@ HttpClientResponse::HttpClientResponse(FakeJni::JLong call_handle, int response_
 
 size_t HttpClientRequest::write_callback(char *ptr, size_t size, size_t nmemb) {
     try {
+#ifndef HTTPCLIENT_NDEBUG
+        std::cout << "HTTPBody: " << url.data() << "\n" << std::string_view(ptr, size * nmemb) << "\n";
+#endif
         auto byteArray = std::make_shared<FakeJni::JByteArray>(nmemb);
         memcpy(byteArray->getArray(), ptr, nmemb);
         std::make_shared<NativeOutputStream>(call_handle)->WriteAll(byteArray);
