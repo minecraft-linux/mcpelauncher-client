@@ -25,6 +25,14 @@ Ecdsa::~Ecdsa() {
 }
 
 void Ecdsa::generateKey(std::shared_ptr<FakeJni::JString> unique_id) {
+    if(eckey) {
+        EC_KEY_free(eckey);
+        eckey = nullptr;
+    }
+    if(ecgroup) {
+        EC_GROUP_free(ecgroup);
+        ecgroup = nullptr;
+    }
     this->unique_id = unique_id;
     ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);  // openssl alias of secp256r1
     if(!ecgroup) {
@@ -102,13 +110,26 @@ EcdsaPublicKey::EcdsaPublicKey(EC_KEY *eckey, EC_GROUP *ecgroup) {
     if(BN_bn2bin(x, (unsigned char *)buf.data()) != len) {
         throw std::runtime_error("OpenSSL failed to export bignum");
     }
-    xbase64 = Base64::encode(buf);
+    // the game uses three base64 flags for https://developer.android.com/reference/android/util/Base64
+    // NO_PADDING | NO_WRAP | URL_SAFE, although the sisu auth service seem to accept normal base64 with padding
+    auto base64tobase64url = [](char x) {
+        if(x == '+') {
+            return '-';
+        }
+        if(x == '/') {
+            return '_';
+        }
+        return x;
+    };
+    xbase64 = Base64::encode(buf, false);
+    std::transform(xbase64.begin(), xbase64.end(), xbase64.begin(), base64tobase64url);
     len = BN_num_bytes(y);
     buf = std::string(len, '_');
     if(BN_bn2bin(y, (unsigned char *)buf.data()) != len) {
         throw std::runtime_error("OpenSSL failed to export bignum");
     }
-    ybase64 = Base64::encode(buf);
+    ybase64 = Base64::encode(buf, false);
+    std::transform(ybase64.begin(), ybase64.end(), ybase64.begin(), base64tobase64url);
 }
 
 std::shared_ptr<FakeJni::JString> EcdsaPublicKey::getBase64UrlX() {
