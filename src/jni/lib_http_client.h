@@ -25,7 +25,7 @@ public:
 
 class HttpClientRequest : public FakeJni::JObject {
     std::shared_ptr<NativeInputStream> inputStream;
-
+    std::string url;
 public:
     DEFINE_CLASS_NAME("com/xbox/httpclient/HttpClientRequest")
     HttpClientRequest();
