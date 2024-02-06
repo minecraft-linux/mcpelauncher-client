@@ -26,10 +26,11 @@ private:
     bool needsQueueGamepadInput = true;
     bool fullscreen = options.fullscreen;
     bool sendEvents = false;
+    // Prefer Touch, Gamepad over Mouse due to Input Emulation
     enum class InputMode {
         Touch,
-        Mouse,
         Gamepad,
+        Mouse,
         Unknown,
     };
     bool useRawInput = false;

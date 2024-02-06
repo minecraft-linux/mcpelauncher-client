@@ -174,7 +174,7 @@ void WindowCallbacks::onTouchEnd(int id, double x, double y) {
     }
 }
 void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
-    if(hasInputMode(InputMode::Mouse)) {
+    if(sendEvents) {
         // return onKeyboard((KeyCode) 4, KeyAction::PRESS);
         // key = (KeyCode) 0x21;
 #ifdef __APPLE__
@@ -222,20 +222,26 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
     }
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
-    if(c == "\n" && !jniSupport.getTextInputHandler().isMultiline())
-        jniSupport.onReturnKeyPressed();
-    else
-        jniSupport.getTextInputHandler().onTextInput(c);
+    if(sendEvents) {
+        if(c == "\n" && !jniSupport.getTextInputHandler().isMultiline()) {
+            jniSupport.onReturnKeyPressed();
+        } else {
+            jniSupport.getTextInputHandler().onTextInput(c);
+        }
+    }
 }
 void WindowCallbacks::onPaste(std::string const& str) {
-    jniSupport.getTextInputHandler().onTextInput(str);
+    if(sendEvents) {
+        jniSupport.getTextInputHandler().onTextInput(str);
+    }
 }
 void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
     Log::trace("WindowCallbacks", "Gamepad %s #%i", connected ? "connected" : "disconnected", gamepad);
-    if(connected)
+    if(connected) {
         gamepads.insert({gamepad, GamepadData()});
-    else
+    } else {
         gamepads.erase(gamepad);
+    }
 
     if(sendEvents) {
         // This crashs the game 1.16.210+ during init, but works after loading
@@ -246,8 +252,9 @@ void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
 }
 
 void WindowCallbacks::queueGamepadAxisInputIfNeeded(int gamepad) {
-    if(!needsQueueGamepadInput)
+    if(!needsQueueGamepadInput) {
         return;
+    }
     inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_GAMEPAD, gamepad, AMOTION_EVENT_ACTION_MOVE, 0, 0.f, 0.f,
                                         [this, gamepad](int axis) {
                                             auto gpi = gamepads.find(gamepad);
