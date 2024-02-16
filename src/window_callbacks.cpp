@@ -215,6 +215,10 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
             return;
         }
 
+        if(action == KeyAction::PRESS && jniSupport.getTextInputHandler().isEnabled() && !jniSupport.getTextInputHandler().isMultiline() && (key == KeyCode::TAB || key == KeyCode::UP || key == KeyCode::DOWN)) {
+            jniSupport.onBackPressed();
+        }
+
         if(action == KeyAction::PRESS)
             inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(key)));
         else if(action == KeyAction::RELEASE)

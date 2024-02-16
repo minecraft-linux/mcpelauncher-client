@@ -261,6 +261,8 @@ public:
         return std::make_shared<FakeJni::JString>("");
     }
 
+    FakeJni::JInt getKeyFromKeyCode(FakeJni::JInt keyCode, FakeJni::JInt metaState, FakeJni::JInt deviceId);
+
     void setCaretPosition(FakeJni::JInt pos);
 
     FakeJni::JInt getCaretPosition();

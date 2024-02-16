@@ -12,6 +12,7 @@
 #include "uuid.h"
 #include <climits>
 #include <sstream>
+#include <android/keycodes.h>
 
 #include <log.h>
 
@@ -263,3 +264,49 @@ void MainActivity::saveFile(std::shared_ptr<FakeJni::JString> fileName) {
     }
 }
 
+FakeJni::JInt MainActivity::getKeyFromKeyCode(FakeJni::JInt keyCode, FakeJni::JInt metaState, FakeJni::JInt deviceId) {
+        // TODO is metaState even filled yet, need to get shift
+        if(keyCode >= AKEYCODE_0 && keyCode <= AKEYCODE_9) {
+            return '0' + keyCode - AKEYCODE_0;
+        }
+        if(keyCode >= AKEYCODE_A && keyCode <= AKEYCODE_Z) {
+            return keyCode - AKEYCODE_A + 'a';
+        }
+        switch(keyCode) {
+        case AKEYCODE_LEFT_BRACKET:
+            return '(';
+        case AKEYCODE_RIGHT_BRACKET:
+            return ')';
+        case AKEYCODE_SPACE:
+            return ' ';
+        case AKEYCODE_SEMICOLON:
+            return ';';
+        case AKEYCODE_EQUALS:
+            return '=';
+        case AKEYCODE_COMMA:
+            return ',';
+        case AKEYCODE_MINUS:
+            return '-';
+        case AKEYCODE_NUMPAD_ADD:
+            return '+';
+        case AKEYCODE_NUMPAD_SUBTRACT:
+            return '-';
+        case AKEYCODE_NUMPAD_MULTIPLY:
+            return '*';
+        case AKEYCODE_NUMPAD_DIVIDE:
+            return '/';
+        case AKEYCODE_PERIOD:
+            return '.';
+        case AKEYCODE_NUMPAD_DOT:
+            return '.';
+        // case AKEYCODE_SLASH:
+        //     return '/';
+        case AKEYCODE_GRAVE:
+            return '`';
+        case AKEYCODE_BACKSLASH:
+            return '\\';
+        case AKEYCODE_APOSTROPHE:
+            return '\'';
+        }
+        return 0;
+    }
