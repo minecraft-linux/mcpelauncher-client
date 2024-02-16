@@ -21,6 +21,7 @@ private:
     FakeInputQueue &inputQueue;
     std::unordered_map<int, GamepadData> gamepads;
     int32_t buttonState = 0;
+    KeyCode lastKey = (KeyCode)0;
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
