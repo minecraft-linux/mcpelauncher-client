@@ -63,7 +63,11 @@ public:
 
     void onReturnKeyPressed();
 
+    void onBackPressed();
+
     void setGameControllerConnected(int devId, bool connected);
 
     TextInputHandler &getTextInputHandler() { return textInput; }
+
+    void setLastChar(FakeJni::JInt sym);
 };

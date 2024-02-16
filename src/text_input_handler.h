@@ -18,11 +18,16 @@ private:
     size_t currentTextCopyPosition = 0;
     TextCallback textUpdateCallback;
     constexpr static char spaces[] = " -_#/\\!@$%^&*();:'\"?.,";
+    size_t enabledNo = 0;
+    std::string lastInput;
+    bool keepOnce = false;
 
 public:
     explicit TextInputHandler(TextCallback cb) : textUpdateCallback(std::move(cb)) {}
 
     bool isEnabled() const { return enabled; }
+
+    size_t getEnabledNo() const { return enabledNo; }
 
     bool isMultiline() const { return multiline; }
 
@@ -42,8 +47,9 @@ public:
 
     int getCursorPosition() const { return currentTextPositionUTF; }
 
-    void setCursorPosition(int pos) { 
-        currentTextPositionUTF = pos;
-        currentTextPosition = pos;
-    }
+    void setCursorPosition(int pos);
+
+    void setKeepLastCharOnce();
+
+    bool getKeepLastCharOnce();
 };

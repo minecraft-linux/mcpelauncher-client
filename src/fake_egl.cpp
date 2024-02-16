@@ -1,5 +1,7 @@
 #include "fake_egl.h"
 #include "gl_core_patch.h"
+#include "settings.h"
+#include "imgui_ui.h"
 #include <map>
 
 #define __ANDROID__
@@ -12,7 +14,6 @@
 #ifdef USE_ARMHF_SUPPORT
 #include "armhf_support.h"
 #endif
-
 namespace fake_egl {
 
 static thread_local EGLSurface currentDrawSurface;
@@ -95,6 +96,9 @@ EGLBoolean eglDestroyContext(EGLDisplay display, EGLContext context) {
 EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context) {
     if(draw != nullptr) {
         ((GameWindow *)draw)->makeCurrent(true);
+#ifdef USE_IMGUI
+        ImGuiUIInit((GameWindow*)draw);
+#endif
     } else {
         ((GameWindow *)currentDrawSurface)->makeCurrent(false);
     }
@@ -104,6 +108,9 @@ EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, 
 
 EGLBoolean eglSwapBuffers(EGLDisplay display, EGLSurface surface) {
     //    Log::trace("FakeEGL", "eglSwapBuffers");
+#ifdef USE_IMGUI
+    ImGuiUIDrawFrame((GameWindow*)surface);
+#endif
     ((GameWindow *)surface)->swapBuffers();
     return EGL_TRUE;
 }
@@ -117,7 +124,7 @@ EGLBoolean eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attrib
     if(attribute == EGL_WIDTH || attribute == EGL_HEIGHT) {
         int w, h;
         ((GameWindow *)surface)->getWindowSize(w, h);
-        *value = (attribute == EGL_WIDTH ? w : h);
+        *value = (attribute == EGL_WIDTH ? w : h - Settings::menubarsize);
         return EGL_TRUE;
     }
     Log::warn("FakeEGL", "eglQuerySurface %x", attribute);
@@ -169,6 +176,16 @@ void FakeEGL::setupGLOverrides() {
 #ifdef USE_ARMHF_SUPPORT
     ArmhfSupport::install(fake_egl::hostProcOverrides);
 #endif
+    // fake_egl::hostProcOverrides["glViewport"] = (void *)+[](int x,
+ 	// int y,
+ 	// int width,
+ 	// int height) {
+    //     ((void (*)(int x,
+ 	// int y,
+ 	// int width,
+ 	// int height))(fake_egl::hostProcAddrFn("glViewport")))(x, y, width, height);
+
+    // };
     // MESA 23.1 blackscreen Workaround Start for 1.18.30+, bgfy will disable the extension and the game works
     fake_egl::hostProcOverrides["glDrawElementsInstancedOES"] = nullptr;
     fake_egl::hostProcOverrides["glDrawArraysInstancedOES"] = nullptr;

@@ -21,4 +21,17 @@ public:
         }
         return ret;
     }
+
+    static size_t getBytePosFromUTF(const char* str, size_t len, size_t utflen) {
+        size_t ret = 0;
+        for(size_t i = 0; i < len;) {
+            char c = str[i];
+            i += getCharByteSize(c);
+            ret++;
+            if(utflen == ret) {
+                return i;
+            }
+        }
+        return ret;
+    }
 };

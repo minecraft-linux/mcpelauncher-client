@@ -25,6 +25,7 @@
 #include "uuid.h"
 #include "shahasher.h"
 #include "securerandom.h"
+#include "../settings.h"
 #include "../main.h"
 #include <thread>
 #include <iostream>
@@ -110,7 +111,7 @@ void JniSupport::registerJniClasses() {
 }
 
 void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
-    registerNatives(MainActivity::getDescriptor(), {{"nativeRegisterThis", "()V"}, {"nativeWaitCrashManagementSetupComplete", "()V"}, {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"}, {"nativeShutdown", "()V"}, {"nativeUnregisterThis", "()V"}, {"nativeStopThis", "()V"}, {"nativeOnDestroy", "()V"}, {"nativeResize", "(II)V"}, {"nativeSetTextboxText", "(Ljava/lang/String;)V"}, {"nativeReturnKeyPressed", "()V"}, {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"}, {"nativeOnPickImageCanceled", "(J)V"}, {"nativeOnPickFileSuccess", "(Ljava/lang/String;)V"}, {"nativeOnPickFileCanceled", "()V"}, {"nativeInitializeXboxLive", "(JJ)V"}, {"nativeinitializeLibHttpClient", "(J)J"}, {"nativeInitializeLibHttpClient", "(J)J"}, {"nativeProcessIntentUriQuery", "(Ljava/lang/String;Ljava/lang/String;)V"}, {"nativeSetIntegrityToken", "(Ljava/lang/String;)V"}, {"nativeRunNativeCallbackOnUiThread", "(J)V"}}, symResolver);
+    registerNatives(MainActivity::getDescriptor(), {{"nativeRegisterThis", "()V"}, {"nativeWaitCrashManagementSetupComplete", "()V"}, {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"}, {"nativeShutdown", "()V"}, {"nativeUnregisterThis", "()V"}, {"nativeStopThis", "()V"}, {"nativeOnDestroy", "()V"}, {"nativeResize", "(II)V"}, {"nativeSetTextboxText", "(Ljava/lang/String;)V"}, {"nativeCaretPosition", "(I)V"}, { "nativeBackPressed", "()V"}, {"nativeReturnKeyPressed", "()V"}, {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"}, {"nativeOnPickImageCanceled", "(J)V"}, {"nativeOnPickFileSuccess", "(Ljava/lang/String;)V"}, {"nativeOnPickFileCanceled", "()V"}, {"nativeInitializeXboxLive", "(JJ)V"}, {"nativeinitializeLibHttpClient", "(J)J"}, {"nativeInitializeLibHttpClient", "(J)J"}, {"nativeProcessIntentUriQuery", "(Ljava/lang/String;Ljava/lang/String;)V"}, {"nativeSetIntegrityToken", "(Ljava/lang/String;)V"}, {"nativeRunNativeCallbackOnUiThread", "(J)V"}}, symResolver);
     registerNatives(NetworkMonitor::getDescriptor(), {{"nativeUpdateNetworkStatus", "(ZZZ)V"}}, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
                                                               {"onStoreInitialized", "(JZ)V"},
@@ -354,17 +355,35 @@ void JniSupport::onWindowResized(int newWidth, int newHeight) {
 }
 
 void JniSupport::onSetTextboxText(std::string const &text) {
-    FakeJni::LocalFrame frame(vm);
-    auto setText = activity->getClass().getMethod("(Ljava/lang/String;)V", "nativeSetTextboxText");
-    if(setText) {
-        auto str = std::make_shared<FakeJni::JString>(text);
-        setText->invoke(frame.getJniEnv(), activity.get(), frame.getJniEnv().createLocalReference(str));
+    if(!Settings::enable_keyboard_autofocus_patches_1_20_60 || getTextInputHandler().isEnabled()) {
+        FakeJni::LocalFrame frame(vm);
+        auto setText = activity->getClass().getMethod("(Ljava/lang/String;)V", "nativeSetTextboxText");
+        if(setText) {
+            auto str = std::make_shared<FakeJni::JString>(text);
+            setText->invoke(frame.getJniEnv(), activity.get(), frame.getJniEnv().createLocalReference(str));
+        }
+    }
+    auto pos = getTextInputHandler().getCursorPosition();
+    if(pos < text.length()) {
+        setLastChar(text.at(pos));
     }
 }
+
+void JniSupport::setLastChar(FakeJni::JInt sym) {
+    activity->setLastChar(sym);
+}
+
 
 void JniSupport::onReturnKeyPressed() {
     FakeJni::LocalFrame frame(vm);
     auto returnPressed = activity->getClass().getMethod("()V", "nativeReturnKeyPressed");
+    if(returnPressed)
+        returnPressed->invoke(frame.getJniEnv(), activity.get());
+}
+
+void JniSupport::onBackPressed() {
+    FakeJni::LocalFrame frame(vm);
+    auto returnPressed = activity->getClass().getMethod("()V", "nativeBackPressed");
     if(returnPressed)
         returnPressed->invoke(frame.getJniEnv(), activity.get());
 }

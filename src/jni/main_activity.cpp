@@ -1,4 +1,5 @@
 #include "main_activity.h"
+#include "../settings.h"
 
 #include <unistd.h>
 #ifndef __APPLE__
@@ -12,6 +13,7 @@
 #include "uuid.h"
 #include <climits>
 #include <sstream>
+#include <android/keycodes.h>
 
 #include <log.h>
 
@@ -263,3 +265,47 @@ void MainActivity::saveFile(std::shared_ptr<FakeJni::JString> fileName) {
     }
 }
 
+FakeJni::JInt MainActivity::getKeyFromKeyCode(FakeJni::JInt keyCode, FakeJni::JInt metaState, FakeJni::JInt deviceId) {
+    if(!Settings::enable_keyboard_autofocus_patches_1_20_60) {
+        return 0;
+    }
+    if(keyCode >= AKEYCODE_F1 && keyCode <= AKEYCODE_F12) {
+        return 0;
+    }
+    auto ret = lastChar;
+    switch (keyCode)
+    {
+    case AKEYCODE_DEL:
+    case AKEYCODE_FORWARD_DEL:
+    case AKEYCODE_SHIFT_LEFT:
+    case AKEYCODE_SHIFT_RIGHT:
+    case AKEYCODE_ALT_LEFT:
+    case AKEYCODE_ALT_RIGHT:
+    case AKEYCODE_CTRL_LEFT:
+    case AKEYCODE_CTRL_RIGHT:
+    case AKEYCODE_CAPS_LOCK:
+    case AKEYCODE_META_LEFT:
+    case AKEYCODE_META_RIGHT:
+    case AKEYCODE_ESCAPE:
+    case AKEYCODE_ENTER:
+    case AKEYCODE_VOLUME_UP:
+    case AKEYCODE_VOLUME_DOWN:
+    case AKEYCODE_VOLUME_MUTE:
+    case AKEYCODE_DPAD_LEFT:
+    case AKEYCODE_DPAD_RIGHT:
+    case AKEYCODE_DPAD_UP:
+    case AKEYCODE_DPAD_UP_LEFT:
+    case AKEYCODE_DPAD_UP_RIGHT:
+    case AKEYCODE_DPAD_DOWN:
+    case AKEYCODE_DPAD_DOWN_LEFT:
+    case AKEYCODE_DPAD_DOWN_RIGHT:
+    case AKEYCODE_UNKNOWN:
+        return 0;
+    }
+    lastChar = 0;
+    return ret;
+}
+
+void MainActivity::setLastChar(FakeJni::JInt sym) {
+    lastChar = sym;
+}

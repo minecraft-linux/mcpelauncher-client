@@ -96,6 +96,7 @@ public:
 class MainActivity : public NativeActivity {
 private:
     bool ignoreNextHideKeyboard = false;
+    FakeJni::JInt lastChar = 0;
 
 public:
     unsigned char *(*stbi_load_from_memory)(unsigned char const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
@@ -261,6 +262,8 @@ public:
         return std::make_shared<FakeJni::JString>("");
     }
 
+    FakeJni::JInt getKeyFromKeyCode(FakeJni::JInt keyCode, FakeJni::JInt metaState, FakeJni::JInt deviceId);
+
     void setCaretPosition(FakeJni::JInt pos);
 
     FakeJni::JInt getCaretPosition();
@@ -299,6 +302,8 @@ public:
 
     void openFile();
     void saveFile(std::shared_ptr<FakeJni::JString>);
+
+    void setLastChar(FakeJni::JInt sym);
 
 };
 

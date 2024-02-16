@@ -7,6 +7,10 @@
 #include <mcpelauncher/path_helper.h>
 #include <cstdlib>
 #include <string>
+#include "settings.h"
+#ifdef USE_IMGUI
+#include <imgui.h>
+#endif
 
 static bool ReadEnvFlag(const char* name, bool def = false) {
     auto val = getenv(name);
@@ -64,10 +68,16 @@ void WindowCallbacks::startSendEvents() {
             jniSupport.setGameControllerConnected(gp.first, true);
         }
     }
+    if(Settings::menubarsize != menubarsize) {
+        menubarsize = Settings::menubarsize;
+        int w, h;
+        window.getWindowSize(w, h);
+        onWindowSizeCallback(w, h);
+    }
 }
 
 void WindowCallbacks::onWindowSizeCallback(int w, int h) {
-    jniSupport.onWindowResized(w, h);
+    jniSupport.onWindowResized(w, h - Settings::menubarsize);
 }
 
 void WindowCallbacks::onClose() {
@@ -114,6 +124,16 @@ void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonActi
     if(hasInputMode(InputMode::Mouse)) {
         if(btn < 1)
             return;
+#ifdef USE_IMGUI
+        if(ImGui::GetCurrentContext()) {
+            ImGuiIO& io = ImGui::GetIO();
+            io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
+            io.AddMouseButtonEvent(btn - 1, action != MouseButtonAction::RELEASE);
+            if(io.WantCaptureMouse) {
+                return;
+            }
+        }
+#endif
         if(btn > 3) {
             // Seems to get recognized same as regular Mousebuttons as Button4 or higher, but ignored from mouse
             return onKeyboard((KeyCode)btn, action == MouseButtonAction::PRESS ? KeyAction::PRESS : KeyAction::RELEASE);
@@ -122,19 +142,29 @@ void WindowCallbacks::onMouseButton(double x, double y, int btn, MouseButtonActi
             Mouse::feed((char)btn, (char)(action == MouseButtonAction::PRESS ? 1 : 0), (short)x, (short)y, 0, 0);
         else if(action == MouseButtonAction::PRESS) {
             buttonState|=mapMouseButtonToAndroid(btn);
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_PRESS, 0, x, y, buttonState, 0));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_PRESS, 0, x, y - Settings::menubarsize, buttonState, 0));
         } else if(action == MouseButtonAction::RELEASE) {
             buttonState = buttonState & ~mapMouseButtonToAndroid(btn);
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_RELEASE, 0, x, y, buttonState, 0));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_BUTTON_RELEASE, 0, x, y - Settings::menubarsize, buttonState, 0));
         }
     }
 }
 void WindowCallbacks::onMousePosition(double x, double y) {
     if(hasInputMode(InputMode::Mouse)) {
+#ifdef USE_IMGUI
+            if(ImGui::GetCurrentContext()) {
+            ImGuiIO& io = ImGui::GetIO();
+            io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
+            io.AddMousePosEvent(x, y);
+            if(io.WantCaptureMouse) {
+                return;
+            }
+        }
+#endif
         if(useDirectMouseInput)
             Mouse::feed(0, 0, (short)x, (short)y, 0, 0);
         else
-            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y, buttonState, 0));
+            inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_MOUSE, AMOTION_EVENT_ACTION_HOVER_MOVE, 0, x, y - Settings::menubarsize, buttonState, 0));
     }
 }
 void WindowCallbacks::onMouseRelativePosition(double x, double y) {
@@ -147,6 +177,16 @@ void WindowCallbacks::onMouseRelativePosition(double x, double y) {
 }
 void WindowCallbacks::onMouseScroll(double x, double y, double dx, double dy) {
     if(hasInputMode(InputMode::Mouse)) {
+#ifdef USE_IMGUI
+        if(ImGui::GetCurrentContext()) {
+            ImGuiIO& io = ImGui::GetIO();
+            io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
+            io.AddMouseWheelEvent(dx, dy);
+            if(io.WantCaptureMouse) {
+                return;
+            }
+        }
+#endif
 #ifdef __APPLE__
         signed char cdy = (signed char)std::max(std::min((dx + dy) * 127.0, 127.0), -127.0);
 #else
@@ -173,8 +213,169 @@ void WindowCallbacks::onTouchEnd(int id, double x, double y) {
         inputQueue.addEvent(FakeMotionEvent(AINPUT_SOURCE_TOUCHSCREEN, AMOTION_EVENT_ACTION_UP, id, x, y));
     }
 }
+static bool deadKey(KeyCode key) {
+    switch (WindowCallbacks::mapMinecraftToAndroidKey(key))
+    {
+    case AKEYCODE_DEL:
+    case AKEYCODE_FORWARD_DEL:
+    case AKEYCODE_SHIFT_LEFT:
+    case AKEYCODE_SHIFT_RIGHT:
+    case AKEYCODE_ALT_LEFT:
+    case AKEYCODE_ALT_RIGHT:
+    case AKEYCODE_CTRL_LEFT:
+    case AKEYCODE_CTRL_RIGHT:
+    case AKEYCODE_CAPS_LOCK:
+    case AKEYCODE_META_LEFT:
+    case AKEYCODE_META_RIGHT:
+    case AKEYCODE_ESCAPE:
+    case AKEYCODE_ENTER:
+    case AKEYCODE_VOLUME_UP:
+    case AKEYCODE_VOLUME_DOWN:
+    case AKEYCODE_VOLUME_MUTE:
+    case AKEYCODE_DPAD_LEFT:
+    case AKEYCODE_DPAD_RIGHT:
+    case AKEYCODE_DPAD_UP:
+    case AKEYCODE_DPAD_UP_LEFT:
+    case AKEYCODE_DPAD_UP_RIGHT:
+    case AKEYCODE_DPAD_DOWN:
+    case AKEYCODE_DPAD_DOWN_LEFT:
+    case AKEYCODE_DPAD_DOWN_RIGHT:
+    case AKEYCODE_UNKNOWN:
+        return true;
+    }
+    return false;
+}
+
+#ifdef USE_IMGUI
+static ImGuiKey mapImGuiKey(KeyCode code) {
+    if(code >= KeyCode::NUM_0 && code <= KeyCode::NUM_9)
+        return (ImGuiKey)((int)code - (int)KeyCode::NUM_0 + ImGuiKey_0);
+    if(code >= KeyCode::NUMPAD_0 && code <= KeyCode::NUMPAD_9)
+        return (ImGuiKey)((int)code - (int)KeyCode::NUMPAD_0 + ImGuiKey_Keypad0);
+    if(code >= KeyCode::A && code <= KeyCode::Z)
+        return (ImGuiKey)((int)code - (int)KeyCode::A + ImGuiKey_A);
+    if(code >= KeyCode::FN1 && code <= KeyCode::FN12)
+        return (ImGuiKey)((int)code - (int)KeyCode::FN1 + ImGuiKey_F1);
+    switch(code) {
+    case KeyCode::BACK:
+        return ImGuiKey_AppBack;
+    case KeyCode::BACKSPACE:
+        return ImGuiKey_Backspace;
+    case KeyCode::TAB:
+        return ImGuiKey_Tab;
+    case KeyCode::ENTER:
+        return ImGuiKey_Enter;
+    case KeyCode::LEFT_SHIFT:
+        return ImGuiKey_LeftShift;
+    case KeyCode::RIGHT_SHIFT:
+        return ImGuiKey_RightShift;
+    case KeyCode::LEFT_CTRL:
+        return ImGuiKey_LeftCtrl;
+    case KeyCode::RIGHT_CTRL:
+        return ImGuiKey_RightCtrl;
+    case KeyCode::PAUSE:
+        return ImGuiKey_Pause;
+    case KeyCode::CAPS_LOCK:
+        return ImGuiKey_CapsLock;
+    case KeyCode::ESCAPE:
+        return ImGuiKey_Escape;
+    case KeyCode::SPACE:
+        return ImGuiKey_Space;
+    case KeyCode::PAGE_UP:
+        return ImGuiKey_PageUp;
+    case KeyCode::PAGE_DOWN:
+        return ImGuiKey_PageDown;
+    case KeyCode::END:
+        return ImGuiKey_End;
+    case KeyCode::HOME:
+        return ImGuiKey_Home;
+    case KeyCode::LEFT:
+        return ImGuiKey_LeftArrow;
+    case KeyCode::UP:
+        return ImGuiKey_UpArrow;
+    case KeyCode::RIGHT:
+        return ImGuiKey_RightArrow;
+    case KeyCode::DOWN:
+        return ImGuiKey_DownArrow;
+    case KeyCode::INSERT:
+        return ImGuiKey_Insert;
+    case KeyCode::DELETE:
+        return ImGuiKey_Delete;
+    case KeyCode::NUM_LOCK:
+        return ImGuiKey_NumLock;
+    case KeyCode::SCROLL_LOCK:
+        return ImGuiKey_ScrollLock;
+    case KeyCode::SEMICOLON:
+        return ImGuiKey_Semicolon;
+    case KeyCode::EQUAL:
+        return ImGuiKey_Equal;
+    case KeyCode::COMMA:
+        return ImGuiKey_Comma;
+    case KeyCode::MINUS:
+        return ImGuiKey_Minus;
+    case KeyCode::NUMPAD_ADD:
+        return ImGuiKey_KeypadAdd;
+    case KeyCode::NUMPAD_SUBTRACT:
+        return ImGuiKey_KeypadSubtract;
+    case KeyCode::NUMPAD_MULTIPLY:
+        return ImGuiKey_KeypadMultiply;
+    case KeyCode::NUMPAD_DIVIDE:
+        return ImGuiKey_KeypadDivide;
+    case KeyCode::PERIOD:
+        return ImGuiKey_Period;
+    case KeyCode::NUMPAD_DECIMAL:
+        return ImGuiKey_KeypadDecimal;
+    case KeyCode::SLASH:
+        return ImGuiKey_Slash;
+    case KeyCode::GRAVE:
+        return ImGuiKey_GraveAccent;
+    case KeyCode::LEFT_BRACKET:
+        return ImGuiKey_LeftBracket;
+    case KeyCode::BACKSLASH:
+        return ImGuiKey_Backslash;
+    case KeyCode::RIGHT_BRACKET:
+        return ImGuiKey_RightBracket;
+    case KeyCode::APOSTROPHE:
+        return ImGuiKey_Apostrophe;
+    case KeyCode::MENU:
+        return ImGuiKey_Menu;
+    case KeyCode::LEFT_ALT:
+        return ImGuiKey_LeftAlt;
+    case KeyCode::RIGHT_ALT:
+        return ImGuiKey_RightAlt;
+    default:
+        return ImGuiKey_None;
+    }
+}
+
+static ImGuiKey mapImGuiModKey(KeyCode code) {
+    switch(code) {
+    case KeyCode::LEFT_SHIFT:
+    case KeyCode::RIGHT_SHIFT:
+        return ImGuiMod_Shift;
+    case KeyCode::LEFT_CTRL:
+    case KeyCode::RIGHT_CTRL:
+        return ImGuiMod_Ctrl;
+    case KeyCode::LEFT_ALT:
+        return ImGuiMod_Alt;
+    default:
+        return ImGuiKey_None;
+    }
+}
+#endif
+
 void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
     if(hasInputMode(InputMode::Mouse)) {
+#ifdef USE_IMGUI
+        if(ImGui::GetCurrentContext()) {
+            ImGuiIO& io = ImGui::GetIO();
+            io.AddKeyEvent(mapImGuiModKey(key), action != KeyAction::RELEASE);
+            io.AddKeyEvent(mapImGuiKey(key), action != KeyAction::RELEASE);
+            if(io.WantCaptureKeyboard) {
+                return;
+            }
+        }
+#endif
         // return onKeyboard((KeyCode) 4, KeyAction::PRESS);
         // key = (KeyCode) 0x21;
 #ifdef __APPLE__
@@ -215,19 +416,88 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action) {
             return;
         }
 
+        int32_t state = 0;
+        switch (key)
+        {
+        case KeyCode::LEFT_SHIFT:
+            state |= AMETA_SHIFT_LEFT_ON | AMETA_SHIFT_ON;
+            break;
+        case KeyCode::RIGHT_SHIFT:
+            state |= AMETA_SHIFT_RIGHT_ON | AMETA_SHIFT_ON;
+            break;
+        case KeyCode::LEFT_ALT:
+            state |= AMETA_ALT_LEFT_ON | AMETA_ALT_ON;
+            break;
+        case KeyCode::RIGHT_ALT:
+            state |= AMETA_ALT_RIGHT_ON | AMETA_ALT_ON;
+            break;
+        case KeyCode::LEFT_CTRL:
+            state |= AMETA_CTRL_LEFT_ON | AMETA_CTRL_ON;
+            break;
+        case KeyCode::RIGHT_CTRL:
+            state |= AMETA_CTRL_RIGHT_ON | AMETA_CTRL_ON;
+            break;
+        case KeyCode::LEFT_SUPER:
+            state |= AMETA_META_LEFT_ON| AMETA_META_ON;
+            break;
+        case KeyCode::RIGHT_SUPER:
+            state |= AMETA_META_RIGHT_ON | AMETA_META_ON;
+            break;
+        case KeyCode::CAPS_LOCK:
+            state |= AMETA_CAPS_LOCK_ON;
+            break;
+        default:
+            break;
+        }
+        if(action == KeyAction::PRESS) {
+            this->metaState |= state;
+        } else {
+            this->metaState &= ~state;
+        }
+
+        if(Settings::enable_keyboard_tab_patches_1_20_60 && state == 0) {
+            if(jniSupport.getTextInputHandler().isEnabled() && !jniSupport.getTextInputHandler().isMultiline()) {
+                if(action == KeyAction::PRESS && (lastKey == KeyCode::TAB || lastKey == KeyCode::UP || lastKey == KeyCode::DOWN) && !(key == KeyCode::TAB || key == KeyCode::UP || key == KeyCode::DOWN || key == KeyCode::ENTER|| key == KeyCode::ESCAPE) && lastEnabledNo == jniSupport.getTextInputHandler().getEnabledNo()) {
+                    if(!deadKey(key)) {
+                        jniSupport.getTextInputHandler().setKeepLastCharOnce();
+                    }
+                    jniSupport.onBackPressed();
+                    inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(KeyCode::ENTER), 0));
+                    inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, mapMinecraftToAndroidKey(KeyCode::ENTER), 0));
+                }
+                lastKey = key;
+                lastEnabledNo = jniSupport.getTextInputHandler().getEnabledNo();
+            } else {
+                lastKey = (KeyCode)0;
+                lastEnabledNo = 0;
+            }
+        }
+
         if(action == KeyAction::PRESS)
-            inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(key)));
+            inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_DOWN, mapMinecraftToAndroidKey(key), this->metaState));
         else if(action == KeyAction::RELEASE)
-            inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, mapMinecraftToAndroidKey(key)));
+            inputQueue.addEvent(FakeKeyEvent(AKEY_EVENT_ACTION_UP, mapMinecraftToAndroidKey(key), this->metaState));
     }
 }
 void WindowCallbacks::onKeyboardText(std::string const& c) {
+#ifdef USE_IMGUI
+    if(ImGui::GetCurrentContext()) {
+        ImGuiIO& io = ImGui::GetIO();
+        io.AddInputCharactersUTF8(c.data());
+        if(io.WantCaptureKeyboard) {
+            return;
+        }
+    }
+#endif
     if(c == "\n" && !jniSupport.getTextInputHandler().isMultiline())
         jniSupport.onReturnKeyPressed();
     else
         jniSupport.getTextInputHandler().onTextInput(c);
 }
 void WindowCallbacks::onPaste(std::string const& str) {
+#ifdef USE_IMGUI
+    Settings::clipboard = str;
+#endif
     jniSupport.getTextInputHandler().onTextInput(str);
 }
 void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
