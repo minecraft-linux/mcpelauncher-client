@@ -25,6 +25,7 @@
 #include "uuid.h"
 #include "shahasher.h"
 #include "securerandom.h"
+#include "../settings.h"
 #include "../main.h"
 #include <thread>
 #include <iostream>
@@ -354,13 +355,24 @@ void JniSupport::onWindowResized(int newWidth, int newHeight) {
 }
 
 void JniSupport::onSetTextboxText(std::string const &text) {
-    FakeJni::LocalFrame frame(vm);
-    auto setText = activity->getClass().getMethod("(Ljava/lang/String;)V", "nativeSetTextboxText");
-    if(setText) {
-        auto str = std::make_shared<FakeJni::JString>(text);
-        setText->invoke(frame.getJniEnv(), activity.get(), frame.getJniEnv().createLocalReference(str));
+    if(!Settings::enable_keyboard_autofocus_patches_1_20_60 || getTextInputHandler().isEnabled()) {
+        FakeJni::LocalFrame frame(vm);
+        auto setText = activity->getClass().getMethod("(Ljava/lang/String;)V", "nativeSetTextboxText");
+        if(setText) {
+            auto str = std::make_shared<FakeJni::JString>(text);
+            setText->invoke(frame.getJniEnv(), activity.get(), frame.getJniEnv().createLocalReference(str));
+        }
+    }
+    auto pos = getTextInputHandler().getCursorPosition();
+    if(pos < text.length()) {
+        setLastChar(text.at(pos));
     }
 }
+
+void JniSupport::setLastChar(FakeJni::JInt sym) {
+    activity->setLastChar(sym);
+}
+
 
 void JniSupport::onReturnKeyPressed() {
     FakeJni::LocalFrame frame(vm);

@@ -36,6 +36,7 @@
 #include <FileUtil.h>
 #include <properties/property.h>
 #include <fstream>
+#include "glad/glad.h"
 // For getpid
 #include <unistd.h>
 #include <simpleipc/client/service_client.h>
@@ -298,6 +299,9 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     if(options.graphicsApi == GraphicsApi::OPENGL_ES2) {
         // GLFW needs a window to let eglGetProcAddress return symbols
         FakeLooper::initWindow();
+#ifdef USE_IMGUI
+        gladLoadGLES2Loader(fake_egl::eglGetProcAddress);
+#endif
         MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
     } else {
         // The glcore patch requires an empty library
@@ -317,7 +321,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
 
     Log::trace("Launcher", "Loading Minecraft library");
-    static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer), reinterpret_cast<void*>(&CorePatches::setFullscreen));
+    static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer), reinterpret_cast<void*>(&CorePatches::setFullscreen), PathHelper::findGameFile(std::string("lib/") + MinecraftUtils::getLibraryAbi()).data());
     if(!handle && options.graphicsApi == GraphicsApi::OPENGL) {
         // Old game version or renderdragon
         options.graphicsApi = GraphicsApi::OPENGL_ES2;
@@ -328,6 +332,9 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
         // GLFW needs a window to let eglGetProcAddress return symbols
         FakeLooper::initWindow();
         MinecraftUtils::setupGLES2Symbols(fake_egl::eglGetProcAddress);
+#ifdef USE_IMGUI
+        gladLoadGLES2Loader(fake_egl::eglGetProcAddress);
+#endif
         // preinit Mods using libGLESv2 can only load now
         modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/", true);
         // Try load the game again

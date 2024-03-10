@@ -13,6 +13,7 @@ private:
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
     bool prepared = false;
     bool textInput = false;
+    int menuSize = 0;
 
     struct EventEntry {
         int fd, ident, events;

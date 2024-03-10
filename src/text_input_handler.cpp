@@ -4,6 +4,24 @@
 void TextInputHandler::enable(std::string text, bool multiline) {
     enabled = true;
     this->multiline = multiline;
+    enabledNo++;
+    if(keepOnce) {
+        printf("[TextInputHandler::update] %s\n", currentText.data());
+        printf("[TextInputHandler::update] %s\n", text.data());
+        if(currentText.length()) {
+            // text.resize(text.size() - 2);
+            auto size = currentText.size();
+            if(size >= 3 && UTF8Util::getCharByteSize(currentText[currentText.size() - 3]) == 3) {
+                text += currentText.substr(currentText.length() - 3);
+            } else if(size >= 2 && UTF8Util::getCharByteSize(currentText[currentText.size() - 2]) == 2) {
+                text += currentText.substr(currentText.length() - 2);
+            } else if(size >= 1 && UTF8Util::getCharByteSize(currentText[currentText.size() - 1]) == 1) {
+                text += currentText[currentText.length() - 1];
+            }
+            textUpdateCallback(text);
+        }
+        keepOnce = false;
+    }
     update(std::move(text));
 }
 
@@ -15,11 +33,13 @@ void TextInputHandler::update(std::string text) {
 }
 
 void TextInputHandler::disable() {
-    currentText.clear();
-    currentTextPosition = 0;
-    currentTextPositionUTF = 0;
-    currentTextCopyPosition = 0;
-    enabled = false;
+    if(!keepOnce) {
+        currentText.clear();
+        currentTextPosition = 0;
+        currentTextPositionUTF = 0;
+        currentTextCopyPosition = 0;
+        enabled = false;
+    }
 }
 
 void TextInputHandler::onTextInput(std::string const &text) {
@@ -148,4 +168,17 @@ std::string TextInputHandler::getCopyText() const {
     } else {
         return currentText;
     }
+}
+
+void TextInputHandler::setCursorPosition(int pos) {
+    currentTextPositionUTF = pos;
+    currentTextPosition = UTF8Util::getBytePosFromUTF(currentText.c_str(), currentText.size(), pos);
+}
+
+void TextInputHandler::setKeepLastCharOnce() {
+    keepOnce = true;
+}
+
+bool TextInputHandler::getKeepLastCharOnce() {
+    return keepOnce;
 }

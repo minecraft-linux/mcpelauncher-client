@@ -14,11 +14,11 @@ struct FakeInputEvent {
 };
 
 struct FakeKeyEvent : FakeInputEvent {
-    int32_t action, keyCode;
+    int32_t action, keyCode, metaState;
 
-    FakeKeyEvent(int32_t action, int32_t keyCode) : FakeInputEvent(AINPUT_SOURCE_KEYBOARD, AINPUT_EVENT_TYPE_KEY), action(action), keyCode(keyCode) {}
-    FakeKeyEvent(int32_t source, int32_t deviceId, int32_t action, int32_t keyCode) : FakeInputEvent(source, AINPUT_EVENT_TYPE_KEY, deviceId), action(action), keyCode(keyCode) {}
-    FakeKeyEvent() : FakeKeyEvent(0, 0) {}
+    FakeKeyEvent(int32_t action, int32_t keyCode, int32_t metaState) : FakeInputEvent(AINPUT_SOURCE_KEYBOARD, AINPUT_EVENT_TYPE_KEY), action(action), keyCode(keyCode), metaState(metaState) {}
+    FakeKeyEvent(int32_t source, int32_t deviceId, int32_t action, int32_t keyCode) : FakeInputEvent(source, AINPUT_EVENT_TYPE_KEY, deviceId), action(action), keyCode(keyCode), metaState(0) {}
+    FakeKeyEvent() : FakeKeyEvent(0, 0, 0) {}
 };
 
 struct FakeMotionEvent : FakeInputEvent {

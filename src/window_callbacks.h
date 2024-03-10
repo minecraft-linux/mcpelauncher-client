@@ -22,11 +22,14 @@ private:
     std::unordered_map<int, GamepadData> gamepads;
     int32_t buttonState = 0;
     KeyCode lastKey = (KeyCode)0;
+    size_t lastEnabledNo = 0;
+    int32_t metaState = 0;
     bool useDirectMouseInput, useDirectKeyboardInput;
     bool modCTRL = false;
     bool needsQueueGamepadInput = true;
     bool fullscreen = options.fullscreen;
     bool sendEvents = false;
+    int menubarsize = 0;
     enum class InputMode {
         Touch,
         Mouse,

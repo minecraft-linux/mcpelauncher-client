@@ -1,4 +1,5 @@
 #include "main_activity.h"
+#include "../settings.h"
 
 #include <unistd.h>
 #ifndef __APPLE__
@@ -265,48 +266,46 @@ void MainActivity::saveFile(std::shared_ptr<FakeJni::JString> fileName) {
 }
 
 FakeJni::JInt MainActivity::getKeyFromKeyCode(FakeJni::JInt keyCode, FakeJni::JInt metaState, FakeJni::JInt deviceId) {
-        // TODO is metaState even filled yet, need to get shift
-        if(keyCode >= AKEYCODE_0 && keyCode <= AKEYCODE_9) {
-            return '0' + keyCode - AKEYCODE_0;
-        }
-        if(keyCode >= AKEYCODE_A && keyCode <= AKEYCODE_Z) {
-            return keyCode - AKEYCODE_A + 'a';
-        }
-        switch(keyCode) {
-        case AKEYCODE_LEFT_BRACKET:
-            return '(';
-        case AKEYCODE_RIGHT_BRACKET:
-            return ')';
-        case AKEYCODE_SPACE:
-            return ' ';
-        case AKEYCODE_SEMICOLON:
-            return ';';
-        case AKEYCODE_EQUALS:
-            return '=';
-        case AKEYCODE_COMMA:
-            return ',';
-        case AKEYCODE_MINUS:
-            return '-';
-        case AKEYCODE_NUMPAD_ADD:
-            return '+';
-        case AKEYCODE_NUMPAD_SUBTRACT:
-            return '-';
-        case AKEYCODE_NUMPAD_MULTIPLY:
-            return '*';
-        case AKEYCODE_NUMPAD_DIVIDE:
-            return '/';
-        case AKEYCODE_PERIOD:
-            return '.';
-        case AKEYCODE_NUMPAD_DOT:
-            return '.';
-        // case AKEYCODE_SLASH:
-        //     return '/';
-        case AKEYCODE_GRAVE:
-            return '`';
-        case AKEYCODE_BACKSLASH:
-            return '\\';
-        case AKEYCODE_APOSTROPHE:
-            return '\'';
-        }
+    if(!Settings::enable_keyboard_autofocus_patches_1_20_60) {
         return 0;
     }
+    if(keyCode >= AKEYCODE_F1 && keyCode <= AKEYCODE_F12) {
+        return 0;
+    }
+    auto ret = lastChar;
+    switch (keyCode)
+    {
+    case AKEYCODE_DEL:
+    case AKEYCODE_FORWARD_DEL:
+    case AKEYCODE_SHIFT_LEFT:
+    case AKEYCODE_SHIFT_RIGHT:
+    case AKEYCODE_ALT_LEFT:
+    case AKEYCODE_ALT_RIGHT:
+    case AKEYCODE_CTRL_LEFT:
+    case AKEYCODE_CTRL_RIGHT:
+    case AKEYCODE_CAPS_LOCK:
+    case AKEYCODE_META_LEFT:
+    case AKEYCODE_META_RIGHT:
+    case AKEYCODE_ESCAPE:
+    case AKEYCODE_ENTER:
+    case AKEYCODE_VOLUME_UP:
+    case AKEYCODE_VOLUME_DOWN:
+    case AKEYCODE_VOLUME_MUTE:
+    case AKEYCODE_DPAD_LEFT:
+    case AKEYCODE_DPAD_RIGHT:
+    case AKEYCODE_DPAD_UP:
+    case AKEYCODE_DPAD_UP_LEFT:
+    case AKEYCODE_DPAD_UP_RIGHT:
+    case AKEYCODE_DPAD_DOWN:
+    case AKEYCODE_DPAD_DOWN_LEFT:
+    case AKEYCODE_DPAD_DOWN_RIGHT:
+    case AKEYCODE_UNKNOWN:
+        return 0;
+    }
+    lastChar = 0;
+    return ret;
+}
+
+void MainActivity::setLastChar(FakeJni::JInt sym) {
+    lastChar = sym;
+}
