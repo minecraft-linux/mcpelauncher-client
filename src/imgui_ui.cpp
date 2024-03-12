@@ -78,14 +78,16 @@ void ImGuiUIDrawFrame(GameWindow* window) {
 
     ImGui::NewFrame();
     static auto showMenuBar = true;
-    auto autoHide = !((!window->getFullscreen() || io.MousePos.y == 0 && io.MouseDelta.y < -5 || io.WantCaptureKeyboard || io.WantCaptureMouse) && !window->getCursorDisabled());
+    static auto menuFocused = false;
+    auto autoShowMenubar = (!window->getFullscreen() || io.MousePos.y == 0 && io.MouseDelta.y < -5 || menuFocused) && !window->getCursorDisabled();
     static auto showFilePicker = false;
     static auto show_demo_window = false;
     static auto show_confirm_popup = false;
     static auto show_about = false;
-    if(Settings::enable_menubar && showMenuBar && !autoHide && ImGui::BeginMainMenuBar())
+    if(Settings::enable_menubar && showMenuBar && autoShowMenubar && ImGui::BeginMainMenuBar())
 
     {
+        menuFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) || ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
         if(ImGui::BeginMenu("File")) {
 #ifndef NDEBUG
             if(ImGui::MenuItem("Open")) {
@@ -168,6 +170,7 @@ void ImGuiUIDrawFrame(GameWindow* window) {
         ImGui::EndMainMenuBar();
     } else {
         Settings::menubarsize = 0;
+        menuFocused = false;
     }
     // Always center this window when appearing
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
