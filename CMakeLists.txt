@@ -59,7 +59,8 @@ if(USE_SNMALLOC)
     target_link_libraries(mcpelauncher-client PRIVATE snmalloc)
     target_sources(mcpelauncher-client PRIVATE ${snmalloc_ext_SOURCE_DIR}/src/snmalloc/override/new.cc)
 endif()
-if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../imgui" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui.cpp")
+option(USE_IMGUI "use imgui for an overlay ui" OFF)
+if(USE_IMGUI AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../imgui" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui.cpp")
     target_sources(mcpelauncher-client PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../imgui/imgui_demo.cpp
