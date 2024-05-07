@@ -170,7 +170,7 @@ void ImGuiUIDrawFrame(GameWindow* window) {
         auto secs = std::chrono::duration_cast<std::chrono::milliseconds>(now - mouseOnY0Since).count();
         showMenuBarViaMouse = secs >= 500;
     }
-    auto autoShowMenubar = (!window->getFullscreen() || showMenuBarViaMouse || menuFocused) && !window->getCursorDisabled();
+    auto autoShowMenubar = (!window->getFullscreen() || showMenuBarViaMouse || menuFocused);
     static auto showFilePicker = false;
     static auto show_demo_window = false;
     static auto show_confirm_popup = false;
