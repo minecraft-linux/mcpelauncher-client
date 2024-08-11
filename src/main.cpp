@@ -375,6 +375,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     linker::load_library("libmcpelauncher_menu.so", {
         { "mcpelauncher_addmenu", (void*)mcpelauncher_addmenu },
         { "mcpelauncher_show_window", (void*)mcpelauncher_show_window },
+        { "mcpelauncher_close_window", (void*)mcpelauncher_close_window },
     });
 
     ModLoader modLoader;

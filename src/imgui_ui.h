@@ -29,7 +29,6 @@ struct control
       int min;
       int def;
       int max;
-      int step;
       void* user;
       void(*onChange)(void* user, int value);
     } sliderint;
@@ -38,7 +37,6 @@ struct control
       float min;
       float def;
       float max;
-      float step;
       void* user;
       void(*onChange)(void* user, float value);
     } sliderfloat;
@@ -56,3 +54,5 @@ struct control
   } data;
 };
 void mcpelauncher_show_window(const char* title, int isModal, void* user, void(*onClose)(void* user), int count, control* controls);
+
+void mcpelauncher_close_window(const char *title);
