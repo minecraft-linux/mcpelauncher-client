@@ -210,7 +210,7 @@ void mcpelauncher_addmenu(size_t length, MenuEntryABI* entries) {
 
 void mcpelauncher_show_window(const char *title, int isModal, void *user, void (*onClose)(void *user), int count, control *controls) {
     activeWindowsLock.lock();
-    if(auto activeWindow = std::find_if(activeWindows.begin(), activeWindows.end(), [](auto&& wnd) {
+    if(auto activeWindow = std::find_if(activeWindows.begin(), activeWindows.end(), [title](auto&& wnd) {
             return wnd.title == (title ? title : "Untitled");
         }); activeWindow != activeWindows.end()) {
         std::vector<WindowControl> subentries(count);
@@ -256,10 +256,10 @@ void mcpelauncher_show_window(const char *title, int isModal, void *user, void (
                  break;
             }
         }
-        activeWindow->isModal = !!isModal;
-        activeWindow->user = user;
-        activeWindow->onClose = onClose;
-        activeWindow->controls = std::move(subentries);
+        (*activeWindow)->isModal = !!isModal;
+        (*activeWindow)->user = user;
+        (*activeWindow)->onClose = onClose;
+        (*activeWindow)->controls = std::move(subentries);
         return;
     }
 
