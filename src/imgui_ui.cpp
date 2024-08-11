@@ -210,6 +210,59 @@ void mcpelauncher_addmenu(size_t length, MenuEntryABI* entries) {
 
 void mcpelauncher_show_window(const char *title, int isModal, void *user, void (*onClose)(void *user), int count, control *controls) {
     activeWindowsLock.lock();
+    if(auto activeWindow = std::find_if(activeWindows.begin(), activeWindows.end(), [](auto&& wnd) {
+            return wnd.title == (title ? title : "Untitled");
+        }); activeWindow != activeWindows.end()) {
+        std::vector<WindowControl> subentries(count);
+        for(int i = 0; i < count; i++) {
+            subentries[i].type = controls[i].type;
+            switch (controls[i].type)
+            {
+            case 0:
+                 subentries[i].data.button.label = controls[i].data.button.label ? controls[i].data.button.label : "";
+                 subentries[i].data.button.user = controls[i].data.button.user;
+                 subentries[i].data.button.onClick = controls[i].data.button.onClick;
+                 break;
+            case 1:
+                 subentries[i].data.sliderint.label = controls[i].data.sliderint.label ? controls[i].data.sliderint.label : "";
+                 subentries[i].data.sliderint.step = controls[i].data.sliderint.step;
+                 subentries[i].data.sliderint.def = controls[i].data.sliderint.def;
+                 subentries[i].data.sliderint.max = controls[i].data.sliderint.max;
+                 subentries[i].data.sliderint.min = controls[i].data.sliderint.min;
+                 subentries[i].data.sliderint.user = controls[i].data.sliderint.user;
+                 subentries[i].data.sliderint.onChange = controls[i].data.sliderint.onChange;
+                 break;
+             case 2:
+                 subentries[i].data.sliderfloat.label = controls[i].data.sliderfloat.label ? controls[i].data.sliderfloat.label : "";
+                 subentries[i].data.sliderfloat.step = controls[i].data.sliderfloat.step;
+                 subentries[i].data.sliderfloat.def = controls[i].data.sliderfloat.def;
+                 subentries[i].data.sliderfloat.max = controls[i].data.sliderfloat.max;
+                 subentries[i].data.sliderfloat.min = controls[i].data.sliderfloat.min;
+                 subentries[i].data.sliderfloat.user = controls[i].data.sliderfloat.user;
+                 subentries[i].data.sliderfloat.onChange = controls[i].data.sliderfloat.onChange;
+                 break;
+             case 3:
+                 subentries[i].data.text.label = controls[i].data.text.label ? controls[i].data.text.label : "";
+                 subentries[i].data.text.size = controls[i].data.text.size;
+                 break;
+             case 4:
+                 subentries[i].data.textinput.label = controls[i].data.textinput.label ? controls[i].data.textinput.label : "";                  subentries[i].data.textinput.def = controls[i].data.textinput.def ? controls[i].data.textinput.def : "";
+                 subentries[i].data.textinput.placeholder = controls[i].data.textinput.placeholder ? controls[i].data.textinput.placeholder : "";
+                 subentries[i].data.textinput.user = controls[i].data.textinput.user;
+                 subentries[i].data.textinput.onChange = controls[i].data.textinput.onChange;
+                 break;
+        
+             default:
+                 break;
+            }
+        }
+        activeWindow->isModal = !!isModal;
+        activeWindow->user = user;
+        activeWindow->onClose = onClose;
+        activeWindow->controls = std::move(subentries);
+        return;
+    }
+
     std::vector<WindowControl> subentries(count);
     for(int i = 0; i < count; i++) {
         subentries[i].type = controls[i].type;
