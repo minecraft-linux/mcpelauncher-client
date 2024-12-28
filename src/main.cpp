@@ -378,6 +378,8 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
         { "mcpelauncher_addmenu", (void*)mcpelauncher_addmenu },
         { "mcpelauncher_show_window", (void*)mcpelauncher_show_window },
         { "mcpelauncher_close_window", (void*)mcpelauncher_close_window },
+        { "mcpelauncher_add_draw_callback", (void*)mcpelauncher_add_draw_callback },
+        { "mcpelauncher_get_imgui_context", (void*)mcpelauncher_get_imgui_context },
     });
 
     ModLoader modLoader;

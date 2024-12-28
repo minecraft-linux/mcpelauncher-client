@@ -56,3 +56,7 @@ struct control
 void mcpelauncher_show_window(const char* title, int isModal, void* user, void(*onClose)(void* user), int count, control* controls);
 
 void mcpelauncher_close_window(const char *title);
+
+void mcpelauncher_add_draw_callback(void* user, void(*onDraw)(void* user));
+
+struct ImGuiContext* mcpelauncher_get_imgui_context();

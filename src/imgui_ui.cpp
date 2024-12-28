@@ -177,6 +177,8 @@ static std::vector<MenuEntry> menuentries;
 static std::mutex menuentrieslock;
 static std::vector<std::shared_ptr<ActiveWindow>> activeWindows;
 static std::mutex activeWindowsLock;
+static std::vector<std::function<void()>> onDrawCallbacks;
+static std::mutex onDrawCallbacksLock;
 
 static void convertEntries(std::vector<MenuEntry>& menuentries, size_t length, MenuEntryABI* entries) {
     for(size_t i = 0; i < length; i++) {
@@ -278,6 +280,16 @@ void mcpelauncher_close_window(const char *title) {
         activeWindows.erase(activeWindow);
     }
     activeWindowsLock.unlock();
+}
+
+void mcpelauncher_add_draw_callback(void* user, void(*onDraw)(void* user)) {
+    onDrawCallbacksLock.lock();
+    onDrawCallbacks.push_back(std::bind(onDraw, user));
+    onDrawCallbacksLock.unlock();
+}
+
+struct ImGuiContext* mcpelauncher_get_imgui_context() {
+    return ImGui::GetCurrentContext();
 }
 
 void ImGuiUIInit(GameWindow* window) {
@@ -927,6 +939,12 @@ void ImGuiUIDrawFrame(GameWindow* window) {
         }
         activeWindowsLock.unlock();
     }
+
+    onDrawCallbacksLock.lock();
+    for(size_t i = 0; i < onDrawCallbacks.size(); i++) {
+        onDrawCallbacks[i]();
+    }
+    onDrawCallbacksLock.unlock();
 
     // Rendering
     ImGui::Render();
