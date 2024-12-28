@@ -206,8 +206,10 @@ void mcpelauncher_addmenu(size_t length, MenuEntryABI* entries) {
     menuentrieslock.unlock();
 }
 
-void mcpelauncher_show_window(const char *title, int isModal, void *user, void (*onClose)(void *user), int count, control *controls) {
-    activeWindowsLock.lock();
+void mcpelauncher_show_window(const char *title, int isModal, void *user, void (*onClose)(void *user), int count, control *controls, bool skipLock) {
+    if (!skipLock) {
+        activeWindowsLock.lock();
+    }
     std::vector<WindowControl> subentries(count);
     for(int i = 0; i < count; i++) {
         subentries[i].type = controls[i].type;
@@ -267,17 +269,23 @@ void mcpelauncher_show_window(const char *title, int isModal, void *user, void (
             .controls = std::move(subentries),
         }));
     }
-    activeWindowsLock.unlock();
+    if (!skipLock) {
+        activeWindowsLock.unlock();
+    }
 }
 
-void mcpelauncher_close_window(const char *title) {
-    activeWindowsLock.lock();
+void mcpelauncher_close_window(const char *title, bool skipLock) {
+    if (!skipLock) {
+        activeWindowsLock.lock();
+    }
     if(auto activeWindow = std::find_if(activeWindows.begin(), activeWindows.end(), [title](auto&& wnd) {
             return wnd->title == (title ? title : "Untitled");
         }); activeWindow != activeWindows.end()) {
         activeWindows.erase(activeWindow);
     }
-    activeWindowsLock.unlock();
+    if (!skipLock) {
+        activeWindowsLock.unlock();
+    }
 }
 
 void ImGuiUIInit(GameWindow* window) {

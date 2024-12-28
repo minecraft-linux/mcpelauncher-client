@@ -53,6 +53,6 @@ struct control
     } textinput;
   } data;
 };
-void mcpelauncher_show_window(const char* title, int isModal, void* user, void(*onClose)(void* user), int count, control* controls);
+void mcpelauncher_show_window(const char* title, int isModal, void* user, void(*onClose)(void* user), int count, control* controls, bool skipLock = false);
 
-void mcpelauncher_close_window(const char *title);
+void mcpelauncher_close_window(const char *title, bool skipLock = false);
