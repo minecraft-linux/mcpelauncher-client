@@ -4,7 +4,7 @@
 #include <string.h>
 
 void StrafeSprintPatch::install(void* handle) {
-    void* ptr = PatchUtils::patternSearch(handle, "F3 0F 10 05 ?? ?? ?? ?? F3 0F 59 E0 0F 28 EA");
+    void* ptr = PatchUtils::patternSearch(handle, "F3 0F 10 05 ?? ?? ?? ?? 41 0F 2E ?? ?? 76 ?? EB");
     if(!ptr) {
         Log::error("StrafeSprintPatch", "Not patching - Pattern not found");
         return;
@@ -16,7 +16,7 @@ void StrafeSprintPatch::install(void* handle) {
     float orig = *val;
 
     if(orig != 0.70710677f) {
-        Log::error("StrafeSprintPatch", "Not patching - Wrong value! Expected 0.70710677, got %f (address: %p)", orig, val);
+        Log::error("StrafeSprintPatch", "Not patching - Wrong value! Expected 0.70710677, got %.8f (address: %p)", orig, val);
         return;
     }
     *val = 0.7071068f;
