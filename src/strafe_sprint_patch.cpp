@@ -4,7 +4,12 @@
 #include <string.h>
 
 void StrafeSprintPatch::install(void* handle) {
+    // 1.20.30+
     void* ptr = PatchUtils::patternSearch(handle, "F3 0F 10 05 ?? ?? ?? ?? 41 0F 2E ?? ?? 76 ?? EB");
+    if (!ptr) {
+        // <= 1.21.80
+        ptr = PatchUtils::patternSearch(handle, "F3 0F 10 05 ?? ?? ?? ?? F3 0F 59 E0 0F 28 EA");
+    }
     if(!ptr) {
         Log::error("StrafeSprintPatch", "Not patching - Pattern not found");
         return;
