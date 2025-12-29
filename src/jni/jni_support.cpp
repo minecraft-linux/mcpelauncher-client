@@ -124,7 +124,7 @@ void JniSupport::registerJniClasses() {
 #endif
 }
 
-void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
+void JniSupport::registerMinecraftNatives(void* (*symResolver)(const char*)) {
     registerNatives(MainActivity::getDescriptor(), {{"nativeRegisterThis", "()V"}, {"nativeWaitCrashManagementSetupComplete", "()V"}, {"nativeInitializeWithApplicationContext", "(Landroid/content/Context;)V"}, {"nativeShutdown", "()V"}, {"nativeUnregisterThis", "()V"}, {"nativeStopThis", "()V"}, {"nativeOnDestroy", "()V"}, {"nativeResize", "(II)V"}, {"nativeSetTextboxText", "(Ljava/lang/String;)V"}, {"nativeCaretPosition", "(I)V"}, {"nativeBackPressed", "()V"}, {"nativeReturnKeyPressed", "()V"}, {"nativeOnPickImageSuccess", "(JLjava/lang/String;)V"}, {"nativeOnPickImageCanceled", "(J)V"}, {"nativeOnPickFileSuccess", "(Ljava/lang/String;)V"}, {"nativeOnPickFileCanceled", "()V"}, {"nativeInitializeXboxLive", "(JJ)V"}, {"nativeinitializeLibHttpClient", "(J)J"}, {"nativeInitializeLibHttpClient", "(J)J"}, {"nativeProcessIntentUriQuery", "(Ljava/lang/String;Ljava/lang/String;)V"}, {"nativeSetIntegrityToken", "(Ljava/lang/String;)V"}, {"nativeRunNativeCallbackOnUiThread", "(J)V"}}, symResolver);
     registerNatives(NetworkMonitor::getDescriptor(), {{"nativeUpdateNetworkStatus", "(ZZZ)V"}}, symResolver);
     registerNatives(NativeStoreListener::getDescriptor(), {
@@ -163,27 +163,27 @@ void JniSupport::registerMinecraftNatives(void *(*symResolver)(const char *)) {
                     symResolver);
 }
 
-JniSupport::JniSupport() : textInput([this](std::string const &str) { return onSetTextboxText(str); }, [this](int pos) { return onCaretPosition(pos); })
+JniSupport::JniSupport() : textInput([this](std::string const& str) { return onSetTextboxText(str); }, [this](int pos) { return onCaretPosition(pos); })
 #if defined(__APPLE__) && defined(__aarch64__)
                            ,
-                           vm([](Baron::Jvm *jvm) {
+                           vm([](Baron::Jvm* jvm) {
                                auto lib = linker::dlopen(PathHelper::findDataFile("lib/" + std::string(PathHelper::getAbiDir()) + "/libjnivmsupport.so").c_str(), 0);
                                if(lib == nullptr) {
                                    Log::error("LAUNCHER", "Failed to load arm64 variadic compat libjnivmsupport.so Original Error: %s", linker::dlerror());
                                    return;
                                }
-                               void **GetJMethodIDSignature = (void **)linker::dlsym(lib, "GetJMethodIDSignature");
+                               void** GetJMethodIDSignature = (void**)linker::dlsym(lib, "GetJMethodIDSignature");
                                if(GetJMethodIDSignature == nullptr) {
                                    Log::error("LAUNCHER", "Failed to get GetJMethodIDSignature Original Error: %s", linker::dlerror());
                                    return;
                                }
-                               *GetJMethodIDSignature = (void *)jnivm::GetJMethodIDSignature;
-                               void (*PatchJNINativeInterface)(JNINativeInterface &interface) = (void (*)(JNINativeInterface &interface))linker::dlsym(lib, "PatchJNINativeInterface");
+                               *GetJMethodIDSignature = (void*)jnivm::GetJMethodIDSignature;
+                               void (*PatchJNINativeInterface)(JNINativeInterface& interface) = (void (*)(JNINativeInterface& interface))linker::dlsym(lib, "PatchJNINativeInterface");
                                if(PatchJNINativeInterface == nullptr) {
                                    Log::error("LAUNCHER", "Failed to get PatchJNINativeInterface Original Error: %s", linker::dlerror());
                                    return;
                                }
-                               jvm->AddHook([PatchJNINativeInterface](JNINativeInterface &in) {
+                               jvm->AddHook([PatchJNINativeInterface](JNINativeInterface& in) {
                                    PatchJNINativeInterface(in);
                                });
                            })
@@ -193,22 +193,22 @@ JniSupport::JniSupport() : textInput([this](std::string const &str) { return onS
 }
 
 void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
-                                 std::vector<JniSupport::NativeEntry> entries, void *(*symResolver)(const char *)) {
+                                 std::vector<JniSupport::NativeEntry> entries, void* (*symResolver)(const char*)) {
     FakeJni::LocalFrame frame(vm);
 
     std::string cppClassName = clazz->getName();
     std::replace(cppClassName.begin(), cppClassName.end(), '/', '_');
 
     std::vector<JNINativeMethod> javaEntries;
-    for(auto const &ent : entries) {
+    for(auto const& ent : entries) {
         auto cppSymName = std::string("Java_") + cppClassName + "_" + ent.name;
         auto cppSym = symResolver(cppSymName.c_str());
         if(cppSym == nullptr) {
-            Log::error("JniSupport", "Missing native symbol: %s", cppSymName.c_str());
+            Log::warn("JniSupport", "Missing native symbol: %s", cppSymName.c_str());
             continue;
         }
 
-        javaEntries.push_back({(char *)ent.name, (char *)ent.sig, cppSym});
+        javaEntries.push_back({(char*)ent.name, (char*)ent.sig, cppSym});
     }
 
     auto jClazz = frame.getJniEnv().createLocalReference(std::const_pointer_cast<FakeJni::JClass>(clazz));
@@ -216,8 +216,8 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
         throw std::runtime_error("RegisterNatives failed");
 }
 
-void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, GameActivity_createFunc *gameOnCreate,
-                           void *stbiLoadFromMemory, void *stbiImageFree) {
+void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameActivity_createFunc* gameOnCreate,
+                           void* stbiLoadFromMemory, void* stbiImageFree) {
     FakeJni::LocalFrame frame(vm);
 
     vm.attachLibrary("libfmod.so", "", {linker::dlopen, linker::dlsym, linker::dlclose_unlocked});
@@ -240,9 +240,9 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, GameAct
 
     if(activityOnCreate != nullptr) {
         nativeActivity.callbacks = &nativeActivityCallbacks;
-        nativeActivity.vm = (JavaVM *)&vm;
-        nativeActivity.assetManager = (AAssetManager *)assetManager.get();
-        nativeActivity.env = (JNIEnv *)&frame.getJniEnv();
+        nativeActivity.vm = (JavaVM*)&vm;
+        nativeActivity.assetManager = (AAssetManager*)assetManager.get();
+        nativeActivity.env = (JNIEnv*)&frame.getJniEnv();
         nativeActivity.internalDataPath = "/internal";
         nativeActivity.externalDataPath = "/external";
         nativeActivity.clazz = activityRef;
@@ -263,9 +263,9 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, GameAct
         // nativeActivityCallbacks.onResume(&nativeActivity);
     } else {
         gameActivity.callbacks = &gameActivityCallbacks;
-        gameActivity.vm = (JavaVM *)&vm;
-        gameActivity.assetManager = (AAssetManager *)assetManager.get();
-        gameActivity.env = (JNIEnv *)&frame.getJniEnv();
+        gameActivity.vm = (JavaVM*)&vm;
+        gameActivity.assetManager = (AAssetManager*)assetManager.get();
+        gameActivity.env = (JNIEnv*)&frame.getJniEnv();
         gameActivity.internalDataPath = "/internal";
         gameActivity.externalDataPath = "/external";
         gameActivity.javaGameActivity = activityRef;
@@ -310,14 +310,14 @@ void JniSupport::startGame(ANativeActivity_createFunc *activityOnCreate, GameAct
     }
 }
 
-static std::string urlDecode(const std::string &encoded) {
+static std::string urlDecode(const std::string& encoded) {
     std::ostringstream decoded;
     for(size_t i = 0; i < encoded.length(); ++i) {
         if(encoded.at(i) == '%' && i + 2 < encoded.length()) {
             std::istringstream in(encoded.substr(i + 1, 2));
             short c;
             in >> std::hex >> c;
-            decoded << (char &)c;
+            decoded << (char&)c;
             i += 2;
         } else {
             decoded << encoded.at(i);
@@ -380,7 +380,7 @@ void JniSupport::importFile(std::string path) {
             } else {
                 Log::warn("JniSupport", "Not importing file at %s; file path cannot contain &", path.c_str());
             }
-        } catch(std::exception &e) {
+        } catch(std::exception& e) {
             Log::error("JniSupport", "Failed to import file at %s: %s", path.c_str(), e.what());
         }
     } else {
@@ -439,12 +439,12 @@ void JniSupport::setLooperRunning(bool running) {
         gameExitCond.notify_all();
 }
 
-void JniSupport::onWindowCreated(ANativeWindow *window, AInputQueue *inputQueue) {
+void JniSupport::onWindowCreated(ANativeWindow* window, AInputQueue* inputQueue) {
     // Note on thread safety: This code is fine thread-wise because ANativeActivity_onCreate locks until the thread is
     // initialized; the thread initialization code runs ALooper_prepare before signaling it's ready.
     this->window = window;
     this->inputQueue = inputQueue;
-    activity->window = (GameWindow *)window;
+    activity->window = (GameWindow*)window;
 }
 
 void JniSupport::onWindowClosed() {
@@ -460,7 +460,7 @@ void JniSupport::onWindowResized(int newWidth, int newHeight) {
         resize->invoke(frame.getJniEnv(), activity.get(), newWidth, newHeight);
 }
 
-void JniSupport::onSetTextboxText(std::string const &text) {
+void JniSupport::onSetTextboxText(std::string const& text) {
     if(!Settings::enable_keyboard_autofocus_patches_1_20_60 || getTextInputHandler().isEnabled()) {
         FakeJni::LocalFrame frame(vm);
         auto setText = activity->getClass().getMethod("(Ljava/lang/String;)V", "nativeSetTextboxText");
