@@ -58,8 +58,8 @@ private:
     std::vector<signed char> response;
     std::vector<ResponseHeader> headers;
     std::vector<char> body;
-    std::string method;
     std::string url;
+    std::string method;
     FakeJni::JLong call_handle;
 
     size_t write_callback_old(char* ptr, size_t size, size_t nmemb);
