@@ -20,7 +20,7 @@ class NativeInputStream : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/xbox/httpclient/HttpClientRequestBody/00024NativeInputStream")
     NativeInputStream(FakeJni::JLong call_handle);
-    size_t Read(void *buffer, size_t size);
+    size_t Read(void* buffer, size_t size);
 };
 
 class HttpClientRequest : public FakeJni::JObject {
@@ -39,31 +39,32 @@ public:
     void setHttpMethodAndBody2(std::shared_ptr<FakeJni::JString>, FakeJni::JLong, std::shared_ptr<FakeJni::JString>, FakeJni::JLong);
     void setHttpHeader(std::shared_ptr<FakeJni::JString> name, std::shared_ptr<FakeJni::JString> value);
     void doRequestAsync(FakeJni::JLong sourceCall);
-    static size_t write_callback_wrapper_old(char *ptr, size_t size, size_t nmemb, void *userdata) {
-        auto *self = static_cast<HttpClientRequest *>(userdata);
+    static size_t write_callback_wrapper_old(char* ptr, size_t size, size_t nmemb, void* userdata) {
+        auto* self = static_cast<HttpClientRequest*>(userdata);
         return self->write_callback_old(ptr, size, nmemb);
     }
-    static size_t write_callback_wrapper(char *ptr, size_t size, size_t nmemb, void *userdata) {
-        auto *self = static_cast<HttpClientRequest *>(userdata);
+    static size_t write_callback_wrapper(char* ptr, size_t size, size_t nmemb, void* userdata) {
+        auto* self = static_cast<HttpClientRequest*>(userdata);
         return self->write_callback(ptr, size, nmemb);
     }
-    static size_t header_callback_wrapper(char *ptr, size_t size, size_t nmemb, void *userdata) {
-        auto *self = static_cast<HttpClientRequest *>(userdata);
+    static size_t header_callback_wrapper(char* ptr, size_t size, size_t nmemb, void* userdata) {
+        auto* self = static_cast<HttpClientRequest*>(userdata);
         return self->header_callback(ptr, size, nmemb);
     }
 
 private:
-    void *curl;
-    struct curl_slist *header = nullptr;
+    void* curl;
+    struct curl_slist* header = nullptr;
     std::vector<signed char> response;
     std::vector<ResponseHeader> headers;
     std::vector<char> body;
+    std::string url;
     std::string method;
     FakeJni::JLong call_handle;
 
-    size_t write_callback_old(char *ptr, size_t size, size_t nmemb);
-    size_t write_callback(char *ptr, size_t size, size_t nmemb);
-    size_t header_callback(char *buffer, size_t size, size_t nitems);
+    size_t write_callback_old(char* ptr, size_t size, size_t nmemb);
+    size_t write_callback(char* ptr, size_t size, size_t nmemb);
+    size_t header_callback(char* buffer, size_t size, size_t nitems);
 };
 
 class HttpClientResponse : public FakeJni::JObject {
@@ -96,7 +97,6 @@ public:
 };
 
 class NetworkObserver : public FakeJni::JObject {
-
 public:
     DEFINE_CLASS_NAME("com/xbox/httpclient/NetworkObserver")
 };

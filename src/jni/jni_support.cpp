@@ -206,7 +206,7 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
         auto cppSymName = std::string("Java_") + cppClassName + "_" + ent.name;
         auto cppSym = symResolver(cppSymName.c_str());
         if(cppSym == nullptr) {
-            Log::error("JniSupport", "Missing native symbol: %s", cppSymName.c_str());
+            Log::warn("JniSupport", "Missing native symbol: %s", cppSymName.c_str());
             continue;
         }
 
