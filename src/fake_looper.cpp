@@ -58,9 +58,11 @@ void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void *> &syms) 
 }
 
 void FakeLooper::onGameActivityClose(GameActivity *native) {
-    FakeJni::JniEnvContext ctx(*(FakeJni::Jvm *)native->vm);
-    auto activity = std::dynamic_pointer_cast<MainActivity>(ctx.getJniEnv().resolveReference(native->javaGameActivity));
-    activity->quitCallback();
+    // GameActivity_finish is called by Minecraft during startup as part of the
+    // Android activity lifecycle transition. Unlike ANativeActivity_finish,
+    // this should not actually exit the app - the window close event handles
+    // clean shutdown instead.
+    Log::trace("Launcher", "GameActivity_finish called (ignored - using window close for shutdown)");
 }
 
 
