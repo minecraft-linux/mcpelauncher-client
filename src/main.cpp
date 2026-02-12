@@ -586,6 +586,29 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
         Log::error("Launcher", "Failed to bind file_handler, you may be unable to import files: %s", ex.what());
     }
 
+    // Fix corrupted __emutls_control structs in libminecraftpe.so
+    // The v1.26 binary has 71 emutls controls but 2 have invalid data due to
+    // linker symbol collisions. Patch them to valid {size=8, align=8, index=0, templ=NULL}.
+    {
+        struct EmutlsControl {
+            size_t size;
+            size_t align;
+            uintptr_t index;
+            void* templ;
+        };
+        static const uintptr_t bad_controls[] = {
+            0x13701258,  // overlaps with rand_meth data (garbage bytes)
+        };
+        for (auto offset : bad_controls) {
+            auto* ctrl = (EmutlsControl*)((uintptr_t)base + offset);
+            ctrl->size = 8;
+            ctrl->align = 8;
+            ctrl->index = 0;
+            ctrl->templ = nullptr;
+            Log::info("Launcher", "Fixed corrupted emutls control at base+0x%lx", (unsigned long)offset);
+        }
+    }
+
     Log::info("Launcher", "Executing main thread");
     ThreadMover::executeMainThread();
     support.setLooperRunning(false);
