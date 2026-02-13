@@ -28,10 +28,6 @@
 #include <mcpelauncher/linker.h>
 #include <minecraft/imported/android_symbols.h>
 #include "main.h"
-#if defined(__x86_64__) && defined(__linux__)
-#include <signal.h>
-#include <ucontext.h>
-#endif
 #ifdef HAVE_SDL3AUDIO
 #include "fake_audio.h"
 #endif
@@ -494,76 +490,6 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%" PRIXPTR, (uintptr_t)MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
-
-    // SIGSEGV recovery for known crashes in the x86_64 libminecraftpe.so.
-    // The crash offsets and register manipulation are specific to x86_64 Linux.
-#if defined(__x86_64__) && defined(__linux__)
-    {
-        static uintptr_t s_mcbase = base;
-        struct sigaction sa = {};
-        sa.sa_flags = SA_SIGINFO;  // No SA_RESETHAND - handler persists
-        sa.sa_sigaction = [](int sig, siginfo_t *info, void *ctx) {
-            auto *uc = (ucontext_t *)ctx;
-            auto rip = (uintptr_t)uc->uc_mcontext.gregs[REG_RIP];
-            uintptr_t mc_offset = rip - s_mcbase;
-
-            // Crash 1: Table lookup with out-of-bounds index (mc+0x9dc22fd)
-            // Function at mc+0x9dc2220 does: mov r15,[rdi+rdx]; mov r14,[rdi+rdx+8]
-            // where rdx = index*16 and index is garbage. r14 is string length,
-            // r15 is string data ptr. Setting both to 0 triggers the function's
-            // built-in null check at mc+0x9dc238b (test r14,r14; je ...) which
-            // safely falls through to the error/default path.
-            if (mc_offset == 0x9dc22fd) {
-                uc->uc_mcontext.gregs[REG_R15] = 0;
-                uc->uc_mcontext.gregs[REG_R14] = 0;
-                // Skip past both loads (4+5=9 bytes) to xorps at mc+0x9dc2306
-                uc->uc_mcontext.gregs[REG_RIP] = s_mcbase + 0x9dc2306;
-                return;
-            }
-
-            // Crash 2: URL decode with bad string ptr (mc+0xcbe8f40)
-            // movzbl (%rdx),%eax where rdx is bad string pointer.
-            // The function at mc+0xcbe8f10 returns a match result via the
-            // output buffer at [rdi]. Setting output to 0 (no match) and
-            // returning from the function.
-            if (mc_offset == 0xcbe8f40) {
-                // Function prologue: 6 pushes + sub $0x88,%rsp
-                // Output buffer is at original rdi (first arg).
-                // Zero the output (no match found) and return.
-                auto rsp = uc->uc_mcontext.gregs[REG_RSP];
-                // Restore rsp: undo sub $0x88 + 6 pushes
-                rsp += 0x88 + 6 * 8;
-                // Return address is at [rsp] before our adjustment
-                auto ret_addr = *(uintptr_t *)(rsp);
-                rsp += 8;  // pop return address
-                uc->uc_mcontext.gregs[REG_RSP] = rsp;
-                uc->uc_mcontext.gregs[REG_RAX] = 0;
-                uc->uc_mcontext.gregs[REG_RIP] = ret_addr;
-                return;
-            }
-
-            // Unknown crash - print diagnostics and abort
-            fprintf(stderr, "\n=== SIGSEGV at mc+0x%lx (unhandled) ===\n", mc_offset);
-            fprintf(stderr, "Fault addr: 0x%lx\n", (uintptr_t)info->si_addr);
-            fprintf(stderr, "RIP: 0x%lx  RSP: 0x%lx\n", rip,
-                    (uintptr_t)uc->uc_mcontext.gregs[REG_RSP]);
-            fprintf(stderr, "RAX: 0x%lx  RDX: 0x%lx\n",
-                    (uintptr_t)uc->uc_mcontext.gregs[REG_RAX],
-                    (uintptr_t)uc->uc_mcontext.gregs[REG_RDX]);
-            fprintf(stderr, "RDI: 0x%lx  RSI: 0x%lx\n",
-                    (uintptr_t)uc->uc_mcontext.gregs[REG_RDI],
-                    (uintptr_t)uc->uc_mcontext.gregs[REG_RSI]);
-            // Dump bytes at RIP
-            fprintf(stderr, "Bytes at RIP:");
-            for (int i = 0; i < 16; i++)
-                fprintf(stderr, " %02x", ((unsigned char*)rip)[i]);
-            fprintf(stderr, "\n");
-            signal(SIGSEGV, SIG_DFL);
-            raise(SIGSEGV);
-        };
-        sigaction(SIGSEGV, &sa, nullptr);
-    }
-#endif
 
     if(!freeOnly.get()) {
         modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
