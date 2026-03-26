@@ -226,10 +226,20 @@ int main(int argc, char* argv[]) {
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
 
 #ifdef __APPLE__
-    if(MinecraftVersion::isAtLeast(1, 26, 10, 0)) {
+    {
         std::string appdir = PathHelper::getAppDir();
+        // Check multiple locations for ANGLE libs
         std::string libEGL = appdir + "/../Frameworks/mvk-angle/libEGL.dylib";
         std::string MoltenVK_icd = appdir + "/../Frameworks/mvk-angle/MoltenVK_icd.json";
+        // Fallback: check next to the executable
+        if(!FileUtil::exists(libEGL)) {
+            libEGL = appdir + "/../lib/libEGL.dylib";
+        }
+        if(!FileUtil::exists(MoltenVK_icd)) {
+            // Use Homebrew MoltenVK if available
+            const char* vk_icd = getenv("VK_ICD_FILENAMES");
+            if(vk_icd) MoltenVK_icd = vk_icd;
+        }
         if(FileUtil::exists(libEGL) && FileUtil::exists(MoltenVK_icd)) {
             // Memory leak, but should be ok as onetime allocation
             elg_lib = strdup(libEGL.data());

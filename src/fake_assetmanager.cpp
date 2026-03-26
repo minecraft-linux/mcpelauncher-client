@@ -20,10 +20,13 @@ struct AAssetDir {
     std::string currentFileName;
 };
 
+FakeAssetManager *FakeAssetManager::instance = nullptr;
+
 FakeAssetManager::FakeAssetManager(std::string rootDir) {
     if(!rootDir.empty() && *rootDir.rbegin() != '/')
         rootDir += '/';
     this->rootDir = std::move(rootDir);
+    instance = this;
 }
 
 namespace fake_assetmanager {
@@ -187,6 +190,9 @@ void FakeAssetManager::initHybrisHooks(std::unordered_map<std::string, void *> &
     using namespace fake_assetmanager;
     syms["AAssetManager_open"] = (void *)AAssetManager_open;
     syms["AAssetManager_openDir"] = (void *)AAssetManager_openDir;
+    syms["AAssetManager_fromJava"] = (void *)+[](void* env, void* assetManager) -> AAssetManager* {
+        return (AAssetManager*)FakeAssetManager::instance;
+    };
     syms["AAsset_close"] = (void *)AAsset_close;
     syms["AAsset_isAllocated"] = (void *)AAsset_isAllocated;
     syms["AAsset_read"] = (void *)AAsset_read;

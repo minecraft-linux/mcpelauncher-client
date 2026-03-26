@@ -126,6 +126,15 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<AudioDevice>();
 #endif
     vm.registerClass<AndroidJniHelperMultiplayer>();
+
+    // GameActivity SDK classes
+    vm.registerClass<Insets>();
+    vm.registerClass<Configuration>();
+    vm.registerClass<LocaleList>();
+    vm.registerClass<WindowInsetsCompat_Type>();
+    vm.registerClass<GoogleGameActivity>();
+    vm.registerClass<FakeGameTextInputState>();
+    vm.registerClass<FakeGameTextInputConnection>();
 }
 
 void JniSupport::registerMinecraftNatives(void* (*symResolver)(const char*)) {
@@ -275,6 +284,8 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameAct
         gameActivity.externalDataPath = "/external";
         gameActivity.javaGameActivity = activityRef;
         gameActivity.sdkVersion = activity->getAndroidVersion();
+        gameActivity.instance = nullptr;
+        gameActivity.obbPath = "";
 
         Log::trace("JniSupport", "Invoking nativeRegisterThis\n");
         auto registerThis = activity->getClass().getMethod("()V", "nativeRegisterThis");
@@ -285,8 +296,12 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameAct
         gameOnCreate(&gameActivity, nullptr, 0);
 
         Log::trace("JniSupport", "Invoking start activity callbacks\n");
-        gameActivityCallbacks.onStart(&gameActivity);
-        gameActivityCallbacks.onNativeWindowCreated(&gameActivity, window);
+        if(gameActivityCallbacks.onStart)
+            gameActivityCallbacks.onStart(&gameActivity);
+        if(gameActivityCallbacks.onNativeWindowCreated)
+            gameActivityCallbacks.onNativeWindowCreated(&gameActivity, window);
+        if(gameActivityCallbacks.onResume)
+            gameActivityCallbacks.onResume(&gameActivity);
     }
 
     std::shared_ptr<NetworkMonitor> network;
@@ -408,9 +423,9 @@ void JniSupport::stopGame() {
         nativeOnDestroy->invoke(frame.getJniEnv(), activity.get());
 
     if(isGameActivity) {
-        gameActivityCallbacks.onPause(&gameActivity);
-        gameActivityCallbacks.onStop(&gameActivity);
-        gameActivityCallbacks.onDestroy(&gameActivity);
+        if(gameActivityCallbacks.onPause) gameActivityCallbacks.onPause(&gameActivity);
+        if(gameActivityCallbacks.onStop) gameActivityCallbacks.onStop(&gameActivity);
+        if(gameActivityCallbacks.onDestroy) gameActivityCallbacks.onDestroy(&gameActivity);
     } else {
         nativeActivityCallbacks.onPause(&nativeActivity);
         nativeActivityCallbacks.onStop(&nativeActivity);

@@ -51,6 +51,10 @@ BEGIN_NATIVE_DESCRIPTOR(BuildVersion){Field<&BuildVersion::SDK_INT>{}, "SDK_INT"
 
     BEGIN_NATIVE_DESCRIPTOR(Locale){Function<&Locale::getDefault>{}, "getDefault"},
     {Function<&Locale::toString>{}, "toString"},
+    {Function<&Locale::getLanguage>{}, "getLanguage"},
+    {Function<&Locale::getScript>{}, "getScript"},
+    {Function<&Locale::getCountry>{}, "getCountry"},
+    {Function<&Locale::getVariant>{}, "getVariant"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(UUID){Function<&UUID::randomUUID>{}, "randomUUID"},
@@ -380,3 +384,65 @@ BEGIN_NATIVE_DESCRIPTOR(AndroidJniHelperMultiplayer){Function<&AndroidJniHelperM
 
 BEGIN_NATIVE_DESCRIPTOR(EventTracerHelperMultiplayer){Function<&EventTracerHelperMultiplayer::getPlayFabEventCommonFields>{}, "getPlayFabEventCommonFields"},
     END_NATIVE_DESCRIPTOR
+
+// --- GameActivity SDK classes ---
+
+BEGIN_NATIVE_DESCRIPTOR(Insets)
+    {Field<&Insets::left>{}, "left"},
+    {Field<&Insets::top>{}, "top"},
+    {Field<&Insets::right>{}, "right"},
+    {Field<&Insets::bottom>{}, "bottom"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(Configuration)
+    {Field<&Configuration::colorMode>{}, "colorMode"},
+    {Field<&Configuration::densityDpi>{}, "densityDpi"},
+    {Field<&Configuration::fontScale>{}, "fontScale"},
+    {Field<&Configuration::fontWeightAdjustment>{}, "fontWeightAdjustment"},
+    {Field<&Configuration::hardKeyboardHidden>{}, "hardKeyboardHidden"},
+    {Field<&Configuration::keyboard>{}, "keyboard"},
+    {Field<&Configuration::keyboardHidden>{}, "keyboardHidden"},
+    {Field<&Configuration::mcc>{}, "mcc"},
+    {Field<&Configuration::mnc>{}, "mnc"},
+    {Field<&Configuration::navigation>{}, "navigation"},
+    {Field<&Configuration::navigationHidden>{}, "navigationHidden"},
+    {Field<&Configuration::orientation>{}, "orientation"},
+    {Field<&Configuration::screenHeightDp>{}, "screenHeightDp"},
+    {Field<&Configuration::screenLayout>{}, "screenLayout"},
+    {Field<&Configuration::screenWidthDp>{}, "screenWidthDp"},
+    {Field<&Configuration::smallestScreenWidthDp>{}, "smallestScreenWidthDp"},
+    {Field<&Configuration::touchscreen>{}, "touchscreen"},
+    {Field<&Configuration::uiMode>{}, "uiMode"},
+    {Function<&Configuration::getLocales>{}, "getLocales"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(LocaleList)
+    {Function<&LocaleList::size>{}, "size"},
+    {Function<&LocaleList::get>{}, "get"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(WindowInsetsCompat_Type)
+    {Function<&WindowInsetsCompat_Type::captionBar>{}, "captionBar"},
+    {Function<&WindowInsetsCompat_Type::displayCutout>{}, "displayCutout"},
+    {Function<&WindowInsetsCompat_Type::ime>{}, "ime"},
+    {Function<&WindowInsetsCompat_Type::mandatorySystemGestures>{}, "mandatorySystemGestures"},
+    {Function<&WindowInsetsCompat_Type::navigationBars>{}, "navigationBars"},
+    {Function<&WindowInsetsCompat_Type::statusBars>{}, "statusBars"},
+    {Function<&WindowInsetsCompat_Type::systemBars>{}, "systemBars"},
+    {Function<&WindowInsetsCompat_Type::systemGestures>{}, "systemGestures"},
+    {Function<&WindowInsetsCompat_Type::tappableElement>{}, "tappableElement"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(GoogleGameActivity)
+    {Function<&GoogleGameActivity::finish>{}, "finish"},
+    {Function<&GoogleGameActivity::setWindowFlags>{}, "setWindowFlags"},
+    {Function<&GoogleGameActivity::getWindowInsets>{}, "getWindowInsets"},
+    {Function<&GoogleGameActivity::getWaterfallInsets>{}, "getWaterfallInsets"},
+    {Function<&GoogleGameActivity::setImeEditorInfoFields>{}, "setImeEditorInfoFields"},
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(FakeGameTextInputState)
+END_NATIVE_DESCRIPTOR
+
+BEGIN_NATIVE_DESCRIPTOR(FakeGameTextInputConnection)
+END_NATIVE_DESCRIPTOR

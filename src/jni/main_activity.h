@@ -2,6 +2,7 @@
 
 #include <fake-jni/fake-jni.h>
 #include "java_types.h"
+#include "locale.h"
 #include "../text_input_handler.h"
 
 class BuildVersion : public FakeJni::JObject {
@@ -319,4 +320,90 @@ public:
 class PlayIntegrity : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/PlayIntegrity")
+};
+
+// --- GameActivity SDK fake JNI classes ---
+
+class LocaleList;
+
+class Insets : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("androidx/core/graphics/Insets")
+    FakeJni::JInt left = 0;
+    FakeJni::JInt top = 0;
+    FakeJni::JInt right = 0;
+    FakeJni::JInt bottom = 0;
+};
+
+class Configuration : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("android/content/res/Configuration")
+    FakeJni::JInt colorMode = 0;
+    FakeJni::JInt densityDpi = 160;
+    FakeJni::JFloat fontScale = 1.0f;
+    FakeJni::JInt fontWeightAdjustment = 0;
+    FakeJni::JInt hardKeyboardHidden = 0;
+    FakeJni::JInt keyboard = 0;
+    FakeJni::JInt keyboardHidden = 0;
+    FakeJni::JInt mcc = 0;
+    FakeJni::JInt mnc = 0;
+    FakeJni::JInt navigation = 0;
+    FakeJni::JInt navigationHidden = 0;
+    FakeJni::JInt orientation = 0;
+    FakeJni::JInt screenHeightDp = 1080;
+    FakeJni::JInt screenLayout = 0;
+    FakeJni::JInt screenWidthDp = 1920;
+    FakeJni::JInt smallestScreenWidthDp = 1080;
+    FakeJni::JInt touchscreen = 0;
+    FakeJni::JInt uiMode = 0;
+    std::shared_ptr<LocaleList> getLocales() {
+        return std::make_shared<LocaleList>();
+    }
+};
+
+class LocaleList : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("android/os/LocaleList")
+    FakeJni::JInt size() { return 1; }
+    std::shared_ptr<Locale> get(FakeJni::JInt index) {
+        return Locale::getDefault();
+    }
+};
+
+class WindowInsetsCompat_Type : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("androidx/core/view/WindowInsetsCompat$Type")
+    static FakeJni::JInt captionBar() { return 0; }
+    static FakeJni::JInt displayCutout() { return 1; }
+    static FakeJni::JInt ime() { return 2; }
+    static FakeJni::JInt mandatorySystemGestures() { return 3; }
+    static FakeJni::JInt navigationBars() { return 4; }
+    static FakeJni::JInt statusBars() { return 5; }
+    static FakeJni::JInt systemBars() { return 6; }
+    static FakeJni::JInt systemGestures() { return 7; }
+    static FakeJni::JInt tappableElement() { return 8; }
+};
+
+class GoogleGameActivity : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/google/androidgamesdk/GameActivity")
+    void finish() {}
+    void setWindowFlags(FakeJni::JInt addFlags, FakeJni::JInt removeFlags) {}
+    std::shared_ptr<Insets> getWindowInsets(FakeJni::JInt type) {
+        return std::make_shared<Insets>();
+    }
+    std::shared_ptr<Insets> getWaterfallInsets() {
+        return std::make_shared<Insets>();
+    }
+    void setImeEditorInfoFields(FakeJni::JInt inputType, FakeJni::JInt actionId, FakeJni::JInt imeOptions) {}
+};
+
+class FakeGameTextInputState : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/google/androidgamesdk/gametextinput/State")
+};
+
+class FakeGameTextInputConnection : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/google/androidgamesdk/gametextinput/InputConnection")
 };

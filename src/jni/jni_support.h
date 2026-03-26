@@ -21,10 +21,10 @@ private:
     bool isGameActivity;
 
     Baron::Jvm vm;
-    ANativeActivityCallbacks nativeActivityCallbacks;
-    GameActivityCallbacks gameActivityCallbacks;
-    ANativeActivity nativeActivity;
-    GameActivity gameActivity;
+    ANativeActivityCallbacks nativeActivityCallbacks = {};
+    GameActivityCallbacks gameActivityCallbacks = {};
+    ANativeActivity nativeActivity = {};
+    GameActivity gameActivity = {};
     std::shared_ptr<MainActivity> activity;
     jobject activityRef;
     std::unique_ptr<FakeAssetManager> assetManager;
@@ -81,15 +81,18 @@ public:
     void setLastChar(FakeJni::JInt sym);
 
     void sendKeyDown(const GameActivityKeyEvent *event) {
-        gameActivityCallbacks.onKeyDown(&gameActivity, event);
+        if(gameActivityCallbacks.onKeyDown)
+            gameActivityCallbacks.onKeyDown(&gameActivity, event);
     }
 
     void sendKeyUp(const GameActivityKeyEvent *event) {
-        gameActivityCallbacks.onKeyUp(&gameActivity, event);
+        if(gameActivityCallbacks.onKeyUp)
+            gameActivityCallbacks.onKeyUp(&gameActivity, event);
     }
 
     void sendMotionEvent(const GameActivityMotionEvent *event) {
-        gameActivityCallbacks.onTouchEvent(&gameActivity, event);
+        if(gameActivityCallbacks.onTouchEvent)
+            gameActivityCallbacks.onTouchEvent(&gameActivity, event);
     }
 
     bool isGameActivityVersion() {
