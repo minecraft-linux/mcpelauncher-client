@@ -235,6 +235,20 @@ int main(int argc, char* argv[]) {
             elg_lib = strdup(libEGL.data());
             setenv("ANGLE_DEFAULT_PLATFORM", "vulkan", true);
             setenv("VK_ICD_FILENAMES", MoltenVK_icd.data(), true);
+
+            // ANGLE feature overrides to fix rendering artifacts on MoltenVK/Metal.
+            // MoltenVK maps VK_ATTACHMENT_LOAD_OP_DONT_CARE to MTLLoadActionDontCare
+            // which leaves tile memory undefined on Apple Silicon — showing as black
+            // rectangles over 3D geometry. These overrides force proper initialization.
+            // Using overwrite=0 so users can still override via profile env vars.
+            setenv("ANGLE_FEATURE_OVERRIDES_DISABLED", "hasCheapRenderPass", 0);
+            setenv("ANGLE_FEATURE_OVERRIDES_ENABLED",
+                "flushAfterStreamVertexData:"
+                "forceRobustResourceInit:"
+                "allowClearForRobustResourceInit:"
+                "preferDrawClearOverVkCmdClearAttachments", 0);
+            // Force synchronous queue submits to prevent frame tearing on MoltenVK
+            setenv("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", "1", 0);
         } else {
             Log::error("Launcher", "Failed to find one of '%s' and '%s'", libEGL.data(), MoltenVK_icd.data());
             Log::error("Launcher", "Expect seeing a black screen, you have been warned");
