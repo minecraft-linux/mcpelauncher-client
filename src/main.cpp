@@ -226,6 +226,22 @@ int main(int argc, char* argv[]) {
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
 
 #ifdef __APPLE__
+    {
+        // Load protobuf symbol collision guard before any game libraries.
+        // On macOS 26+, Apple's MLAssetIO (via CoreML) bundles protobuf
+        // symbols that conflict with the game's libprotobuf, causing a
+        // crash on shutdown. The guard validates callback pointers.
+        std::string appdir = PathHelper::getAppDir();
+        std::string guardPath = appdir + "/../lib/libprotobuf-guard-macos.dylib";
+        if(FileUtil::exists(guardPath)) {
+            void *guard = dlopen(guardPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+            if(guard) {
+                Log::info("Launcher", "Loaded protobuf guard: %s", guardPath.c_str());
+            } else {
+                Log::warn("Launcher", "Failed to load protobuf guard: %s", dlerror());
+            }
+        }
+    }
     if(MinecraftVersion::isAtLeast(1, 26, 10, 0)) {
         std::string appdir = PathHelper::getAppDir();
         std::string libEGL = appdir + "/../Frameworks/mvk-angle/libEGL.dylib";
