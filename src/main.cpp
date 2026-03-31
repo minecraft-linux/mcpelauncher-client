@@ -235,6 +235,27 @@ int main(int argc, char* argv[]) {
             elg_lib = strdup(libEGL.data());
             setenv("ANGLE_DEFAULT_PLATFORM", "vulkan", true);
             setenv("VK_ICD_FILENAMES", MoltenVK_icd.data(), true);
+
+            // ANGLE feature overrides to fix rendering artifacts on MoltenVK/Metal.
+            //
+            // forceRobustResourceInit: zero-initializes GPU resources on allocation.
+            //   Fixes black rectangle artifacts from undefined tile memory when ANGLE
+            //   uses VK_ATTACHMENT_LOAD_OP_DONT_CARE → MoltenVK → MTLLoadActionDontCare.
+            //
+            // allowClearForRobustResourceInit: uses efficient clear ops for initialization.
+            //
+            // preferSkippingInvalidateForEmulatedFormats: prevents glInvalidateFramebuffer
+            //   from setting DontCare store ops on emulated-format attachments. Without this,
+            //   the deferred rendering pipeline leaks previous frame data through invalidated
+            //   G-buffer attachments, causing ghost trails visible in high-contrast areas.
+            //
+            // Using overwrite=0 so users can still override via profile env vars.
+            setenv("ANGLE_FEATURE_OVERRIDES_ENABLED",
+                "forceRobustResourceInit:"
+                "allowClearForRobustResourceInit:"
+                "preferSkippingInvalidateForEmulatedFormats", 0);
+            // Force synchronous queue submits to prevent frame tearing on MoltenVK
+            setenv("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", "1", 0);
         } else {
             Log::error("Launcher", "Failed to find one of '%s' and '%s'", libEGL.data(), MoltenVK_icd.data());
             Log::error("Launcher", "Expect seeing a black screen, you have been warned");
