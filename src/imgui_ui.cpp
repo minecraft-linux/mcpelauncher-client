@@ -1095,7 +1095,10 @@ void ImGuiUIDrawFrame(GameWindow* window) {
                 activeWindows[i]->modalOpened = true;
                 ImGui::OpenPopup(activeWindows[i]->title.data());
             }
-            if(activeWindows[i]->isModal ? ImGui::BeginPopupModal(activeWindows[i]->title.data(), &activeWindows[i]->open) : ImGui::Begin(activeWindows[i]->title.data(), &activeWindows[i]->open)) {
+            bool windowVisible = activeWindows[i]->isModal
+                    ? ImGui::BeginPopupModal(activeWindows[i]->title.data(), &activeWindows[i]->open)
+                    : ImGui::Begin(activeWindows[i]->title.data(), &activeWindows[i]->open);
+            if(windowVisible) {
                 for(auto&& control : activeWindows[i]->controls) {
                     switch(control.type) {
                     case 0:
@@ -1159,11 +1162,13 @@ void ImGuiUIDrawFrame(GameWindow* window) {
                         break;
                     }
                 }
-                if(activeWindows[i]->isModal) {
+            }
+            if(activeWindows[i]->isModal) {
+                if(windowVisible) {
                     ImGui::EndPopup();
-                } else {
-                    ImGui::End();
                 }
+            } else {
+                ImGui::End();
             }
             if(!activeWindows[i]->open) {
                 activeWindows[i]->onClose(activeWindows[i]->user);
