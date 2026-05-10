@@ -28,6 +28,10 @@
 #include <mcpelauncher/linker.h>
 #include <minecraft/imported/android_symbols.h>
 #include "main.h"
+
+#include <cstring>
+#include <sys/mman.h>
+#include <unistd.h>
 #ifdef HAVE_SDL3AUDIO
 #include "fake_audio.h"
 #endif
@@ -618,8 +622,15 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     Log::info("Launcher", "Initializing JNI");
 
     FakeLooper::setJniSupport(&support);
-    support.registerMinecraftNatives(+[](const char* sym) {
-        return linker::dlsym(handle, sym);
+    support.registerMinecraftNatives(+[](const char* sym) -> void* {
+        void* result = linker::dlsym(handle, sym);
+        if (result) return result;
+        // Stubs for JNI natives MC expects but no library exports (1.26.20.4+).
+        // Google Play Integrity API doesn't apply on Linux desktop, so the
+        // completion callback is a no-op.
+        if (strcmp(sym, "Java_com_mojang_minecraftpe_PlayIntegrity_nativePlayIntegrityComplete") == 0)
+            return (void*)(+[](void*, void*) -> void {});
+        return nullptr;
     });
     std::thread startThread([&support]() {
         ThreadMover::storeStartThreadId();
@@ -660,6 +671,77 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
                 ctrl->index = 0;
                 ctrl->templ = nullptr;
                 Log::info("Launcher", "Fixed corrupted emutls control at base+0x%lx", (unsigned long)offset);
+            }
+        }
+    }
+
+    // Generalized __emutls_get_address sanitizing hook.
+    //
+    // Background: the v1.26.0.2 fix above patches one specific corrupted
+    // __emutls_control offset that PR #132 reverse-engineered for that build.
+    // Newer Bedrock releases (1.26.10.x, 1.26.20.x, 1.26.30.x, ...) hit the
+    // same class of LLD bug — symbols colliding with __emutls_v.* — but at
+    // different offsets in libminecraftpe.so, and the bad controls vary
+    // between point releases. Hand-finding offsets per build doesn't scale.
+    //
+    // Approach: hook __emutls_get_address in libc++_shared.so (the only impl
+    // libminecraftpe.so imports) and sanitize any control whose first two
+    // fields (size, align) are both runtime-pointer-sized. Real controls have
+    // size <1MB and align ≤4096; only data overlaid by another symbol's
+    // pointer-laden bytes (the collision pattern) ever matches the heuristic.
+    // Resets the struct to {size=8, align=8, index=0, templ=NULL} before
+    // tail-calling the original.
+    //
+    // The hook copies 16 bytes from the function entry to a trampoline so the
+    // original instructions still execute (libc++_shared's __emutls_get_address
+    // begins with 6× push, mov %rdi,%rbx, mov 0x10(%rdi),%r13 — exactly 16
+    // bytes covering complete instruction boundaries). The patched 13 bytes
+    // are `movabs $wrapper, %r11; jmp *%r11`.
+    {
+        void* libcxx = linker::dlopen("libc++_shared.so", RTLD_NOLOAD);
+        void* orig_emutls = libcxx ? linker::dlsym(libcxx, "__emutls_get_address") : nullptr;
+        if (!orig_emutls) {
+            Log::warn("Launcher", "Could not locate __emutls_get_address for hooking");
+        } else {
+            Log::info("Launcher", "__emutls_get_address at %p, installing sanitizing hook", orig_emutls);
+            uint8_t* tramp = (uint8_t*)mmap(nullptr, 4096, PROT_READ | PROT_WRITE | PROT_EXEC,
+                                            MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+            if (tramp == MAP_FAILED) {
+                Log::warn("Launcher", "mmap for emutls trampoline failed; not installing hook");
+            } else {
+                static uint8_t* g_tramp;
+                g_tramp = tramp;
+                memcpy(tramp, orig_emutls, 16);
+                tramp[16] = 0x49; tramp[17] = 0xbb;  // mov $imm64, %r11
+                *(uint64_t*)(tramp + 18) = (uint64_t)orig_emutls + 16;
+                tramp[26] = 0x41; tramp[27] = 0xff; tramp[28] = 0xe3;  // jmp *%r11
+
+                static auto wrapper = +[](void* control) -> void* {
+                    uint64_t* c = (uint64_t*)control;
+                    if (c[0] >= 0x10000000ULL && c[1] >= 0x10000000ULL) {
+                        c[0] = 8;
+                        c[1] = 8;
+                        c[2] = 0;
+                        c[3] = 0;
+                    }
+                    typedef void* (*emutls_fn_t)(void*);
+                    return ((emutls_fn_t)g_tramp)(control);
+                };
+
+                uintptr_t page = (uintptr_t)orig_emutls & ~(uintptr_t)(getpagesize() - 1);
+                size_t span = ((uintptr_t)orig_emutls + 13 - page + getpagesize() - 1)
+                              & ~(uintptr_t)(getpagesize() - 1);
+                if (mprotect((void*)page, span, PROT_READ | PROT_WRITE | PROT_EXEC) == 0) {
+                    uint8_t patch[13];
+                    patch[0] = 0x49; patch[1] = 0xbb;
+                    *(uint64_t*)(patch + 2) = (uint64_t)(void*)wrapper;
+                    patch[10] = 0x41; patch[11] = 0xff; patch[12] = 0xe3;
+                    memcpy(orig_emutls, patch, 13);
+                    mprotect((void*)page, span, PROT_READ | PROT_EXEC);
+                    Log::info("Launcher", "__emutls_get_address sanitizing hook installed");
+                } else {
+                    Log::warn("Launcher", "mprotect failed; emutls hook not installed");
+                }
             }
         }
     }
