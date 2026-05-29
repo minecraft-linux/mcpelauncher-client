@@ -13,14 +13,3 @@ struct LauncherOptions {
     std::string sendUri;
 };
 extern LauncherOptions options;
-
-class GameOptionsFile {
-private:
-    properties::property_list properties;
-public:
-    properties::property<int> graphicsMode;
-    properties::property<int> volumetricFogQuality;
-
-    GameOptionsFile();
-    void save();
-};

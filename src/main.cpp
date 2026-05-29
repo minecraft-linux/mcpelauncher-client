@@ -100,6 +100,26 @@ std::string normalizePath(const std::string& path) {
 extern "C" __attribute__((weak)) const char * elg_lib = "";
 #endif
 
+static std::string getOptionsPath() {
+    return PathHelper::getPrimaryDataDirectory() + "games/com.mojang/minecraftpe/options.txt";
+}
+
+static void parseOptions(properties::property_list& properties) {
+    std::ifstream propertiesFile(getOptionsPath());
+    if(propertiesFile) {
+        properties.load(propertiesFile);
+    }
+}
+
+static void saveOptions(properties::property_list& properties) {
+    std::ofstream propertiesFile(getOptionsPath());
+    if(propertiesFile.is_open()) {
+        properties.save(propertiesFile);
+    }
+}
+
+void readOptions();
+
 int main(int argc, char* argv[]) {
     if(argc == 2 && argv[1][0] != '-') {
         Log::info("Sendfile", "sending file");
@@ -145,7 +165,7 @@ int main(int argc, char* argv[]) {
     argparser::arg<bool> resetSettings(p, "--reset-settings", "-gs", "Save the default Settings", false);
     argparser::arg<bool> freeOnly(p, "--free-only", "-f", "Only allow starting free versions", false);
     argparser::arg<bool> emulateTouch(p, "--emulate-touch", "-et", "Emulate touch with mouse", false);
-    argparser::arg<std::string> mods(p, "--mods", "-m", "Additional directories to load mods from split by ','", "");
+    argparser::arg<std::vector<std::string>> mods(p, "--mods", "-m", "Additional directories to load mods from split by ','");
 
     if(!p.parse(argc, (const char**)argv))
         return 1;
@@ -161,14 +181,16 @@ int main(int argc, char* argv[]) {
     options.useStdinImport = stdinImpt;
     options.emulateTouch = emulateTouch;
     std::vector<std::string> modDirs;
-    for(size_t i = 0; i < mods.get().length();) {
-        auto r = mods.get().find(',', i);
-        if(r == std::string::npos) {
-            modDirs.push_back(normalizePath(mods.get().substr(i)));
-            break;
-        } else {
-            modDirs.push_back(normalizePath(mods.get().substr(i, r - i)));
-            i = r + 1;
+    for(auto&& m : mods.get()) {
+        for(size_t i = 0; i < m.length();) {
+            auto r = m.find(',', i);
+            if(r == std::string::npos) {
+                modDirs.push_back(normalizePath(m.substr(i)));
+                break;
+            } else {
+                modDirs.push_back(normalizePath(m.substr(i, r - i)));
+                i = r + 1;
+            }
         }
     }
 
@@ -223,7 +245,7 @@ int main(int argc, char* argv[]) {
     }
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
 
-    GameOptionsFile gameOptionsFile;
+    readOptions();
 
 #ifdef __APPLE__
     if(MinecraftVersion::isAtLeast(1, 26, 10, 0)) {
@@ -236,11 +258,14 @@ int main(int argc, char* argv[]) {
             setenv("ANGLE_DEFAULT_PLATFORM", "vulkan", true);
             setenv("VK_ICD_FILENAMES", MoltenVK_icd.data(), true);
             // Vibrant Visuals not fully supported
-            auto oldOption = gameOptionsFile.graphicsMode.get();
+            properties::property_list properties(':');
+            properties::property<int> graphicsMode(properties, "graphics_mode", 2);
+            parseOptions(properties);
+            auto oldOption = graphicsMode.get();
             if(oldOption != 0 && oldOption != 1) {
                 Log::warn("Launcher", "Vibrant Visuals via MoltenVK are not supported yet and causing rendering issues, disabling this graphics mode!");
-                gameOptionsFile.graphicsMode.set(1);
-                gameOptionsFile.save();
+                graphicsMode.set(1);
+                saveOptions(properties);
             }
         } else {
             Log::error("Launcher", "Failed to find one of '%s' and '%s'", libEGL.data(), MoltenVK_icd.data());
@@ -646,11 +671,14 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
         if(_glGetString) {
             auto renderer = _glGetString(0x1F01); // GL_RENDERER
             if(renderer != nullptr && strstr(renderer, "NVIDIA") != nullptr) {
-                if(gameOptionsFile.volumetricFogQuality.get() != 0) {
+                properties::property_list properties(':');
+                properties::property<int> volumetricFogQuality(properties, "volumetric_fog_quality", 0);
+                parseOptions(properties);
+                if(volumetricFogQuality.get() != 0) {
                     Log::warn("Launcher", "Vibrant Visuals volumetric Fog via NVIDIA drivers are not supported causing crashs when entering worlds / server, disabling this graphics mode!");
                 }
-                gameOptionsFile.volumetricFogQuality.set(0);
-                gameOptionsFile.save();
+                volumetricFogQuality.set(0);
+                saveOptions(properties);
             }
         }
     }
@@ -683,7 +711,8 @@ void printVersionInfo() {
     printf("MSA daemon path: %s\n", XboxLiveHelper::findMsa().c_str());
 }
 
-GameOptionsFile::GameOptionsFile() : properties(':'), graphicsMode(properties, "graphics_mode", 2), volumetricFogQuality(properties, "volumetric_fog_quality", 0) {
+void readOptions() {
+    properties::property_list properties(':');
     properties::property<int> leftKey(properties, "keyboard_type_0_key.left", 'A');
     properties::property<int> downKey(properties, "keyboard_type_0_key.back", 'S');
     properties::property<int> rightKey(properties, "keyboard_type_0_key.right", 'D');
@@ -696,9 +725,19 @@ GameOptionsFile::GameOptionsFile() : properties(':'), graphicsMode(properties, "
 
     properties::property<bool> fullKeyboard(properties, "ctrl_fullkeyboardgameplay", false);
 
-    std::ifstream propertiesFile(PathHelper::getPrimaryDataDirectory() + "/games/com.mojang/minecraftpe/options.txt");
-    if(propertiesFile) {
-        properties.load(propertiesFile);
+    parseOptions(properties);
+
+    if(leftKey > 512 || downKey > 512 || rightKey > 512 || upKey > 512 || leftKeyFullKeyboard > 512 || downKeyFullKeyboard > 512 || rightKeyFullKeyboard > 512 || upKeyFullKeyboard > 512) {
+        Log::trace("BUG", "Launcher Release v1.7.2 might caused corruption reset Direction to WASD");
+        leftKey.set('A');
+        leftKeyFullKeyboard.set('A');
+        downKey.set('S');
+        downKeyFullKeyboard.set('S');
+        rightKey.set('D');
+        rightKeyFullKeyboard.set('D');
+        upKey.set('W');
+        upKeyFullKeyboard.set('W');
+        saveOptions(properties);
     }
 
     GameOptions::leftKey = leftKey;
@@ -712,9 +751,4 @@ GameOptionsFile::GameOptionsFile() : properties(':'), graphicsMode(properties, "
     GameOptions::upKeyFullKeyboard = upKeyFullKeyboard;
 
     GameOptions::fullKeyboard = fullKeyboard;
-}
-
-void GameOptionsFile::save() {
-    std::ofstream propertiesFile(PathHelper::getPrimaryDataDirectory() + "/games/com.mojang/minecraftpe/options.txt");
-    properties.save(propertiesFile);
 }
