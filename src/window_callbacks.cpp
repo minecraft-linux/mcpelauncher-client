@@ -79,7 +79,7 @@ void WindowCallbacks::setCursorLocked(bool locked) {
 }
 
 void WindowCallbacks::onClose() {
-    jniSupport.onWindowClosed();
+    _EXIT(0)
 }
 
 void WindowCallbacks::setFullscreen(bool isFs) {
