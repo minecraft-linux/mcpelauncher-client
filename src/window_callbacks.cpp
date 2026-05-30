@@ -79,7 +79,7 @@ void WindowCallbacks::setCursorLocked(bool locked) {
 }
 
 void WindowCallbacks::onClose() {
-    _Exit0)
+    _Exit(0)
 }
 
 void WindowCallbacks::setFullscreen(bool isFs) {
