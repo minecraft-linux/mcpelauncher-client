@@ -5,10 +5,6 @@
 #include <thread>
 #include <unistd.h>
 #include <poll.h>
-#include <algorithm>
-#include <cctype>
-#include <sstream>
-#include <iomanip>
 
 #if defined(CURLWS_TEXT) && defined(CURLWS_BINARY)
 #define ENABLE_WEBSOCKETS
@@ -25,7 +21,6 @@ typedef struct {
     char* data;
     size_t len;
     size_t cap;
-    int type;
 } ws_msg;
 
 void ws_append(ws_msg* m, const void* src, size_t n) {
@@ -44,82 +39,6 @@ void poll_socket(curl_socket_t sock, int timeout_ms) {
         .events = POLLIN | POLLERR | POLLHUP};
 
     poll(&pfd, 1, timeout_ms);
-}
-
-static std::string ws_format_binary_preview(const char* data, size_t len) {
-    constexpr size_t previewLimit = 64;
-
-    std::ostringstream out;
-    out << "len=" << len << " hex=";
-    out << std::hex << std::setfill('0');
-
-    size_t previewLen = std::min(len, previewLimit);
-    for(size_t i = 0; i < previewLen; ++i) {
-        if(i != 0) {
-            out << ' ';
-        }
-        out << std::setw(2) << (unsigned int)(unsigned char)data[i];
-    }
-
-    if(previewLen < len) {
-        out << " ...";
-    }
-
-    out << " ascii=";
-    for(size_t i = 0; i < previewLen; ++i) {
-        unsigned char c = (unsigned char)data[i];
-        if(std::isprint(c)) {
-            out << (char)c;
-        } else {
-            out << "\\x" << std::setw(2) << (unsigned int)c;
-        }
-    }
-
-    if(previewLen < len) {
-        out << "...";
-    }
-
-    return out.str();
-}
-
-static std::string ws_format_text_preview(const char* data, size_t len) {
-    constexpr size_t previewLimit = 256;
-
-    std::ostringstream out;
-    size_t previewLen = std::min(len, previewLimit);
-    for(size_t i = 0; i < previewLen; ++i) {
-        unsigned char c = (unsigned char)data[i];
-        switch(c) {
-            case '\0':
-                out << "\\0";
-                break;
-            case '\n':
-                out << "\\n";
-                break;
-            case '\r':
-                out << "\\r";
-                break;
-            case '\t':
-                out << "\\t";
-                break;
-            case '\\':
-                out << "\\\\";
-                break;
-            default:
-                if(std::isprint(c)) {
-                    out << (char)c;
-                } else {
-                    out << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)c << std::dec;
-                }
-                break;
-        }
-    }
-
-    if(previewLen < len) {
-        out << "...";
-    }
-
-    return out.str();
 }
 
 HttpClientWebSocket::HttpClientWebSocket(FakeJni::JLong owner) {
@@ -179,50 +98,34 @@ void HttpClientWebSocket::connect(std::shared_ptr<FakeJni::JString> url, std::sh
                 }
 
                 if(meta->flags & CURLWS_PING) {
+                    curlMu.lock();
+                    curl_ws_send(curl, buf, n, NULL, 0, CURLWS_PONG);
+                    curlMu.unlock();
                     continue;
-                }
-
-                int frameType = meta->flags & (CURLWS_TEXT | CURLWS_BINARY);
-                if(!frameType) {
-                    // Ignore non-user control frames such as unsolicited PONGs.
-                    continue;
-                }
-
-                if(meta->offset == 0 && frameType && msg.len == 0) {
-                    msg.type = frameType;
                 }
 
                 ws_append(&msg, buf, n);
 
-                if(meta->bytesleft != 0) {
-                    continue;
-                }
-
-                if(meta->flags & CURLWS_CONT) {
-                    continue;
-                }
-
-                // full message assembled
-                if(msg.type & CURLWS_TEXT) {
-                    std::string cont((const char*)msg.data, msg.len);
+                if(meta->bytesleft == 0 && !(meta->flags & CURLWS_CONT)) {
+                    // full message assembled
+                    if(meta->flags & CURLWS_TEXT) {
+                        std::string cont((const char*)msg.data, msg.len);
 #ifndef NDEBUG
-                    std::string preview = ws_format_text_preview(cont.data(), cont.size());
-                    Log::trace("HttpClientWebSocket", "Got message: len=%zu text=%.*s escaped=%s", cont.size(), (int)cont.size(), cont.data(), preview.c_str());
+                        Log::trace("HttpClientWebSocket", "Got message: %s", cont.c_str());
 #endif
-                    FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
-                    auto method = getClass().getMethod("(Ljava/lang/String;)V", "onMessage");
-                    method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(cont)));
-                } else if(msg.type & CURLWS_BINARY) {
+                        FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
+                        auto method = getClass().getMethod("(Ljava/lang/String;)V", "onMessage");
+                        method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>(cont)));
+                    } else if(meta->flags & CURLWS_BINARY) {
 #ifndef NDEBUG
-                    std::string preview = ws_format_binary_preview(msg.data, msg.len);
-                    Log::trace("HttpClientWebSocket", "Got binary message: %s", preview.c_str());
+                        Log::trace("HttpClientWebSocket", "Got binary message");
 #endif
-                    FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
-                    auto method = getClass().getMethod("(Ljava/nio/ByteBuffer;)V", "onBinaryMessage");
-                    method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<jnivm::ByteBuffer>(msg.data, msg.len)));
+                        FakeJni::LocalFrame frame(*(FakeJni::Jvm*)jvm);
+                        auto method = getClass().getMethod("(Ljava/nio/ByteBuffer;)V", "onBinaryMessage");
+                        method->invoke(frame.getJniEnv(), this, frame.getJniEnv().createLocalReference(std::make_shared<jnivm::ByteBuffer>(msg.data, msg.len)));
+                    }
+                    msg.len = 0;  // reuse buffer
                 }
-                msg.len = 0;  // reuse buffer
-                msg.type = 0;
             }
 
             if(msg.data) {
