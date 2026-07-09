@@ -99,5 +99,16 @@ if(USE_IMGUI AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../imgui" AND EXISTS 
     )
 endif()
 
+# macOS: build protobuf symbol collision guard as a separate dylib.
+# Apple's MLAssetIO (via CoreML) bundles protobuf symbols that conflict
+# with the game's libprotobuf. This guard validates callback pointers
+# before forwarding to prevent crash on shutdown.
+if(APPLE)
+    enable_language(C)
+    add_library(protobuf-guard-macos SHARED src/protobuf_guard_macos.c)
+    target_compile_options(protobuf-guard-macos PRIVATE -fPIC)
+    install(TARGETS protobuf-guard-macos LIBRARY COMPONENT mcpelauncher-client DESTINATION lib)
+endif()
+
 install(TARGETS mcpelauncher-client RUNTIME COMPONENT mcpelauncher-client DESTINATION bin)
 include(CPackSettings.cmake)
