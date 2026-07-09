@@ -12,6 +12,9 @@ int32_t FakeAudio::defaultBufSize = 512;
 void FakeAudio::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     syms["AAudioStreamBuilder_openStream"] = (void *)+[](FakeAudioStreamBuilder *_Nonnull builder, FakeAudioStream *_Nullable *_Nonnull stream) -> aaudio_result_t {
         *stream = new FakeAudioStream{.dataCallback = builder->dataCallback, .dataCallbackUser = builder->dataCallbackUser, .errorCallback = builder->errorCallback, .errorCallbackUser = builder->errorCallbackUser, .bufferCap = builder->bufferCap};
+        if (builder->sampleRate > 0) (*stream)->sampleRate = builder->sampleRate;
+        if (builder->channelCount > 0) (*stream)->channelCount = builder->channelCount;
+        if (builder->format != AAUDIO_FORMAT_UNSPECIFIED) (*stream)->format = builder->format;
         (*stream)->audioBufferSize = builder->bufferCap * (*stream)->getBytesPerSample() * (*stream)->channelCount;
         (*stream)->audioBuffer = malloc((*stream)->audioBufferSize);
         return AAUDIO_OK;
@@ -71,6 +74,15 @@ void FakeAudio::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     };
     syms["AAudioStreamBuilder_setInputPreset"] = (void *)+[]() {
     };
+    syms["AAudioStreamBuilder_setSampleRate"] = (void *)+[](FakeAudioStreamBuilder *_Nonnull builder, int32_t sampleRate) {
+        builder->sampleRate = sampleRate;
+    };
+    syms["AAudioStreamBuilder_setChannelCount"] = (void *)+[](FakeAudioStreamBuilder *_Nonnull builder, int32_t channelCount) {
+        builder->channelCount = channelCount;
+    };
+    syms["AAudioStreamBuilder_setFormat"] = (void *)+[](FakeAudioStreamBuilder *_Nonnull builder, aaudio_format_t format) {
+        builder->format = format;
+    };
     syms["AAudioStream_getSampleRate"] = (void *)+[](FakeAudioStream *_Nonnull stream) -> int32_t {
         return stream->sampleRate;
     };
@@ -80,7 +92,7 @@ void FakeAudio::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     };
     syms["AAudioStream_getState"] = (void *)+[](FakeAudioStream *_Nonnull stream) -> aaudio_stream_state_t {
         if(!stream->s) {
-            return AAUDIO_STREAM_STATE_CLOSED;
+            return AAUDIO_STREAM_STATE_OPEN;
         }
         // Backport to SDL 3.1 Audio API for legacy macOS support
         SDL_AudioDeviceID devid = SDL_GetAudioStreamDevice(stream->s);
@@ -137,13 +149,13 @@ void FakeAudio::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
 }
 
 void FakeAudio::updateDefaults() {
-    SDL_AudioSpec spec;
-    int sampleFrames;
-    SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &sampleFrames);
-
-    defaultSampleRate = ReadEnvInt("AUDIO_SAMPLE_RATE", spec.freq);
-    defaultNumChannels = spec.channels;
-    defaultBufSize = sampleFrames;
+    SDL_AudioSpec spec = {};
+    int sampleFrames = 0;
+    if (SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &sampleFrames)) {
+        if (spec.freq > 0) defaultSampleRate = ReadEnvInt("AUDIO_SAMPLE_RATE", spec.freq);
+        if (spec.channels > 0 && spec.channels <= 8) defaultNumChannels = spec.channels;
+        if (sampleFrames > 0) defaultBufSize = sampleFrames;
+    }
 
     FmodUtils::setSampleRate(defaultSampleRate);
 }
