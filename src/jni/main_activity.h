@@ -272,6 +272,14 @@ public:
         return 1024LL * 1024LL * 1024LL * 1024LL;
     }
 
+    FakeJni::JLong getTotalSpace(std::shared_ptr<FakeJni::JString> str) {
+        return 1024LL * 1024LL * 1024LL * 1024LL;
+    }
+
+    FakeJni::JLong getFreeSpace(std::shared_ptr<FakeJni::JString> str) {
+        return 1024LL * 1024LL * 1024LL * 1024LL;
+    }
+
     FakeJni::JInt getCaretPosition();
 
     void lockCursor();
