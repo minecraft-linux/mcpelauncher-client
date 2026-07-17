@@ -5,19 +5,93 @@ project(mcpelauncher-client LANGUAGES CXX ASM)
 find_package(CURL REQUIRED)
 
 git_commit_hash(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_COMMIT_HASH)
-configure_file(src/build_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/build_info/build_info.h)
+git_full_commit_hash(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_COMMIT_HASH_FULL)
+git_describe_version(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_DESCRIBE)
+git_exact_tag(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_VERSION)
+git_worktree_dirty(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_WORKTREE_DIRTY)
 
-add_executable(mcpelauncher-client src/main.cpp src/main.h src/window_callbacks.cpp src/window_callbacks.h src/xbox_live_helper.cpp src/xbox_live_helper.h src/splitscreen_patch.cpp src/splitscreen_patch.h src/strafe_sprint_patch.cpp src/strafe_sprint_patch.h src/fake_swappygl.cpp src/fake_swappygl.h src/cll_upload_auth_step.cpp src/cll_upload_auth_step.h src/gl_core_patch.cpp src/gl_core_patch.h src/hbui_patch.cpp src/hbui_patch.h src/utf8_util.h src/shader_error_patch.cpp src/shader_error_patch.h src/jni/jni_descriptors.cpp src/jni/java_types.h src/jni/main_activity.cpp src/jni/main_activity.h src/jni/asset_manager.cpp src/jni/asset_manager.h src/jni/playfab.cpp src/jni/playfab.h src/jni/store.cpp src/jni/store.h src/jni/cert_manager.cpp src/jni/cert_manager.h src/jni/http_stub.cpp src/jni/http_stub.h src/jni/package_source.cpp src/jni/package_source.h src/jni/jni_support.h src/jni/jni_support.cpp src/jni/fmod.h src/jni/fmod.cpp src/fake_looper.cpp src/fake_looper.h src/fake_window.cpp src/fake_window.h src/fake_assetmanager.cpp src/fake_assetmanager.h src/fake_egl.cpp src/fake_egl.h src/fake_inputqueue.cpp src/fake_inputqueue.h src/symbols.cpp src/symbols.h src/text_input_handler.cpp src/text_input_handler.h src/jni/xbox_live.cpp src/jni/xbox_live.h src/core_patches.cpp src/core_patches.h  src/thread_mover.cpp src/thread_mover.h src/jni/lib_http_client.cpp src/jni/lib_http_client.h src/jni/lib_http_client_websocket.cpp src/jni/lib_http_client_websocket.h src/jni/accounts.cpp src/jni/accounts.h src/jni/arrays.cpp src/jni/arrays.h src/jni/jbase64.cpp src/jni/jbase64.h src/jni/locale.cpp src/jni/locale.h src/jni/securerandom.cpp src/jni/securerandom.h src/jni/signature.cpp src/jni/signature.h src/jni/uuid.cpp src/jni/uuid.h src/jni/webview.cpp src/jni/webview.h src/util.cpp src/util.h src/xal_webview_factory.cpp src/xal_webview_factory.h src/xal_webview.h src/settings.cpp src/settings.h )
-target_link_libraries(mcpelauncher-client logger properties-parser mcpelauncher-core gamewindow filepicker msa-daemon-client daemon-server-utils cll-telemetry argparser baron android-support-headers libc-shim mcpelauncher-apkinfo ${CURL_LIBRARIES})
-target_include_directories(mcpelauncher-client PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/build_info/ ${CURL_INCLUDE_DIRS})
+set(GENERATOR_TOOL_VERSION "")
+if (CMAKE_MAKE_PROGRAM)
+    execute_process(
+            COMMAND ${CMAKE_MAKE_PROGRAM} --version
+            RESULT_VARIABLE GENERATOR_TOOL_RESULT
+            OUTPUT_VARIABLE GENERATOR_TOOL_OUTPUT
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (GENERATOR_TOOL_RESULT EQUAL 0)
+        string(REGEX MATCH "^[^\r\n]*" GENERATOR_TOOL_VERSION "${GENERATOR_TOOL_OUTPUT}")
+    endif()
+endif()
+
+set(XCODE_VERSION "")
+set(XCODE_BUILD_VERSION "")
+set(SDK_NAME "")
+set(SDK_VERSION "")
+set(SDK_BUILD_VERSION "")
+if (APPLE)
+    set(SDK_NAME "macosx")
+    find_program(XCODEBUILD_EXEC xcodebuild)
+    if (XCODEBUILD_EXEC)
+        execute_process(
+                COMMAND ${XCODEBUILD_EXEC} -version
+                RESULT_VARIABLE XCODE_RESULT
+                OUTPUT_VARIABLE XCODE_OUTPUT
+                ERROR_QUIET
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if (XCODE_RESULT EQUAL 0)
+            string(REGEX MATCH "Xcode ([^\r\n]+)" XCODE_VERSION_MATCH "${XCODE_OUTPUT}")
+            if (XCODE_VERSION_MATCH)
+                set(XCODE_VERSION "${CMAKE_MATCH_1}")
+            endif()
+            string(REGEX MATCH "Build version ([^\r\n]+)" XCODE_BUILD_MATCH "${XCODE_OUTPUT}")
+            if (XCODE_BUILD_MATCH)
+                set(XCODE_BUILD_VERSION "${CMAKE_MATCH_1}")
+            endif()
+        endif()
+    endif()
+
+    find_program(XCRUN_EXEC xcrun)
+    if (XCRUN_EXEC)
+        execute_process(
+                COMMAND ${XCRUN_EXEC} --sdk macosx --show-sdk-version
+                RESULT_VARIABLE SDK_VERSION_RESULT
+                OUTPUT_VARIABLE SDK_VERSION
+                ERROR_QUIET
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if (NOT SDK_VERSION_RESULT EQUAL 0)
+            set(SDK_VERSION "")
+        endif()
+        execute_process(
+                COMMAND ${XCRUN_EXEC} --sdk macosx --show-sdk-build-version
+                RESULT_VARIABLE SDK_BUILD_RESULT
+                OUTPUT_VARIABLE SDK_BUILD_VERSION
+                ERROR_QUIET
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if (NOT SDK_BUILD_RESULT EQUAL 0)
+            set(SDK_BUILD_VERSION "")
+        endif()
+    endif()
+endif()
 
 option(NO_OPENSSL "disable openssl code" OFF)
+configure_file(src/build_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/build_info/build_info.h)
+
+add_executable(mcpelauncher-client src/main.cpp src/main.h src/graphics_capability_report.cpp src/graphics_capability_report.h src/window_callbacks.cpp src/window_callbacks.h src/xbox_live_helper.cpp src/xbox_live_helper.h src/splitscreen_patch.cpp src/splitscreen_patch.h src/strafe_sprint_patch.cpp src/strafe_sprint_patch.h src/fake_swappygl.cpp src/fake_swappygl.h src/cll_upload_auth_step.cpp src/cll_upload_auth_step.h src/gl_core_patch.cpp src/gl_core_patch.h src/hbui_patch.cpp src/hbui_patch.h src/utf8_util.h src/shader_error_patch.cpp src/shader_error_patch.h src/jni/jni_descriptors.cpp src/jni/java_types.h src/jni/main_activity.cpp src/jni/main_activity.h src/jni/asset_manager.cpp src/jni/asset_manager.h src/jni/playfab.cpp src/jni/playfab.h src/jni/store.cpp src/jni/store.h src/jni/cert_manager.cpp src/jni/cert_manager.h src/jni/http_stub.cpp src/jni/http_stub.h src/jni/package_source.cpp src/jni/package_source.h src/jni/jni_support.h src/jni/jni_support.cpp src/jni/fmod.h src/jni/fmod.cpp src/fake_looper.cpp src/fake_looper.h src/fake_window.cpp src/fake_window.h src/fake_assetmanager.cpp src/fake_assetmanager.h src/fake_egl.cpp src/fake_egl.h src/fake_inputqueue.cpp src/fake_inputqueue.h src/symbols.cpp src/symbols.h src/text_input_handler.cpp src/text_input_handler.h src/jni/xbox_live.cpp src/jni/xbox_live.h src/core_patches.cpp src/core_patches.h  src/thread_mover.cpp src/thread_mover.h src/jni/lib_http_client.cpp src/jni/lib_http_client.h src/jni/lib_http_client_websocket.cpp src/jni/lib_http_client_websocket.h src/jni/accounts.cpp src/jni/accounts.h src/jni/arrays.cpp src/jni/arrays.h src/jni/jbase64.cpp src/jni/jbase64.h src/jni/locale.cpp src/jni/locale.h src/jni/securerandom.cpp src/jni/securerandom.h src/jni/signature.cpp src/jni/signature.h src/jni/uuid.cpp src/jni/uuid.h src/jni/webview.cpp src/jni/webview.h src/util.cpp src/util.h src/xal_webview_factory.cpp src/xal_webview_factory.h src/xal_webview.h src/settings.cpp src/settings.h )
+target_link_libraries(mcpelauncher-client logger properties-parser mcpelauncher-core gamewindow filepicker msa-daemon-client daemon-server-utils cll-telemetry argparser baron android-support-headers libc-shim mcpelauncher-apkinfo nlohmann_json ${CURL_LIBRARIES})
+target_include_directories(mcpelauncher-client PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/build_info/ ${CURL_INCLUDE_DIRS})
+target_compile_definitions(mcpelauncher-client PRIVATE "MCPELAUNCHER_BUILD_CONFIGURATION=\"$<CONFIG>\"")
+
 if (NO_OPENSSL)
     target_compile_definitions(mcpelauncher-client PRIVATE NO_OPENSSL)
 else()
     find_package(OpenSSL REQUIRED)
     target_sources(mcpelauncher-client PRIVATE src/jni/shahasher.cpp src/jni/shahasher.h src/jni/ecdsa.cpp src/jni/ecdsa.h)
     target_link_libraries(mcpelauncher-client OpenSSL::Crypto)
+    target_compile_definitions(mcpelauncher-client PRIVATE MCPELAUNCHER_HAS_OPENSSL)
 endif()
 
 if (IS_ARM_BUILD)
@@ -32,11 +106,16 @@ endif()
 if(TARGET SDL3::SDL3)
     message(VERBOSE "USING SDL3")
     target_link_libraries(mcpelauncher-client SDL3::SDL3)
+    target_compile_definitions(mcpelauncher-client PRIVATE MCPELAUNCHER_HAS_SDL3)
     if (USE_SDL3_AUDIO)
         message(VERBOSE "USING SDL3AUDIO")
         target_sources(mcpelauncher-client PRIVATE src/jni/sdl3audio.cpp src/jni/sdl3audio.h src/fake_audio.cpp src/fake_audio.h)
         target_compile_definitions(mcpelauncher-client PRIVATE HAVE_SDL3AUDIO)
     endif()
+endif()
+
+if(GAMEWINDOW_SYSTEM STREQUAL "GLFW")
+    target_compile_definitions(mcpelauncher-client PRIVATE MCPELAUNCHER_HAS_GLFW)
 endif()
 
 if (NOT USE_SDL3_AUDIO)

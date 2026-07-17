@@ -38,6 +38,7 @@
 #include "symbols.h"
 #include "core_patches.h"
 #include "thread_mover.h"
+#include "graphics_capability_report.h"
 #include <FileUtil.h>
 #include <properties/property.h>
 #include <fstream>
@@ -166,6 +167,8 @@ int main(int argc, char* argv[]) {
     argparser::arg<bool> freeOnly(p, "--free-only", "-f", "Only allow starting free versions", false);
     argparser::arg<bool> emulateTouch(p, "--emulate-touch", "-et", "Emulate touch with mouse", false);
     argparser::arg<std::vector<std::string>> mods(p, "--mods", "-m", "Additional directories to load mods from split by ','");
+    argparser::arg<std::string> graphicsReport(p, "--graphics-report", "-gcr", "Write an incremental graphics capability report to this file");
+    argparser::arg<std::string> graphicsReportId(p, "--graphics-report-id", "-gri", "Safe experiment identifier stored in the graphics report");
 
     if(!p.parse(argc, (const char**)argv))
         return 1;
@@ -204,6 +207,43 @@ int main(int argc, char* argv[]) {
     if(!cacheDir.get().empty())
         PathHelper::setCacheDir(cacheDir);
 
+    std::unique_ptr<GraphicsCapabilityReport> capabilityReport;
+    auto writeCapabilityReport = [&capabilityReport]() {
+        if(!capabilityReport) {
+            return;
+        }
+        std::string error;
+        if(!capabilityReport->writeSnapshot(error)) {
+            Log::error("CapabilityReport", "%s", error.c_str());
+        }
+    };
+    if(!graphicsReport.get().empty()) {
+        try {
+            GraphicsCapabilityReport::RunConfiguration runConfiguration {
+                options.graphicsApi == GraphicsApi::OPENGL_ES2 ? "opengles" : "opengl",
+                windowWidth.get(),
+                windowHeight.get(),
+                disableFmod.get(),
+                texturePatch.get(),
+                webrtcdebug.get(),
+                stdinImpt.get(),
+                resetSettings.get(),
+                freeOnly.get(),
+                emulateTouch.get(),
+                !gameDir.get().empty(),
+                !dataDir.get().empty(),
+                !cacheDir.get().empty(),
+                !importFilePath.get().empty(),
+                !sendUri.get().empty(),
+                modDirs.size()
+            };
+            capabilityReport = std::make_unique<GraphicsCapabilityReport>(graphicsReport.get(), graphicsReportId.get(), runConfiguration);
+            writeCapabilityReport();
+        } catch(const std::exception& exception) {
+            Log::error("CapabilityReport", "Could not initialize graphics reporting: %s", exception.what());
+        }
+    }
+
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
 #if defined(__linux__)
 #define TARGET "Linux"
@@ -230,19 +270,38 @@ int main(int argc, char* argv[]) {
 
     std::ifstream manifestFileStream(PathHelper::getGameDir() + "AndroidManifest.xml", std::ios::binary);
     if(manifestFileStream.is_open()) {
-        std::stringstream manifest;
-        manifest << manifestFileStream.rdbuf();
-        auto smanifest = manifest.str();
+        try {
+            std::stringstream manifest;
+            manifest << manifestFileStream.rdbuf();
+            auto smanifest = manifest.str();
 
-        axml::AXMLFile manifestFile (smanifest.data(), smanifest.size());
-        axml::AXMLParser manifestParser (manifestFile);
-        ApkInfo apkInfo = ApkInfo::fromXml(manifestParser);
+            axml::AXMLFile manifestFile (smanifest.data(), smanifest.size());
+            axml::AXMLParser manifestParser (manifestFile);
+            ApkInfo apkInfo = ApkInfo::fromXml(manifestParser);
+            if(apkInfo.package.empty() || apkInfo.versionName.empty() || apkInfo.versionCode < 0) {
+                throw std::runtime_error("Minecraft manifest identity is incomplete");
+            }
 
-        Log::info("Launcher", "Minecraft Package: %s", apkInfo.package.c_str());
-        Log::info("Launcher", "Minecraft Version Code: %d", apkInfo.versionCode);
+            Log::info("Launcher", "Minecraft Package: %s", apkInfo.package.c_str());
+            Log::info("Launcher", "Minecraft Version Name: %s", apkInfo.versionName.c_str());
+            Log::info("Launcher", "Minecraft Version Code: %d", apkInfo.versionCode);
 
-        MinecraftVersion::init(apkInfo.package, apkInfo.versionCode);
+            MinecraftVersion::init(apkInfo.package, apkInfo.versionCode);
+            if(capabilityReport) {
+                capabilityReport->recordMinecraftIdentity({apkInfo.package, apkInfo.versionName, apkInfo.versionCode,
+                                                           MinecraftVersion::getString()});
+            }
+        } catch(...) {
+            if(capabilityReport) {
+                capabilityReport->recordMinecraftManifestParseFailed();
+                writeCapabilityReport();
+            }
+            throw;
+        }
+    } else if(capabilityReport) {
+        capabilityReport->recordMinecraftManifestNotFound();
     }
+    writeCapabilityReport();
     Log::info("Launcher", "Game version: %s", MinecraftVersion::getString().c_str());
 
     readOptions();
@@ -273,6 +332,12 @@ int main(int argc, char* argv[]) {
         }
     }
 #endif
+
+    if(capabilityReport) {
+        capabilityReport->refreshEnvironment();
+        capabilityReport->finishPartial();
+        writeCapabilityReport();
+    }
 
 #if defined(__i386__) || defined(__x86_64__)
     {
