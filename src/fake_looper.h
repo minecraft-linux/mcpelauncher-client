@@ -1,7 +1,9 @@
 #pragma once
 
 #include <android/looper.h>
+#include <functional>
 #include <memory>
+#include <utility>
 #include <game_window.h>
 #include "jni/jni_support.h"
 #include "window_callbacks.h"
@@ -11,6 +13,8 @@ class FakeLooper {
 private:
     static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
+    static std::function<void(const GraphicsContextInfo&)> graphicsContextCreatedCallback;
+    static std::function<void()> graphicsContextCreationFailedCallback;
     bool prepared = false;
     bool textInput = false;
     int menuSize = 0;
@@ -58,6 +62,13 @@ public:
     int pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData);
 
     static void initWindow();
+
+    static void setGraphicsContextCallbacks(
+        std::function<void(const GraphicsContextInfo&)> created,
+        std::function<void()> failed) {
+        graphicsContextCreatedCallback = std::move(created);
+        graphicsContextCreationFailedCallback = std::move(failed);
+    }
 
     static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);
 

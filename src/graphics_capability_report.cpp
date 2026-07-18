@@ -29,12 +29,14 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cctype>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <iomanip>
+#include <limits>
 #include <mutex>
 #include <optional>
 #include <sstream>
@@ -411,6 +413,243 @@ json collectEnvironment() {
     };
 }
 
+const char* clientApiName(GraphicsClientApi api) {
+    switch(api) {
+    case GraphicsClientApi::OPENGL:
+        return "opengl";
+    case GraphicsClientApi::OPENGL_ES:
+        return "opengles";
+    default:
+        return nullptr;
+    }
+}
+
+const char* windowSystemName(GraphicsWindowSystem windowSystem) {
+    switch(windowSystem) {
+    case GraphicsWindowSystem::GLFW:
+        return "glfw";
+    case GraphicsWindowSystem::SDL3:
+        return "sdl3";
+    case GraphicsWindowSystem::EGLUT:
+        return "eglut";
+    default:
+        return nullptr;
+    }
+}
+
+const char* contextProfileName(GraphicsContextProfile profile) {
+    switch(profile) {
+    case GraphicsContextProfile::CORE:
+        return "core";
+    case GraphicsContextProfile::COMPATIBILITY:
+        return "compatibility";
+    case GraphicsContextProfile::ES:
+        return "es";
+    default:
+        return nullptr;
+    }
+}
+
+const char* contextCreationApiName(GraphicsContextCreationApi api) {
+    switch(api) {
+    case GraphicsContextCreationApi::NATIVE:
+        return "native";
+    case GraphicsContextCreationApi::EGL:
+        return "egl";
+    case GraphicsContextCreationApi::OSMESA:
+        return "osmesa";
+    default:
+        return nullptr;
+    }
+}
+
+std::optional<std::pair<int, int>> parseContextVersion(const std::string& version) {
+    auto firstDigit = std::find_if(version.begin(), version.end(), [](unsigned char c) {
+        return std::isdigit(c) != 0;
+    });
+    if(firstDigit == version.end()) {
+        return std::nullopt;
+    }
+
+    char* majorEnd = nullptr;
+    long major = std::strtol(&*firstDigit, &majorEnd, 10);
+    if(majorEnd == &*firstDigit || majorEnd == nullptr || *majorEnd != '.') {
+        return std::nullopt;
+    }
+    char* minorEnd = nullptr;
+    long minor = std::strtol(majorEnd + 1, &minorEnd, 10);
+    if(minorEnd == majorEnd + 1 || major < 0 || minor < 0 ||
+       major > std::numeric_limits<int>::max() || minor > std::numeric_limits<int>::max()) {
+        return std::nullopt;
+    }
+    return std::make_pair(static_cast<int>(major), static_cast<int>(minor));
+}
+
+std::string queryHostGlString(GraphicsCapabilityReport::HostProcAddress getHostProcAddress,
+                              unsigned int name) {
+    if(getHostProcAddress == nullptr) {
+        return {};
+    }
+    using GlGetString = const unsigned char* (*)(unsigned int);
+    auto glGetString = reinterpret_cast<GlGetString>(getHostProcAddress("glGetString"));
+    if(glGetString == nullptr) {
+        return {};
+    }
+    const auto* value = glGetString(name);
+    return value == nullptr ? std::string() : std::string(reinterpret_cast<const char*>(value));
+}
+
+bool hasExtensionToken(const std::string& extensions, const char* token) {
+    std::size_t offset = 0;
+    const std::size_t tokenLength = strlen(token);
+    while((offset = extensions.find(token, offset)) != std::string::npos) {
+        bool startsToken = offset == 0 || extensions[offset - 1] == ' ';
+        bool endsToken = offset + tokenLength == extensions.size() || extensions[offset + tokenLength] == ' ';
+        if(startsToken && endsToken) {
+            return true;
+        }
+        offset += tokenLength;
+    }
+    return false;
+}
+
+struct BackendObservation {
+    std::optional<std::string> backend;
+    std::optional<std::string> evidenceValue;
+    bool ambiguous = false;
+};
+
+BackendObservation backendFromDeviceExtensions(const std::string& extensions) {
+    struct KnownBackend {
+        const char* extension;
+        const char* backend;
+    };
+    constexpr KnownBackend knownBackends[] = {
+        {"EGL_ANGLE_device_vulkan", "vulkan"},
+        {"EGL_ANGLE_device_metal", "metal"},
+        {"EGL_ANGLE_device_cgl", "opengl"},
+        {"EGL_ANGLE_device_eagl", "opengles"},
+        {"EGL_ANGLE_device_d3d11", "d3d11"},
+        {"EGL_ANGLE_device_webgpu", "webgpu"}
+    };
+
+    BackendObservation result;
+    for(const auto& known : knownBackends) {
+        if(!hasExtensionToken(extensions, known.extension)) {
+            continue;
+        }
+        if(result.backend) {
+            result.backend.reset();
+            result.evidenceValue.reset();
+            result.ambiguous = true;
+            return result;
+        }
+        result.backend = known.backend;
+        result.evidenceValue = known.extension;
+    }
+    return result;
+}
+
+bool isAngleRenderer(const std::string& renderer) {
+    return renderer.rfind("ANGLE (", 0) == 0;
+}
+
+BackendObservation backendFromAngleRenderer(const std::string& renderer) {
+    BackendObservation result;
+    if(!isAngleRenderer(renderer)) {
+        return result;
+    }
+    if(renderer.find(", Vulkan ") != std::string::npos) {
+        result.backend = "vulkan";
+        result.evidenceValue = "renderer_vulkan";
+    } else if(renderer.find(", ANGLE Metal Renderer") != std::string::npos) {
+        result.backend = "metal";
+        result.evidenceValue = "renderer_metal";
+    } else if(renderer.find(" Direct3D11") != std::string::npos) {
+        result.backend = "d3d11";
+        result.evidenceValue = "renderer_d3d11";
+    } else if(renderer.find(", WebGPU,") != std::string::npos || renderer.find(", WebGPU)") != std::string::npos) {
+        result.backend = "webgpu";
+        result.evidenceValue = "renderer_webgpu";
+    } else if(renderer.find(", NULL,") != std::string::npos || renderer.find(", NULL)") != std::string::npos) {
+        result.backend = "null";
+        result.evidenceValue = "renderer_null";
+    }
+    return result;
+}
+
+struct HostEglObservation {
+    BackendObservation deviceBackend;
+    std::string runtimeVersion;
+    bool queryAvailable = false;
+};
+
+HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHostProcAddress) {
+    HostEglObservation result;
+    if(getHostProcAddress == nullptr) {
+        return result;
+    }
+
+    using EglGetCurrentDisplay = void* (*)();
+    using EglQueryDisplayAttrib = unsigned int (*)(void*, int, std::intptr_t*);
+    using EglQueryDeviceString = const char* (*)(void*, int);
+    using EglQueryString = const char* (*)(void*, int);
+    using EglGetError = unsigned int (*)();
+
+    auto eglGetCurrentDisplay = reinterpret_cast<EglGetCurrentDisplay>(getHostProcAddress("eglGetCurrentDisplay"));
+    auto eglQueryDisplayAttrib = reinterpret_cast<EglQueryDisplayAttrib>(getHostProcAddress("eglQueryDisplayAttribEXT"));
+    auto eglQueryDeviceString = reinterpret_cast<EglQueryDeviceString>(getHostProcAddress("eglQueryDeviceStringEXT"));
+    auto eglQueryString = reinterpret_cast<EglQueryString>(getHostProcAddress("eglQueryString"));
+    auto eglGetError = reinterpret_cast<EglGetError>(getHostProcAddress("eglGetError"));
+
+    constexpr int EGL_VERSION_VALUE = 0x3054;
+    constexpr int EGL_EXTENSIONS_VALUE = 0x3055;
+    constexpr int EGL_DEVICE_EXT_VALUE = 0x322C;
+
+    if(eglGetCurrentDisplay == nullptr || eglQueryString == nullptr) {
+        return result;
+    }
+    void* display = eglGetCurrentDisplay();
+    if(display == nullptr) {
+        return result;
+    }
+    if(const char* value = eglQueryString(display, EGL_VERSION_VALUE)) {
+        result.runtimeVersion = value;
+    }
+
+    // EGL 1.5 guarantees the no-display client extension query. On older EGL
+    // runtimes, skip the optional device diagnostic rather than risking
+    // EGL_BAD_DISPLAY while probing for EGL_EXT_client_extensions itself.
+    auto eglVersion = parseContextVersion(result.runtimeVersion);
+    bool canQueryClientExtensions = eglVersion &&
+        (eglVersion->first > 1 || (eglVersion->first == 1 && eglVersion->second >= 5));
+    if(!canQueryClientExtensions || eglQueryDisplayAttrib == nullptr || eglQueryDeviceString == nullptr) {
+        return result;
+    }
+    const char* clientExtensions = eglQueryString(nullptr, EGL_EXTENSIONS_VALUE);
+    if(clientExtensions == nullptr || !hasExtensionToken(clientExtensions, "EGL_EXT_device_query")) {
+        return result;
+    }
+
+    std::intptr_t deviceAttribute = 0;
+    if(eglQueryDisplayAttrib(display, EGL_DEVICE_EXT_VALUE, &deviceAttribute) == 0 || deviceAttribute == 0) {
+        // A supported query that failed generated this diagnostic EGL error;
+        // consume it so capability collection cannot perturb later EGL calls.
+        if(eglGetError != nullptr) {
+            eglGetError();
+        }
+        return result;
+    }
+    result.queryAvailable = true;
+    const char* extensions = eglQueryDeviceString(reinterpret_cast<void*>(deviceAttribute), EGL_EXTENSIONS_VALUE);
+    if(extensions != nullptr) {
+        result.deviceBackend = backendFromDeviceExtensions(extensions);
+    } else if(eglGetError != nullptr) {
+        eglGetError();
+    }
+    return result;
+}
+
 bool writeAll(int descriptor, const std::string& payload, std::string& error) {
     std::size_t offset = 0;
     while(offset < payload.size()) {
@@ -551,7 +790,26 @@ GraphicsCapabilityReport::GraphicsCapabilityReport(std::string outputPath, std::
     };
 }
 
-GraphicsCapabilityReport::~GraphicsCapabilityReport() = default;
+GraphicsCapabilityReport::~GraphicsCapabilityReport() noexcept {
+    try {
+        bool needsFinalSnapshot = false;
+        {
+            std::lock_guard<std::mutex> lock(impl->mutex);
+            if(impl->document["capture"]["status"] == "in_progress") {
+                impl->document["capture"]["status"] = "partial";
+                needsFinalSnapshot = true;
+            }
+        }
+        if(needsFinalSnapshot) {
+            std::string error;
+            if(!writeSnapshot(error)) {
+                std::fprintf(stderr, "CapabilityReport: %s\n", error.c_str());
+            }
+        }
+    } catch(...) {
+        std::fputs("CapabilityReport: Could not finalize the graphics report\n", stderr);
+    }
+}
 
 void GraphicsCapabilityReport::recordMinecraftIdentity(const MinecraftIdentity& identity) {
     std::lock_guard<std::mutex> lock(impl->mutex);
@@ -592,6 +850,157 @@ void GraphicsCapabilityReport::recordMinecraftUnavailable(const char* code, cons
     if(fatal) {
         impl->document["capture"]["status"] = "failed";
     }
+}
+
+void GraphicsCapabilityReport::recordGraphicsContextCreated(
+    const GraphicsContextInfo& contextInfo, HostProcAddress getHostProcAddress) {
+    constexpr unsigned int GL_RENDERER_VALUE = 0x1F01;
+    constexpr unsigned int GL_VERSION_VALUE = 0x1F02;
+
+    std::string glRenderer = queryHostGlString(getHostProcAddress, GL_RENDERER_VALUE);
+    std::string glVersion = queryHostGlString(getHostProcAddress, GL_VERSION_VALUE);
+    HostEglObservation egl = queryHostEgl(getHostProcAddress);
+
+    GraphicsClientApi clientApi = contextInfo.clientApi;
+    if(clientApi == GraphicsClientApi::UNKNOWN && !glVersion.empty()) {
+        clientApi = glVersion.rfind("OpenGL ES", 0) == 0 ? GraphicsClientApi::OPENGL_ES
+                                                          : GraphicsClientApi::OPENGL;
+    }
+
+    int versionMajor = contextInfo.versionMajor;
+    int versionMinor = contextInfo.versionMinor;
+    if((versionMajor < 0 || versionMinor < 0) && !glVersion.empty()) {
+        if(auto parsed = parseContextVersion(glVersion)) {
+            versionMajor = parsed->first;
+            versionMinor = parsed->second;
+        }
+    }
+
+    GraphicsContextProfile profile = contextInfo.profile;
+    if(profile == GraphicsContextProfile::UNKNOWN && clientApi == GraphicsClientApi::OPENGL_ES) {
+        profile = GraphicsContextProfile::ES;
+    }
+
+    const char* windowSystem = windowSystemName(contextInfo.windowSystem);
+    const char* apiName = clientApiName(clientApi);
+    const char* profileName = contextProfileName(profile);
+    const char* creationApiName = contextCreationApiName(contextInfo.creationApi);
+
+    std::lock_guard<std::mutex> lock(impl->mutex);
+    auto& context = impl->document["sections"]["graphics_context"];
+    context["errors"] = json::array();
+    context["data"] = {
+        {"window_system", stringOrNull(windowSystem)},
+        {"client_api", stringOrNull(apiName)},
+        {"version", {
+            {"major", versionMajor < 0 ? json(nullptr) : json(versionMajor)},
+            {"minor", versionMinor < 0 ? json(nullptr) : json(versionMinor)},
+            {"revision", contextInfo.versionRevision < 0 ? json(nullptr) : json(contextInfo.versionRevision)}
+        }},
+        {"profile", stringOrNull(profileName)},
+        {"creation_api", stringOrNull(creationApiName)}
+    };
+    if(windowSystem == nullptr || apiName == nullptr || versionMajor < 0 || versionMinor < 0) {
+        context["status"] = "partial";
+        context["errors"].push_back({
+            {"code", "context_identity_incomplete"},
+            {"message", "The active context did not expose complete API and version identity"}
+        });
+    } else {
+        context["status"] = "collected";
+    }
+
+    const char* rendererOverride = std::getenv("ANGLE_GL_RENDERER");
+    bool rendererOverrideActive = rendererOverride != nullptr && rendererOverride[0] != '\0';
+    BackendObservation rendererBackend;
+    if(!rendererOverrideActive) {
+        rendererBackend = backendFromAngleRenderer(glRenderer);
+    }
+    bool rendererIdentifiesAngle = !rendererOverrideActive && isAngleRenderer(glRenderer);
+    bool runtimeIdentifiesAngle = egl.runtimeVersion.find("ANGLE") != std::string::npos;
+    bool angleActive = egl.deviceBackend.backend.has_value() || egl.deviceBackend.ambiguous ||
+                       rendererIdentifiesAngle || runtimeIdentifiesAngle;
+    auto& angle = impl->document["sections"]["angle"];
+    angle["errors"] = json::array();
+
+    if(!angleActive) {
+        angle["data"] = nullptr;
+        bool evidenceUnavailable = contextInfo.creationApi == GraphicsContextCreationApi::EGL &&
+                                   (glRenderer.empty() || rendererOverrideActive) &&
+                                   egl.runtimeVersion.empty() && !egl.queryAvailable;
+        angle["status"] = evidenceUnavailable ? "unavailable" : "not_applicable";
+        return;
+    }
+
+    std::optional<std::string> selectedBackend;
+    std::optional<std::string> selectionEvidence;
+    std::optional<std::string> selectionEvidenceValue;
+    if(egl.deviceBackend.backend) {
+        selectedBackend = egl.deviceBackend.backend;
+        selectionEvidence = "egl_device_extension";
+        selectionEvidenceValue = egl.deviceBackend.evidenceValue;
+    } else if(!egl.deviceBackend.ambiguous && rendererBackend.backend) {
+        selectedBackend = rendererBackend.backend;
+        selectionEvidence = "angle_renderer_description";
+        selectionEvidenceValue = rendererBackend.evidenceValue;
+    }
+
+    bool evidenceMismatch = egl.deviceBackend.backend && rendererBackend.backend &&
+                            *egl.deviceBackend.backend != *rendererBackend.backend;
+    if(evidenceMismatch) {
+        selectedBackend.reset();
+        selectionEvidence.reset();
+        selectionEvidenceValue.reset();
+    }
+
+    angle["data"] = {
+        {"active", true},
+        {"selected_backend", selectedBackend ? json(*selectedBackend) : json(nullptr)},
+        {"selection_evidence", selectionEvidence ? json(*selectionEvidence) : json(nullptr)},
+        {"selection_evidence_value", selectionEvidenceValue ? json(*selectionEvidenceValue) : json(nullptr)},
+        {"renderer_string_override_active", rendererOverrideActive},
+        {"runtime_egl_version", stringOrNull(egl.runtimeVersion)}
+    };
+    if(egl.deviceBackend.ambiguous) {
+        angle["status"] = "partial";
+        angle["errors"].push_back({
+            {"code", "angle_backend_device_evidence_ambiguous"},
+            {"message", "The active EGL device exposed multiple recognized ANGLE backend tokens"}
+        });
+    } else if(evidenceMismatch) {
+        angle["status"] = "partial";
+        angle["errors"].push_back({
+            {"code", "angle_backend_evidence_mismatch"},
+            {"message", "ANGLE backend observations disagreed"}
+        });
+    } else if(!selectedBackend) {
+        angle["status"] = "partial";
+        angle["errors"].push_back({
+            {"code", rendererOverrideActive ? "angle_renderer_override_untrusted" : "angle_backend_unclassified"},
+            {"message", rendererOverrideActive
+                ? "ANGLE was active, but its overridden renderer string was not accepted as backend evidence"
+                : "ANGLE was active but its selected backend could not be classified"}
+        });
+    } else {
+        angle["status"] = "collected";
+    }
+}
+
+void GraphicsCapabilityReport::recordGraphicsContextCreationFailed() {
+    std::lock_guard<std::mutex> lock(impl->mutex);
+    impl->document["capture"]["status"] = "failed";
+    auto& context = impl->document["sections"]["graphics_context"];
+    context["status"] = "error";
+    context["data"] = nullptr;
+    context["errors"] = json::array({{
+        {"code", "context_creation_failed"},
+        {"message", "The host graphics context could not be created"}
+    }});
+
+    auto& angle = impl->document["sections"]["angle"];
+    angle["status"] = "unavailable";
+    angle["data"] = nullptr;
+    angle["errors"] = json::array();
 }
 
 void GraphicsCapabilityReport::refreshEnvironment() {

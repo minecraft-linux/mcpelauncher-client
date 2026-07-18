@@ -243,6 +243,31 @@ int main(int argc, char* argv[]) {
             Log::error("CapabilityReport", "Could not initialize graphics reporting: %s", exception.what());
         }
     }
+    if(capabilityReport) {
+        auto* report = capabilityReport.get();
+        try {
+            FakeLooper::setGraphicsContextCallbacks(
+                [report](const GraphicsContextInfo& contextInfo) {
+                    auto getHostProcAddress = GameWindowManager::getManager()->getProcAddrFunc();
+                    report->recordGraphicsContextCreated(contextInfo, getHostProcAddress);
+                    std::string error;
+                    if(!report->writeSnapshot(error)) {
+                        Log::error("CapabilityReport", "%s", error.c_str());
+                    }
+                },
+                [report]() {
+                    report->recordGraphicsContextCreationFailed();
+                    std::string error;
+                    if(!report->writeSnapshot(error)) {
+                        Log::error("CapabilityReport", "%s", error.c_str());
+                    }
+                });
+        } catch(const std::exception& exception) {
+            Log::error("CapabilityReport", "Could not enable graphics context reporting: %s", exception.what());
+        } catch(...) {
+            Log::error("CapabilityReport", "Could not enable graphics context reporting");
+        }
+    }
 
     Log::info("Launcher", "Version: client %s / manifest %s", CLIENT_GIT_COMMIT_HASH, MANIFEST_GIT_COMMIT_HASH);
 #if defined(__linux__)
@@ -335,7 +360,6 @@ int main(int argc, char* argv[]) {
 
     if(capabilityReport) {
         capabilityReport->refreshEnvironment();
-        capabilityReport->finishPartial();
         writeCapabilityReport();
     }
 
@@ -754,6 +778,10 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
 
     //    XboxLivePatches::workaroundShutdownFreeze(handle);
     XboxLiveHelper::getInstance().shutdown();
+    if(capabilityReport) {
+        capabilityReport->finishPartial();
+        writeCapabilityReport();
+    }
     // Workaround for XboxLive ShutdownFreeze
     _Exit(0);
     return 0;

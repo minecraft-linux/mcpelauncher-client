@@ -5,8 +5,13 @@
 #include <memory>
 #include <string>
 
+#include <game_window.h>
+
 class GraphicsCapabilityReport {
 public:
+    using HostFunction = void* (*)();
+    using HostProcAddress = HostFunction (*)(const char*);
+
     struct MinecraftIdentity {
         std::string package;
         std::string versionName;
@@ -35,7 +40,7 @@ public:
 
     GraphicsCapabilityReport(std::string outputPath, std::string experimentId,
                              const RunConfiguration& runConfiguration);
-    ~GraphicsCapabilityReport();
+    ~GraphicsCapabilityReport() noexcept;
 
     GraphicsCapabilityReport(const GraphicsCapabilityReport&) = delete;
     GraphicsCapabilityReport& operator=(const GraphicsCapabilityReport&) = delete;
@@ -43,6 +48,9 @@ public:
     void recordMinecraftIdentity(const MinecraftIdentity& identity);
     void recordMinecraftManifestNotFound();
     void recordMinecraftManifestParseFailed();
+    void recordGraphicsContextCreated(const GraphicsContextInfo& contextInfo,
+                                      HostProcAddress getHostProcAddress);
+    void recordGraphicsContextCreationFailed();
     void refreshEnvironment();
     void finishPartial();
 

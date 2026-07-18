@@ -1,4 +1,6 @@
 #include "fake_looper.h"
+
+#include <exception>
 #include "main.h"
 #include "shader_error_patch.h"
 #include "splitscreen_patch.h"
@@ -16,6 +18,8 @@
 
 JniSupport *FakeLooper::jniSupport;
 thread_local std::unique_ptr<FakeLooper> FakeLooper::currentLooper;
+std::function<void(const GraphicsContextInfo&)> FakeLooper::graphicsContextCreatedCallback;
+std::function<void()> FakeLooper::graphicsContextCreationFailedCallback;
 
 void FakeLooper::initWindow() {
     if(!currentLooper) {
@@ -75,8 +79,31 @@ void FakeLooper::initializeWindow() {
 #endif
 
     Log::info("Launcher", "Creating window");
-    associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
-                                                                     options.windowWidth, options.windowHeight, options.graphicsApi);
+    try {
+        associatedWindow = GameWindowManager::getManager()->createWindow("Minecraft",
+                                                                         options.windowWidth, options.windowHeight, options.graphicsApi);
+    } catch(...) {
+        if(graphicsContextCreationFailedCallback) {
+            try {
+                graphicsContextCreationFailedCallback();
+            } catch(const std::exception& exception) {
+                Log::error("CapabilityReport", "Could not record context creation failure: %s", exception.what());
+            } catch(...) {
+                Log::error("CapabilityReport", "Could not record context creation failure");
+            }
+        }
+        throw;
+    }
+    if(graphicsContextCreatedCallback) {
+        Log::info("CapabilityReport", "Collecting the active host graphics context");
+        try {
+            graphicsContextCreatedCallback(associatedWindow->getGraphicsContextInfo());
+        } catch(const std::exception& exception) {
+            Log::error("CapabilityReport", "Could not record the active graphics context: %s", exception.what());
+        } catch(...) {
+            Log::error("CapabilityReport", "Could not record the active graphics context");
+        }
+    }
     FakeEGL::setupGLOverrides();
 }
 
