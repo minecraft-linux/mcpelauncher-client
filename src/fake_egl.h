@@ -10,24 +10,31 @@
 
 namespace fake_egl {
 
-EGLBoolean eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor);
-EGLBoolean eglTerminate(EGLDisplay display);
-EGLint eglGetError();
-char const *eglQueryString(EGLDisplay display, EGLint name);
-EGLDisplay eglGetDisplay(EGLNativeDisplayType dp);
-EGLDisplay eglGetCurrentDisplay();
-EGLContext eglGetCurrentContext();
-EGLBoolean eglChooseConfig(EGLDisplay display, EGLint const *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
-EGLBoolean eglGetConfigAttrib(EGLDisplay display, EGLConfig config, EGLint attribute, EGLint *value);
-EGLSurface eglCreateWindowSurface(EGLDisplay display, EGLConfig config, EGLNativeWindowType native_window, EGLint const *attrib_list);
-EGLBoolean eglDestroySurface(EGLDisplay display, EGLSurface surface);
-EGLContext eglCreateContext(EGLDisplay display, EGLConfig config, EGLContext share_context, EGLint const *attrib_list);
-EGLBoolean eglDestroyContext(EGLDisplay display, EGLContext context);
-EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context);
-EGLBoolean eglSwapBuffers(EGLDisplay display, EGLSurface surface);
-EGLBoolean eglSwapInterval(EGLDisplay display, EGLint interval);
-EGLBoolean eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint *value);
+EGLBoolean EGLAPIENTRY eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor);
+EGLBoolean EGLAPIENTRY eglTerminate(EGLDisplay display);
+EGLint EGLAPIENTRY eglGetError();
+char const *EGLAPIENTRY eglQueryString(EGLDisplay display, EGLint name);
+EGLDisplay EGLAPIENTRY eglGetDisplay(EGLNativeDisplayType dp);
+EGLDisplay EGLAPIENTRY eglGetCurrentDisplay();
+EGLContext EGLAPIENTRY eglGetCurrentContext();
+EGLBoolean EGLAPIENTRY eglGetConfigs(EGLDisplay display, EGLConfig *configs, EGLint config_size, EGLint *num_config);
+EGLBoolean EGLAPIENTRY eglChooseConfig(EGLDisplay display, EGLint const *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
+EGLBoolean EGLAPIENTRY eglGetConfigAttrib(EGLDisplay display, EGLConfig config, EGLint attribute, EGLint *value);
+EGLSurface EGLAPIENTRY eglCreateWindowSurface(EGLDisplay display, EGLConfig config, EGLNativeWindowType native_window, EGLint const *attrib_list);
+EGLBoolean EGLAPIENTRY eglDestroySurface(EGLDisplay display, EGLSurface surface);
+EGLContext EGLAPIENTRY eglCreateContext(EGLDisplay display, EGLConfig config, EGLContext share_context, EGLint const *attrib_list);
+EGLBoolean EGLAPIENTRY eglDestroyContext(EGLDisplay display, EGLContext context);
+EGLBoolean EGLAPIENTRY eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context);
+EGLBoolean EGLAPIENTRY eglSwapBuffers(EGLDisplay display, EGLSurface surface);
+EGLBoolean EGLAPIENTRY eglSwapInterval(EGLDisplay display, EGLint interval);
+EGLBoolean EGLAPIENTRY eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint *value);
+EGLBoolean EGLAPIENTRY eglWaitClient();
 
+// Registered as the guest eglGetProcAddress export with the exact EGL ABI.
+__eglMustCastToProperFunctionPointerType EGLAPIENTRY eglGetProcAddressExport(const char *name);
+
+// Internal adapter for consumers such as GLAD that use an object-pointer
+// loader signature instead of EGL's function-pointer return type.
 void *eglGetProcAddress(const char *name);
 
 }  // namespace fake_egl
@@ -36,12 +43,39 @@ struct FakeEGL {
     using HostFunction = void (*)();
     using HostProcAddress = HostFunction (*)(const char*);
 
+    struct ConfigurationInfo {
+        EGLint configId;
+        EGLint configCaveat;
+        EGLint colorBufferType;
+        EGLint bufferSize;
+        EGLint redSize;
+        EGLint greenSize;
+        EGLint blueSize;
+        EGLint alphaSize;
+        EGLint luminanceSize;
+        EGLint alphaMaskSize;
+        EGLint depthSize;
+        EGLint stencilSize;
+        EGLint sampleBuffers;
+        EGLint samples;
+        EGLint surfaceType;
+        EGLint renderableType;
+        EGLint conformant;
+        EGLBoolean nativeRenderable;
+        EGLint nativeVisualId;
+        EGLint nativeVisualType;
+    };
+
     struct CapabilityInfo {
         EGLint initializeMajor;
         EGLint initializeMinor;
         char const *vendor;
         char const *version;
-        char const *extensions;
+        char const *clientExtensions;
+        char const *displayExtensions;
+        char const *clientApis;
+        ConfigurationInfo const *configurations;
+        std::size_t configurationCount;
     };
 
     struct SwapBuffersCallback {
@@ -62,6 +96,10 @@ struct FakeEGL {
     // Returns the immutable values implemented by the synthetic libEGL
     // exports without invoking EGL lifecycle functions for diagnostics.
     static CapabilityInfo getCapabilityInfo();
+
+    // Exercises the successful synthetic query exports against the immutable
+    // descriptor without changing fake EGL lifecycle state.
+    static bool validateCapabilityContract();
 
     static bool enableTexturePatch;
 };

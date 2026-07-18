@@ -2,6 +2,8 @@
 #include "gl_core_patch.h"
 #include "settings.h"
 #include "imgui_ui.h"
+#include <algorithm>
+#include <limits>
 #include <map>
 
 #define __ANDROID__
@@ -19,7 +21,30 @@ std::vector<FakeEGL::SwapBuffersCallback> FakeEGL::swapBuffersCallbacks = {};
 std::mutex FakeEGL::swapBuffersCallbacksLock;
 
 FakeEGL::CapabilityInfo FakeEGL::getCapabilityInfo() {
-    return {1, 5, "mcpelauncher", "1.5 mcpelauncher", ""};
+    static constexpr ConfigurationInfo configurations[] = {{
+        1,
+        EGL_NONE,
+        EGL_RGB_BUFFER,
+        32,
+        8,
+        8,
+        8,
+        8,
+        0,
+        0,
+        8,
+        8,
+        0,
+        0,
+        EGL_WINDOW_BIT,
+        EGL_OPENGL_ES2_BIT,
+        EGL_OPENGL_ES2_BIT,
+        EGL_FALSE,
+        0,
+        0
+    }};
+    return {1, 5, "mcpelauncher", "1.5 mcpelauncher", "", "", "OpenGL_ES",
+            configurations, sizeof(configurations) / sizeof(configurations[0])};
 }
 
 namespace fake_egl {
@@ -28,7 +53,7 @@ static thread_local EGLSurface currentDrawSurface;
 static FakeEGL::HostProcAddress hostProcAddrFn;
 static std::unordered_map<std::string, void *> hostProcOverrides;
 
-EGLBoolean eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor) {
+EGLBoolean EGLAPIENTRY eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor) {
     auto capabilityInfo = FakeEGL::getCapabilityInfo();
     if(major)
         *major = capabilityInfo.initializeMajor;
@@ -37,73 +62,120 @@ EGLBoolean eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor) {
     return EGL_TRUE;
 }
 
-EGLBoolean eglTerminate(EGLDisplay display) {
+EGLBoolean EGLAPIENTRY eglTerminate(EGLDisplay display) {
     return EGL_TRUE;
 }
 
-EGLint eglGetError() {
+EGLint EGLAPIENTRY eglGetError() {
     return EGL_SUCCESS;
 }
 
-char const *eglQueryString(EGLDisplay display, EGLint name) {
+char const *EGLAPIENTRY eglQueryString(EGLDisplay display, EGLint name) {
     auto capabilityInfo = FakeEGL::getCapabilityInfo();
     if(name == EGL_VENDOR)
         return capabilityInfo.vendor;
     if(name == EGL_VERSION)
         return capabilityInfo.version;
     if(name == EGL_EXTENSIONS)
-        return capabilityInfo.extensions;
+        return display == EGL_NO_DISPLAY ? capabilityInfo.clientExtensions : capabilityInfo.displayExtensions;
+    if(name == EGL_CLIENT_APIS)
+        return capabilityInfo.clientApis;
     Log::warn("FakeEGL", "eglQueryString %x", name);
     return nullptr;
 }
 
-EGLDisplay eglGetDisplay(EGLNativeDisplayType dp) {
+EGLDisplay EGLAPIENTRY eglGetDisplay(EGLNativeDisplayType dp) {
     return (EGLDisplay *)1;
 }
 
-EGLDisplay eglGetCurrentDisplay() {
+EGLDisplay EGLAPIENTRY eglGetCurrentDisplay() {
     return (EGLDisplay *)1;
 }
 
-EGLContext eglGetCurrentContext() {
+EGLContext EGLAPIENTRY eglGetCurrentContext() {
     return currentDrawSurface ? (EGLContext *)1 : (EGLContext *)0;
 }
 
-EGLBoolean eglChooseConfig(EGLDisplay display, EGLint const *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
-    *num_config = 1;
+static EGLConfig configurationHandle(std::size_t index) {
+    return reinterpret_cast<EGLConfig>(index + 1);
+}
+
+EGLBoolean EGLAPIENTRY eglGetConfigs(EGLDisplay display, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
+    if(num_config == nullptr || config_size < 0) {
+        return EGL_FALSE;
+    }
+    auto capabilityInfo = FakeEGL::getCapabilityInfo();
+    auto available = static_cast<EGLint>(capabilityInfo.configurationCount);
+    if(configs == nullptr) {
+        *num_config = available;
+        return EGL_TRUE;
+    }
+    auto returned = std::min(config_size, available);
+    for(EGLint index = 0; index < returned; ++index) {
+        configs[index] = configurationHandle(static_cast<std::size_t>(index));
+    }
+    *num_config = returned;
     return EGL_TRUE;
 }
 
-EGLBoolean eglGetConfigAttrib(EGLDisplay display, EGLConfig config, EGLint attribute, EGLint *value) {
-    if(attribute == EGL_NATIVE_VISUAL_ID) {
-        *value = 0;
-        return EGL_TRUE;
+EGLBoolean EGLAPIENTRY eglChooseConfig(EGLDisplay display, EGLint const *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
+    // Preserve the synthetic implementation's historical single-config
+    // behavior for every Minecraft attribute list.
+    return eglGetConfigs(display, configs, config_size, num_config);
+}
+
+EGLBoolean EGLAPIENTRY eglGetConfigAttrib(EGLDisplay display, EGLConfig config, EGLint attribute, EGLint *value) {
+    if(value == nullptr) {
+        return EGL_FALSE;
     }
-    if(attribute == EGL_RED_SIZE || attribute == EGL_GREEN_SIZE || attribute == EGL_BLUE_SIZE || attribute == EGL_ALPHA_SIZE || attribute == EGL_DEPTH_SIZE || attribute == EGL_STENCIL_SIZE) {
-        *value = 8;
-        return EGL_TRUE;
+    auto capabilityInfo = FakeEGL::getCapabilityInfo();
+    if(capabilityInfo.configurationCount == 0 || config != configurationHandle(0)) {
+        return EGL_FALSE;
+    }
+    const auto& configuration = capabilityInfo.configurations[0];
+    switch(attribute) {
+        case EGL_CONFIG_ID: *value = configuration.configId; return EGL_TRUE;
+        case EGL_CONFIG_CAVEAT: *value = configuration.configCaveat; return EGL_TRUE;
+        case EGL_COLOR_BUFFER_TYPE: *value = configuration.colorBufferType; return EGL_TRUE;
+        case EGL_BUFFER_SIZE: *value = configuration.bufferSize; return EGL_TRUE;
+        case EGL_RED_SIZE: *value = configuration.redSize; return EGL_TRUE;
+        case EGL_GREEN_SIZE: *value = configuration.greenSize; return EGL_TRUE;
+        case EGL_BLUE_SIZE: *value = configuration.blueSize; return EGL_TRUE;
+        case EGL_ALPHA_SIZE: *value = configuration.alphaSize; return EGL_TRUE;
+        case EGL_LUMINANCE_SIZE: *value = configuration.luminanceSize; return EGL_TRUE;
+        case EGL_ALPHA_MASK_SIZE: *value = configuration.alphaMaskSize; return EGL_TRUE;
+        case EGL_DEPTH_SIZE: *value = configuration.depthSize; return EGL_TRUE;
+        case EGL_STENCIL_SIZE: *value = configuration.stencilSize; return EGL_TRUE;
+        case EGL_SAMPLE_BUFFERS: *value = configuration.sampleBuffers; return EGL_TRUE;
+        case EGL_SAMPLES: *value = configuration.samples; return EGL_TRUE;
+        case EGL_SURFACE_TYPE: *value = configuration.surfaceType; return EGL_TRUE;
+        case EGL_RENDERABLE_TYPE: *value = configuration.renderableType; return EGL_TRUE;
+        case EGL_CONFORMANT: *value = configuration.conformant; return EGL_TRUE;
+        case EGL_NATIVE_RENDERABLE: *value = configuration.nativeRenderable; return EGL_TRUE;
+        case EGL_NATIVE_VISUAL_ID: *value = configuration.nativeVisualId; return EGL_TRUE;
+        case EGL_NATIVE_VISUAL_TYPE: *value = configuration.nativeVisualType; return EGL_TRUE;
     }
     Log::warn("FakeEGL", "eglGetConfigAttrib %x", attribute);
-    return EGL_TRUE;
+    return EGL_FALSE;
 }
 
-EGLSurface eglCreateWindowSurface(EGLDisplay display, EGLConfig config, EGLNativeWindowType native_window, EGLint const *attrib_list) {
+EGLSurface EGLAPIENTRY eglCreateWindowSurface(EGLDisplay display, EGLConfig config, EGLNativeWindowType native_window, EGLint const *attrib_list) {
     return native_window;
 }
 
-EGLBoolean eglDestroySurface(EGLDisplay display, EGLSurface surface) {
+EGLBoolean EGLAPIENTRY eglDestroySurface(EGLDisplay display, EGLSurface surface) {
     return EGL_TRUE;
 }
 
-EGLContext eglCreateContext(EGLDisplay display, EGLConfig config, EGLContext share_context, EGLint const *attrib_list) {
+EGLContext EGLAPIENTRY eglCreateContext(EGLDisplay display, EGLConfig config, EGLContext share_context, EGLint const *attrib_list) {
     return (EGLContext *)1;
 }
 
-EGLBoolean eglDestroyContext(EGLDisplay display, EGLContext context) {
+EGLBoolean EGLAPIENTRY eglDestroyContext(EGLDisplay display, EGLContext context) {
     return EGL_TRUE;
 }
 
-EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context) {
+EGLBoolean EGLAPIENTRY eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context) {
     if(draw != nullptr) {
         ((GameWindow *)draw)->makeCurrent(true);
 #ifdef USE_IMGUI
@@ -116,7 +188,7 @@ EGLBoolean eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, 
     return EGL_TRUE;
 }
 
-EGLBoolean eglSwapBuffers(EGLDisplay display, EGLSurface surface) {
+EGLBoolean EGLAPIENTRY eglSwapBuffers(EGLDisplay display, EGLSurface surface) {
     if(FakeEGL::swapBuffersCallbacksLock.try_lock()) {
         for(size_t i = 0; i < FakeEGL::swapBuffersCallbacks.size(); i++) {
             FakeEGL::swapBuffersCallbacks[i].callback(FakeEGL::swapBuffersCallbacks[i].user, display, surface);
@@ -131,12 +203,12 @@ EGLBoolean eglSwapBuffers(EGLDisplay display, EGLSurface surface) {
     return EGL_TRUE;
 }
 
-EGLBoolean eglSwapInterval(EGLDisplay display, EGLint interval) {
+EGLBoolean EGLAPIENTRY eglSwapInterval(EGLDisplay display, EGLint interval) {
     //((GameWindow *)currentDrawSurface)->setSwapInterval(interval);
     return EGL_TRUE;
 }
 
-EGLBoolean eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint *value) {
+EGLBoolean EGLAPIENTRY eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint *value) {
     if(attribute == EGL_WIDTH || attribute == EGL_HEIGHT) {
         int w, h;
         ((GameWindow *)surface)->getWindowSize(w, h);
@@ -147,11 +219,19 @@ EGLBoolean eglQuerySurface(EGLDisplay display, EGLSurface surface, EGLint attrib
     return EGL_TRUE;
 }
 
-void *eglGetProcAddress(const char *name) {
+EGLBoolean EGLAPIENTRY eglWaitClient() {
+    return EGL_TRUE;
+}
+
+__eglMustCastToProperFunctionPointerType EGLAPIENTRY eglGetProcAddressExport(const char *name) {
     auto it = hostProcOverrides.find(name);
     if(it != hostProcOverrides.end())
-        return it->second;
-    return reinterpret_cast<void*>(hostProcAddrFn(name));
+        return reinterpret_cast<__eglMustCastToProperFunctionPointerType>(it->second);
+    return hostProcAddrFn(name);
+}
+
+void *eglGetProcAddress(const char *name) {
+    return reinterpret_cast<void*>(eglGetProcAddressExport(name));
 }
 
 }  // namespace fake_egl
@@ -162,6 +242,90 @@ void FakeEGL::setProcAddrFunction(HostProcAddress fn) {
     fake_egl::hostProcAddrFn = fn;
 }
 
+bool FakeEGL::validateCapabilityContract() {
+    const auto capabilities = getCapabilityInfo();
+    EGLint major = -1;
+    EGLint minor = -1;
+    EGLDisplay display = reinterpret_cast<EGLDisplay>(1);
+    if(fake_egl::eglInitialize(display, &major, &minor) != EGL_TRUE ||
+       major != capabilities.initializeMajor || minor != capabilities.initializeMinor) {
+        return false;
+    }
+    auto stringMatches = [](const char* actual, const char* expected) {
+        return actual != nullptr && expected != nullptr && strcmp(actual, expected) == 0;
+    };
+    if(!stringMatches(fake_egl::eglQueryString(display, EGL_VENDOR), capabilities.vendor) ||
+       !stringMatches(fake_egl::eglQueryString(display, EGL_VERSION), capabilities.version) ||
+       !stringMatches(fake_egl::eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS), capabilities.clientExtensions) ||
+       !stringMatches(fake_egl::eglQueryString(display, EGL_EXTENSIONS), capabilities.displayExtensions) ||
+       !stringMatches(fake_egl::eglQueryString(display, EGL_CLIENT_APIS), capabilities.clientApis)) {
+        return false;
+    }
+    if(capabilities.configurationCount > static_cast<std::size_t>(std::numeric_limits<EGLint>::max())) {
+        return false;
+    }
+    if(capabilities.configurationCount != 0 && capabilities.configurations == nullptr) {
+        return false;
+    }
+
+    EGLint reportedCount = -1;
+    if(fake_egl::eglGetConfigs(display, nullptr, 0, &reportedCount) != EGL_TRUE ||
+       reportedCount != static_cast<EGLint>(capabilities.configurationCount)) {
+        return false;
+    }
+    std::vector<EGLConfig> configurations(capabilities.configurationCount, nullptr);
+    EGLint returnedCount = -1;
+    if(fake_egl::eglGetConfigs(display, configurations.data(), reportedCount, &returnedCount) != EGL_TRUE ||
+       returnedCount != reportedCount) {
+        return false;
+    }
+    std::vector<EGLConfig> chosenConfigurations(capabilities.configurationCount, nullptr);
+    EGLint chosenCount = -1;
+    if(fake_egl::eglChooseConfig(display, nullptr, chosenConfigurations.data(), reportedCount,
+                                 &chosenCount) != EGL_TRUE ||
+       chosenCount != reportedCount || chosenConfigurations != configurations) {
+        return false;
+    }
+
+    for(std::size_t index = 0; index < capabilities.configurationCount; ++index) {
+        const auto& expected = capabilities.configurations[index];
+        struct AttributeExpectation {
+            EGLint attribute;
+            EGLint value;
+        };
+        const AttributeExpectation attributes[] = {
+            {EGL_CONFIG_ID, expected.configId},
+            {EGL_CONFIG_CAVEAT, expected.configCaveat},
+            {EGL_COLOR_BUFFER_TYPE, expected.colorBufferType},
+            {EGL_BUFFER_SIZE, expected.bufferSize},
+            {EGL_RED_SIZE, expected.redSize},
+            {EGL_GREEN_SIZE, expected.greenSize},
+            {EGL_BLUE_SIZE, expected.blueSize},
+            {EGL_ALPHA_SIZE, expected.alphaSize},
+            {EGL_LUMINANCE_SIZE, expected.luminanceSize},
+            {EGL_ALPHA_MASK_SIZE, expected.alphaMaskSize},
+            {EGL_DEPTH_SIZE, expected.depthSize},
+            {EGL_STENCIL_SIZE, expected.stencilSize},
+            {EGL_SAMPLE_BUFFERS, expected.sampleBuffers},
+            {EGL_SAMPLES, expected.samples},
+            {EGL_SURFACE_TYPE, expected.surfaceType},
+            {EGL_RENDERABLE_TYPE, expected.renderableType},
+            {EGL_CONFORMANT, expected.conformant},
+            {EGL_NATIVE_RENDERABLE, static_cast<EGLint>(expected.nativeRenderable)},
+            {EGL_NATIVE_VISUAL_ID, expected.nativeVisualId},
+            {EGL_NATIVE_VISUAL_TYPE, expected.nativeVisualType}
+        };
+        for(const auto& attribute : attributes) {
+            EGLint actual = std::numeric_limits<EGLint>::min();
+            if(fake_egl::eglGetConfigAttrib(display, configurations[index], attribute.attribute,
+                                            &actual) != EGL_TRUE || actual != attribute.value) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 void FakeEGL::addSwapBuffersCallback(void *user, void (*callback)(void *user, EGLDisplay display, EGLSurface surface)) {
     swapBuffersCallbacksLock.lock();
     swapBuffersCallbacks.emplace_back(SwapBuffersCallback{.user = user, .callback = callback});
@@ -169,6 +333,9 @@ void FakeEGL::addSwapBuffersCallback(void *user, void (*callback)(void *user, EG
 }
 
 void FakeEGL::installLibrary() {
+    auto capabilityInfo = getCapabilityInfo();
+    Log::info("FakeEGL", "Installing synthetic EGL %s with %zu reported configuration(s)",
+              capabilityInfo.version, capabilityInfo.configurationCount);
     std::unordered_map<std::string, void *> syms;
     syms["eglInitialize"] = (void *)fake_egl::eglInitialize;
     syms["eglTerminate"] = (void *)fake_egl::eglTerminate;
@@ -177,6 +344,7 @@ void FakeEGL::installLibrary() {
     syms["eglGetDisplay"] = (void *)fake_egl::eglGetDisplay;
     syms["eglGetCurrentDisplay"] = (void *)fake_egl::eglGetCurrentDisplay;
     syms["eglGetCurrentContext"] = (void *)fake_egl::eglGetCurrentContext;
+    syms["eglGetConfigs"] = (void *)fake_egl::eglGetConfigs;
     syms["eglChooseConfig"] = (void *)fake_egl::eglChooseConfig;
     syms["eglGetConfigAttrib"] = (void *)fake_egl::eglGetConfigAttrib;
     syms["eglCreateWindowSurface"] = (void *)fake_egl::eglCreateWindowSurface;
@@ -187,10 +355,8 @@ void FakeEGL::installLibrary() {
     syms["eglSwapBuffers"] = (void *)fake_egl::eglSwapBuffers;
     syms["eglSwapInterval"] = (void *)fake_egl::eglSwapInterval;
     syms["eglQuerySurface"] = (void *)fake_egl::eglQuerySurface;
-    syms["eglGetProcAddress"] = (void *)fake_egl::eglGetProcAddress;
-    syms["eglWaitClient"] = (void *)+[]() -> EGLBoolean {
-        return EGL_TRUE;
-    };
+    syms["eglGetProcAddress"] = (void *)fake_egl::eglGetProcAddressExport;
+    syms["eglWaitClient"] = (void *)fake_egl::eglWaitClient;
     linker::load_library("libEGL.so", syms);
 }
 
