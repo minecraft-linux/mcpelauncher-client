@@ -52,7 +52,7 @@ public:
     void recordGraphicsContextCreated(const GraphicsContextInfo& contextInfo,
                                       HostProcAddress getHostGlProcAddress,
                                       HostProcAddress getHostEglProcAddress);
-    void recordGuestEglIdentity(const char* vendor, const char* version);
+    void recordGuestEglCapabilities();
     void recordGuestGl(const GraphicsContextInfo& contextInfo,
                        GuestProcAddress getGuestProcAddress);
     void recordGraphicsContextCreationFailed();

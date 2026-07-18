@@ -1,4 +1,5 @@
 #include "graphics_capability_report.h"
+#include "fake_egl.h"
 
 #include <build_info.h>
 #include <mcpelauncher/path_helper.h>
@@ -503,27 +504,13 @@ std::string queryHostGlString(GraphicsCapabilityReport::HostProcAddress getHostP
     return value == nullptr ? std::string() : std::string(reinterpret_cast<const char*>(value));
 }
 
-bool hasExtensionToken(const std::string& extensions, const char* token) {
-    std::size_t offset = 0;
-    const std::size_t tokenLength = strlen(token);
-    while((offset = extensions.find(token, offset)) != std::string::npos) {
-        bool startsToken = offset == 0 || extensions[offset - 1] == ' ';
-        bool endsToken = offset + tokenLength == extensions.size() || extensions[offset + tokenLength] == ' ';
-        if(startsToken && endsToken) {
-            return true;
-        }
-        offset += tokenLength;
-    }
-    return false;
-}
-
 struct BackendObservation {
     std::optional<std::string> backend;
     std::optional<std::string> evidenceValue;
     bool ambiguous = false;
 };
 
-BackendObservation backendFromDeviceExtensions(const std::string& extensions) {
+BackendObservation backendFromDeviceExtensions(const std::vector<std::string>& extensions) {
     struct KnownBackend {
         const char* extension;
         const char* backend;
@@ -539,7 +526,7 @@ BackendObservation backendFromDeviceExtensions(const std::string& extensions) {
 
     BackendObservation result;
     for(const auto& known : knownBackends) {
-        if(!hasExtensionToken(extensions, known.extension)) {
+        if(std::find(extensions.begin(), extensions.end(), known.extension) == extensions.end()) {
             continue;
         }
         if(result.backend) {
@@ -582,7 +569,24 @@ BackendObservation backendFromAngleRenderer(const std::string& renderer) {
     return result;
 }
 
-struct HostEglObservation {
+constexpr std::size_t MAX_EGL_IDENTITY_LENGTH = 1024;
+constexpr std::size_t MAX_EGL_EXTENSION_COUNT = 1024;
+constexpr std::size_t MAX_EGL_EXTENSION_LENGTH = 255;
+constexpr std::size_t MAX_EGL_EXTENSION_BYTES = 64 * 1024;
+constexpr std::size_t MAX_EGL_LIST_SCAN_LENGTH = MAX_EGL_EXTENSION_BYTES + MAX_EGL_EXTENSION_COUNT;
+constexpr std::size_t MAX_EGL_CONFIGURATION_COUNT = 1024;
+
+struct EglCollectionError {
+    const char* code;
+    const char* message;
+};
+
+struct EglLayerObservation {
+    json data = nullptr;
+    std::vector<EglCollectionError> errors;
+};
+
+struct HostEglObservation : EglLayerObservation {
     BackendObservation deviceBackend;
     std::string vendor;
     std::string runtimeVersion;
@@ -591,7 +595,14 @@ struct HostEglObservation {
     bool deviceQueryAvailable = false;
 };
 
-constexpr std::size_t MAX_EGL_IDENTITY_LENGTH = 1024;
+void addEglError(std::vector<EglCollectionError>& errors, const char* code, const char* message) {
+    auto duplicate = std::find_if(errors.begin(), errors.end(), [&](const auto& error) {
+        return strcmp(error.code, code) == 0;
+    });
+    if(duplicate == errors.end()) {
+        errors.push_back({code, message});
+    }
+}
 
 std::string boundedAsciiEglString(const char* value) {
     if(value == nullptr) {
@@ -609,6 +620,92 @@ std::string boundedAsciiEglString(const char* value) {
         return {};
     }
     return std::string(value, length);
+}
+
+std::optional<std::vector<std::string>> parseBoundedEglList(const char* value) {
+    if(value == nullptr) {
+        return std::nullopt;
+    }
+    std::size_t length = 0;
+    while(length <= MAX_EGL_LIST_SCAN_LENGTH && value[length] != '\0') {
+        auto character = static_cast<unsigned char>(value[length]);
+        if(character < 0x20 || character > 0x7E) {
+            return std::nullopt;
+        }
+        ++length;
+    }
+    if(length > MAX_EGL_LIST_SCAN_LENGTH) {
+        return std::nullopt;
+    }
+
+    std::vector<std::string> tokens;
+    std::size_t aggregateBytes = 0;
+    std::size_t offset = 0;
+    while(offset < length) {
+        while(offset < length && value[offset] == ' ') {
+            ++offset;
+        }
+        if(offset == length) {
+            break;
+        }
+        auto end = offset;
+        while(end < length && value[end] != ' ') {
+            ++end;
+        }
+        auto tokenLength = end - offset;
+        if(tokenLength == 0 || tokenLength > MAX_EGL_EXTENSION_LENGTH ||
+           tokens.size() == MAX_EGL_EXTENSION_COUNT ||
+           aggregateBytes > MAX_EGL_EXTENSION_BYTES - tokenLength) {
+            return std::nullopt;
+        }
+        tokens.emplace_back(value + offset, tokenLength);
+        aggregateBytes += tokenLength;
+        offset = end;
+    }
+    std::sort(tokens.begin(), tokens.end());
+    tokens.erase(std::unique(tokens.begin(), tokens.end()), tokens.end());
+    return tokens;
+}
+
+bool validEglExtensionToken(const std::string& token) {
+    if(token.size() <= 4 || token.rfind("EGL_", 0) != 0) {
+        return false;
+    }
+    return std::all_of(token.begin() + 4, token.end(), [](unsigned char character) {
+        return (character >= 'A' && character <= 'Z') ||
+               (character >= 'a' && character <= 'z') ||
+               (character >= '0' && character <= '9') || character == '_';
+    });
+}
+
+std::optional<std::vector<std::string>> parseEglExtensionSet(const char* value) {
+    auto tokens = parseBoundedEglList(value);
+    if(!tokens || !std::all_of(tokens->begin(), tokens->end(), validEglExtensionToken)) {
+        return std::nullopt;
+    }
+    return tokens;
+}
+
+std::optional<std::vector<std::string>> parseEglClientApis(const char* value) {
+    auto tokens = parseBoundedEglList(value);
+    if(!tokens) {
+        return std::nullopt;
+    }
+    std::vector<std::string> apis;
+    for(const auto& token : *tokens) {
+        if(token == "OpenGL") {
+            apis.emplace_back("opengl");
+        } else if(token == "OpenGL_ES") {
+            apis.emplace_back("opengles");
+        } else if(token == "OpenVG") {
+            apis.emplace_back("openvg");
+        } else {
+            return std::nullopt;
+        }
+    }
+    std::sort(apis.begin(), apis.end());
+    apis.erase(std::unique(apis.begin(), apis.end()), apis.end());
+    return apis;
 }
 
 json makeEglLayerData(const char* queryPath, const std::string& vendor,
@@ -632,6 +729,386 @@ json makeEglLayerData(const char* queryPath, const std::string& vendor,
     };
 }
 
+struct EglConfigurationValues {
+    EGLint configId = 0;
+    EGLint configCaveat = 0;
+    EGLint colorBufferType = 0;
+    std::optional<EGLint> colorComponentType;
+    EGLint bufferSize = 0;
+    EGLint redSize = 0;
+    EGLint greenSize = 0;
+    EGLint blueSize = 0;
+    EGLint alphaSize = 0;
+    EGLint luminanceSize = 0;
+    EGLint alphaMaskSize = 0;
+    EGLint depthSize = 0;
+    EGLint stencilSize = 0;
+    EGLint sampleBuffers = 0;
+    EGLint samples = 0;
+    EGLint surfaceType = 0;
+    EGLint renderableType = 0;
+    EGLint conformant = 0;
+    EGLBoolean nativeRenderable = EGL_FALSE;
+    EGLint nativeVisualId = 0;
+    EGLint nativeVisualType = 0;
+};
+
+std::optional<json> makeEglConfiguration(const EglConfigurationValues& values) {
+    const EGLint nonnegativeValues[] = {
+        values.configId, values.bufferSize, values.redSize, values.greenSize,
+        values.blueSize, values.alphaSize, values.luminanceSize, values.alphaMaskSize,
+        values.depthSize, values.stencilSize, values.sampleBuffers, values.samples,
+        values.surfaceType, values.renderableType, values.conformant,
+        values.nativeVisualId, values.nativeVisualType
+    };
+    if(std::any_of(std::begin(nonnegativeValues), std::end(nonnegativeValues),
+                   [](EGLint value) { return value < 0; })) {
+        return std::nullopt;
+    }
+
+    const char* caveat = nullptr;
+    if(values.configCaveat == EGL_NONE) {
+        caveat = "none";
+    } else if(values.configCaveat == EGL_SLOW_CONFIG) {
+        caveat = "slow";
+    } else if(values.configCaveat == EGL_NON_CONFORMANT_CONFIG) {
+        caveat = "non_conformant";
+    } else {
+        return std::nullopt;
+    }
+
+    const char* colorBufferType = nullptr;
+    if(values.colorBufferType == EGL_RGB_BUFFER) {
+        colorBufferType = "rgb";
+    } else if(values.colorBufferType == EGL_LUMINANCE_BUFFER) {
+        colorBufferType = "luminance";
+    } else {
+        return std::nullopt;
+    }
+
+    json colorComponentType = nullptr;
+    constexpr EGLint EGL_COLOR_COMPONENT_TYPE_FIXED_EXT_VALUE = 0x333A;
+    constexpr EGLint EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT_VALUE = 0x333B;
+    if(values.colorComponentType) {
+        if(*values.colorComponentType == EGL_COLOR_COMPONENT_TYPE_FIXED_EXT_VALUE) {
+            colorComponentType = "fixed";
+        } else if(*values.colorComponentType == EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT_VALUE) {
+            colorComponentType = "float";
+        } else {
+            return std::nullopt;
+        }
+    }
+    if(values.nativeRenderable != EGL_TRUE && values.nativeRenderable != EGL_FALSE) {
+        return std::nullopt;
+    }
+
+    auto apiMask = [](EGLint raw) {
+        return json{
+            {"raw", raw},
+            {"opengl", (raw & EGL_OPENGL_BIT) != 0},
+            {"opengles1", (raw & EGL_OPENGL_ES_BIT) != 0},
+            {"opengles2", (raw & EGL_OPENGL_ES2_BIT) != 0},
+            {"opengles3", (raw & EGL_OPENGL_ES3_BIT) != 0},
+            {"openvg", (raw & EGL_OPENVG_BIT) != 0}
+        };
+    };
+
+    return json{
+        {"config_id", values.configId},
+        {"config_caveat", caveat},
+        {"color_buffer_type", colorBufferType},
+        {"color_component_type", colorComponentType},
+        {"buffer_size", values.bufferSize},
+        {"red_size", values.redSize},
+        {"green_size", values.greenSize},
+        {"blue_size", values.blueSize},
+        {"alpha_size", values.alphaSize},
+        {"luminance_size", values.luminanceSize},
+        {"alpha_mask_size", values.alphaMaskSize},
+        {"depth_size", values.depthSize},
+        {"stencil_size", values.stencilSize},
+        {"sample_buffers", values.sampleBuffers},
+        {"samples", values.samples},
+        {"surface_type", {
+            {"raw", values.surfaceType},
+            {"window", (values.surfaceType & EGL_WINDOW_BIT) != 0},
+            {"pixmap", (values.surfaceType & EGL_PIXMAP_BIT) != 0},
+            {"pbuffer", (values.surfaceType & EGL_PBUFFER_BIT) != 0}
+        }},
+        {"renderable_type", apiMask(values.renderableType)},
+        {"conformant", apiMask(values.conformant)},
+        {"native_renderable", values.nativeRenderable == EGL_TRUE},
+        {"native_visual_id", values.nativeVisualId},
+        {"native_visual_type", values.nativeVisualType}
+    };
+}
+
+bool eglLayerDataComplete(const json& data) {
+    return !data.is_null() &&
+           !data["client"]["extensions"].is_null() &&
+           !data["display"]["initialization"].is_null() &&
+           !data["display"]["vendor"].is_null() &&
+           !data["display"]["version"].is_null() &&
+           !data["display"]["client_apis"].is_null() &&
+           !data["display"]["extensions"].is_null() &&
+           !data["configurations"]["reported_count"].is_null() &&
+           !data["configurations"]["items"].is_null();
+}
+
+EglLayerObservation queryGuestEglSnapshot() {
+    EglLayerObservation result;
+    auto capabilities = FakeEGL::getCapabilityInfo();
+    auto vendor = boundedAsciiEglString(capabilities.vendor);
+    auto version = boundedAsciiEglString(capabilities.version);
+    result.data = makeEglLayerData("minecraft_fake_egl_exports", vendor, version);
+    if(!FakeEGL::validateCapabilityContract()) {
+        addEglError(result.errors, "guest_egl_export_contract_mismatch",
+                    "The synthetic guest EGL exports did not match their immutable capability descriptor");
+    }
+
+    if(capabilities.initializeMajor >= 0 && capabilities.initializeMinor >= 0) {
+        result.data["display"]["initialization"] = {
+            {"succeeded", true},
+            {"version", {
+                {"major", capabilities.initializeMajor},
+                {"minor", capabilities.initializeMinor}
+            }}
+        };
+    } else {
+        addEglError(result.errors, "guest_egl_initialization_invalid",
+                    "The synthetic guest EGL initialization version was invalid");
+    }
+
+    auto clientExtensions = parseEglExtensionSet(capabilities.clientExtensions);
+    if(clientExtensions) {
+        result.data["client"]["extensions"] = *clientExtensions;
+    } else {
+        addEglError(result.errors, "guest_egl_client_extensions_invalid",
+                    "The synthetic guest EGL client extension set was invalid");
+    }
+    auto displayExtensions = parseEglExtensionSet(capabilities.displayExtensions);
+    if(displayExtensions) {
+        result.data["display"]["extensions"] = *displayExtensions;
+    } else {
+        addEglError(result.errors, "guest_egl_display_extensions_invalid",
+                    "The synthetic guest EGL display extension set was invalid");
+    }
+    auto clientApis = parseEglClientApis(capabilities.clientApis);
+    if(clientApis) {
+        result.data["display"]["client_apis"] = *clientApis;
+    } else {
+        addEglError(result.errors, "guest_egl_client_apis_invalid",
+                    "The synthetic guest EGL client API set was invalid");
+    }
+
+    if(vendor.empty() || version.empty()) {
+        addEglError(result.errors, "guest_egl_identity_query_failed",
+                    "The synthetic guest EGL implementation did not expose safe vendor and version identity");
+    }
+    if(capabilities.configurationCount > static_cast<std::size_t>(std::numeric_limits<EGLint>::max())) {
+        addEglError(result.errors, "guest_egl_configuration_count_invalid",
+                    "The synthetic guest EGL configuration count was invalid");
+        return result;
+    }
+
+    auto configurationCount = static_cast<EGLint>(capabilities.configurationCount);
+    result.data["configurations"]["reported_count"] = configurationCount;
+    if(capabilities.configurationCount > MAX_EGL_CONFIGURATION_COUNT) {
+        addEglError(result.errors, "egl_configuration_count_exceeds_limit",
+                    "The EGL configuration count exceeded the safe collection limit");
+        return result;
+    }
+    if(capabilities.configurationCount != 0 && capabilities.configurations == nullptr) {
+        addEglError(result.errors, "guest_egl_configuration_data_unavailable",
+                    "The synthetic guest EGL configurations were unavailable");
+        return result;
+    }
+
+    std::vector<json> configurations;
+    configurations.reserve(capabilities.configurationCount);
+    for(std::size_t index = 0; index < capabilities.configurationCount; ++index) {
+        const auto& input = capabilities.configurations[index];
+        EglConfigurationValues values;
+        values.configId = input.configId;
+        values.configCaveat = input.configCaveat;
+        values.colorBufferType = input.colorBufferType;
+        values.bufferSize = input.bufferSize;
+        values.redSize = input.redSize;
+        values.greenSize = input.greenSize;
+        values.blueSize = input.blueSize;
+        values.alphaSize = input.alphaSize;
+        values.luminanceSize = input.luminanceSize;
+        values.alphaMaskSize = input.alphaMaskSize;
+        values.depthSize = input.depthSize;
+        values.stencilSize = input.stencilSize;
+        values.sampleBuffers = input.sampleBuffers;
+        values.samples = input.samples;
+        values.surfaceType = input.surfaceType;
+        values.renderableType = input.renderableType;
+        values.conformant = input.conformant;
+        values.nativeRenderable = input.nativeRenderable;
+        values.nativeVisualId = input.nativeVisualId;
+        values.nativeVisualType = input.nativeVisualType;
+        auto configuration = makeEglConfiguration(values);
+        if(!configuration) {
+            addEglError(result.errors, "guest_egl_configuration_attribute_invalid",
+                        "A synthetic guest EGL configuration attribute was invalid");
+            return result;
+        }
+        configurations.push_back(std::move(*configuration));
+    }
+    std::sort(configurations.begin(), configurations.end(), [](const auto& left, const auto& right) {
+        return left["config_id"].template get<EGLint>() < right["config_id"].template get<EGLint>();
+    });
+    auto duplicate = std::adjacent_find(configurations.begin(), configurations.end(),
+                                        [](const auto& left, const auto& right) {
+        return left["config_id"] == right["config_id"];
+    });
+    if(duplicate != configurations.end()) {
+        addEglError(result.errors, "egl_configuration_id_duplicate",
+                    "The EGL configuration list contained duplicate configuration identifiers");
+        return result;
+    }
+    result.data["configurations"]["items"] = configurations;
+    return result;
+}
+
+using EglGetErrorFunction = decltype(&eglGetError);
+using EglGetConfigAttribFunction = decltype(&eglGetConfigAttrib);
+
+std::optional<json> queryHostEglConfiguration(EGLDisplay display, EGLConfig configuration,
+                                               bool queryColorComponentType,
+                                               EglGetConfigAttribFunction eglGetConfigAttrib,
+                                               EglGetErrorFunction eglGetError,
+                                               std::vector<EglCollectionError>& errors) {
+    EglConfigurationValues values;
+    auto query = [&](EGLint attribute, EGLint& output) {
+        output = -1;
+        if(eglGetConfigAttrib(display, configuration, attribute, &output) == EGL_TRUE) {
+            return true;
+        }
+        eglGetError();
+        addEglError(errors, "host_egl_configuration_attribute_query_failed",
+                    "A host EGL configuration attribute could not be queried");
+        return false;
+    };
+
+    if(!query(EGL_CONFIG_ID, values.configId) ||
+       !query(EGL_CONFIG_CAVEAT, values.configCaveat) ||
+       !query(EGL_COLOR_BUFFER_TYPE, values.colorBufferType) ||
+       !query(EGL_BUFFER_SIZE, values.bufferSize) ||
+       !query(EGL_RED_SIZE, values.redSize) ||
+       !query(EGL_GREEN_SIZE, values.greenSize) ||
+       !query(EGL_BLUE_SIZE, values.blueSize) ||
+       !query(EGL_ALPHA_SIZE, values.alphaSize) ||
+       !query(EGL_LUMINANCE_SIZE, values.luminanceSize) ||
+       !query(EGL_ALPHA_MASK_SIZE, values.alphaMaskSize) ||
+       !query(EGL_DEPTH_SIZE, values.depthSize) ||
+       !query(EGL_STENCIL_SIZE, values.stencilSize) ||
+       !query(EGL_SAMPLE_BUFFERS, values.sampleBuffers) ||
+       !query(EGL_SAMPLES, values.samples) ||
+       !query(EGL_SURFACE_TYPE, values.surfaceType) ||
+       !query(EGL_RENDERABLE_TYPE, values.renderableType) ||
+       !query(EGL_CONFORMANT, values.conformant)) {
+        return std::nullopt;
+    }
+    EGLint nativeRenderable = -1;
+    if(!query(EGL_NATIVE_RENDERABLE, nativeRenderable) ||
+       !query(EGL_NATIVE_VISUAL_ID, values.nativeVisualId) ||
+       !query(EGL_NATIVE_VISUAL_TYPE, values.nativeVisualType)) {
+        return std::nullopt;
+    }
+    values.nativeRenderable = static_cast<EGLBoolean>(nativeRenderable);
+    if(queryColorComponentType) {
+        constexpr EGLint EGL_COLOR_COMPONENT_TYPE_EXT_VALUE = 0x3339;
+        EGLint colorComponentType = -1;
+        if(!query(EGL_COLOR_COMPONENT_TYPE_EXT_VALUE, colorComponentType)) {
+            return std::nullopt;
+        }
+        values.colorComponentType = colorComponentType;
+    }
+
+    auto encoded = makeEglConfiguration(values);
+    if(!encoded) {
+        addEglError(errors, "host_egl_configuration_attribute_invalid",
+                    "A host EGL configuration attribute was outside the report contract");
+    }
+    return encoded;
+}
+
+void collectHostEglConfigurations(EGLDisplay display, bool queryColorComponentType,
+                                  GraphicsCapabilityReport::HostProcAddress getHostProcAddress,
+                                  EglGetErrorFunction eglGetError, json& data,
+                                  std::vector<EglCollectionError>& errors) {
+    using EglGetConfigs = decltype(&eglGetConfigs);
+    auto eglGetConfigs = reinterpret_cast<EglGetConfigs>(getHostProcAddress("eglGetConfigs"));
+    auto eglGetConfigAttrib = reinterpret_cast<EglGetConfigAttribFunction>(
+        getHostProcAddress("eglGetConfigAttrib"));
+    if(eglGetConfigs == nullptr || eglGetConfigAttrib == nullptr) {
+        addEglError(errors, "host_egl_configuration_entry_point_unavailable",
+                    "Required host EGL configuration query entry points were unavailable");
+        return;
+    }
+
+    EGLint reportedCount = -1;
+    if(eglGetConfigs(display, nullptr, 0, &reportedCount) == EGL_FALSE) {
+        eglGetError();
+        addEglError(errors, "host_egl_configuration_count_query_failed",
+                    "The host EGL configuration count could not be queried");
+        return;
+    }
+    if(reportedCount < 0) {
+        addEglError(errors, "host_egl_configuration_count_invalid",
+                    "The host EGL configuration count was invalid");
+        return;
+    }
+    data["configurations"]["reported_count"] = reportedCount;
+    if(static_cast<std::size_t>(reportedCount) > MAX_EGL_CONFIGURATION_COUNT) {
+        addEglError(errors, "egl_configuration_count_exceeds_limit",
+                    "The EGL configuration count exceeded the safe collection limit");
+        return;
+    }
+
+    std::vector<EGLConfig> handles(static_cast<std::size_t>(reportedCount), nullptr);
+    EGLint returnedCount = 0;
+    if(reportedCount > 0 &&
+       eglGetConfigs(display, handles.data(), reportedCount, &returnedCount) == EGL_FALSE) {
+        eglGetError();
+        addEglError(errors, "host_egl_configuration_list_query_failed",
+                    "The host EGL configuration list could not be queried");
+        return;
+    }
+    if(returnedCount != reportedCount) {
+        addEglError(errors, "host_egl_configuration_count_changed",
+                    "The host EGL configuration count changed during collection");
+        return;
+    }
+
+    std::vector<json> configurations;
+    configurations.reserve(handles.size());
+    for(auto handle : handles) {
+        auto configuration = queryHostEglConfiguration(display, handle, queryColorComponentType,
+                                                       eglGetConfigAttrib, eglGetError, errors);
+        if(!configuration) {
+            return;
+        }
+        configurations.push_back(std::move(*configuration));
+    }
+    std::sort(configurations.begin(), configurations.end(), [](const auto& left, const auto& right) {
+        return left["config_id"].template get<EGLint>() < right["config_id"].template get<EGLint>();
+    });
+    auto duplicate = std::adjacent_find(configurations.begin(), configurations.end(),
+                                        [](const auto& left, const auto& right) {
+        return left["config_id"] == right["config_id"];
+    });
+    if(duplicate != configurations.end()) {
+        addEglError(errors, "egl_configuration_id_duplicate",
+                    "The EGL configuration list contained duplicate configuration identifiers");
+        return;
+    }
+    data["configurations"]["items"] = configurations;
+}
+
 HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHostProcAddress) {
     HostEglObservation result;
     if(getHostProcAddress == nullptr) {
@@ -640,7 +1117,6 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
 
     using EglGetCurrentDisplay = decltype(&eglGetCurrentDisplay);
     using EglQueryString = decltype(&eglQueryString);
-    using EglGetError = decltype(&eglGetError);
     using EglQueryDisplayAttrib = EGLBoolean (EGLAPIENTRY *)(EGLDisplay, EGLint, EGLAttrib*);
     using EglDevice = void*;
     using EglQueryDeviceString = const char* (EGLAPIENTRY *)(EglDevice, EGLint);
@@ -649,9 +1125,9 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
     auto eglQueryDisplayAttrib = reinterpret_cast<EglQueryDisplayAttrib>(getHostProcAddress("eglQueryDisplayAttribEXT"));
     auto eglQueryDeviceString = reinterpret_cast<EglQueryDeviceString>(getHostProcAddress("eglQueryDeviceStringEXT"));
     auto eglQueryString = reinterpret_cast<EglQueryString>(getHostProcAddress("eglQueryString"));
-    auto eglGetError = reinterpret_cast<EglGetError>(getHostProcAddress("eglGetError"));
+    auto eglGetError = reinterpret_cast<EglGetErrorFunction>(getHostProcAddress("eglGetError"));
 
-    if(eglGetCurrentDisplay == nullptr || eglQueryString == nullptr) {
+    if(eglGetCurrentDisplay == nullptr || eglQueryString == nullptr || eglGetError == nullptr) {
         return result;
     }
     result.resolverAvailable = true;
@@ -669,46 +1145,104 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
     if(version == nullptr && eglGetError != nullptr) {
         eglGetError();
     }
-    if(const char* value = version) {
-        result.runtimeVersion = boundedAsciiEglString(value);
-    }
+    result.runtimeVersion = boundedAsciiEglString(version);
+    result.data = makeEglLayerData("game_window_host_resolver", result.vendor,
+                                   result.runtimeVersion);
 
-    // EGL 1.5 guarantees the no-display client extension query. On older EGL
-    // runtimes, skip the optional device diagnostic rather than risking
-    // EGL_BAD_DISPLAY while probing for EGL_EXT_client_extensions itself.
     auto eglVersion = parseContextVersion(result.runtimeVersion);
+    if(eglVersion) {
+        result.data["display"]["initialization"] = {
+            {"succeeded", true},
+            {"version", {
+                {"major", eglVersion->first},
+                {"minor", eglVersion->second}
+            }}
+        };
+    } else {
+        addEglError(result.errors, "host_egl_initialization_version_unavailable",
+                    "The initialized host EGL display version could not be observed safely");
+    }
     bool canQueryClientExtensions = eglVersion &&
         (eglVersion->first > 1 || (eglVersion->first == 1 && eglVersion->second >= 5));
-    if(!canQueryClientExtensions || eglQueryDisplayAttrib == nullptr || eglQueryDeviceString == nullptr) {
-        return result;
-    }
-    const char* clientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
-    if(clientExtensions == nullptr) {
-        if(eglGetError != nullptr) {
+    std::optional<std::vector<std::string>> clientExtensions;
+    if(canQueryClientExtensions) {
+        const char* rawClientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+        if(rawClientExtensions == nullptr) {
             eglGetError();
+            addEglError(result.errors, "host_egl_client_extensions_query_failed",
+                        "The host EGL client extension set could not be queried");
+        } else {
+            clientExtensions = parseEglExtensionSet(rawClientExtensions);
+            if(clientExtensions) {
+                result.data["client"]["extensions"] = *clientExtensions;
+            } else {
+                addEglError(result.errors, "host_egl_client_extensions_invalid",
+                            "The host EGL client extension set was outside the report bounds");
+            }
         }
-        return result;
-    }
-    if(!hasExtensionToken(clientExtensions, "EGL_EXT_device_query")) {
-        return result;
+    } else {
+        addEglError(result.errors, "host_egl_client_extensions_unsupported",
+                    "The host EGL version did not guarantee a safe client extension query");
     }
 
-    EGLAttrib deviceAttribute = 0;
-    constexpr EGLint EGL_DEVICE_EXT_VALUE = 0x322C;
-    if(eglQueryDisplayAttrib(display, EGL_DEVICE_EXT_VALUE, &deviceAttribute) == EGL_FALSE || deviceAttribute == 0) {
-        // A supported query that failed generated this diagnostic EGL error;
-        // consume it so capability collection cannot perturb later EGL calls.
-        if(eglGetError != nullptr) {
-            eglGetError();
-        }
-        return result;
-    }
-    result.deviceQueryAvailable = true;
-    const char* extensions = eglQueryDeviceString(reinterpret_cast<EglDevice>(deviceAttribute), EGL_EXTENSIONS);
-    if(extensions != nullptr) {
-        result.deviceBackend = backendFromDeviceExtensions(extensions);
-    } else if(eglGetError != nullptr) {
+    std::optional<std::vector<std::string>> displayExtensions;
+    const char* rawDisplayExtensions = eglQueryString(display, EGL_EXTENSIONS);
+    if(rawDisplayExtensions == nullptr) {
         eglGetError();
+        addEglError(result.errors, "host_egl_display_extensions_query_failed",
+                    "The host EGL display extension set could not be queried");
+    } else {
+        displayExtensions = parseEglExtensionSet(rawDisplayExtensions);
+        if(displayExtensions) {
+            result.data["display"]["extensions"] = *displayExtensions;
+        } else {
+            addEglError(result.errors, "host_egl_display_extensions_invalid",
+                        "The host EGL display extension set was outside the report bounds");
+        }
+    }
+
+    const char* rawClientApis = eglQueryString(display, EGL_CLIENT_APIS);
+    if(rawClientApis == nullptr) {
+        eglGetError();
+        addEglError(result.errors, "host_egl_client_apis_query_failed",
+                    "The host EGL client API set could not be queried");
+    } else {
+        auto clientApis = parseEglClientApis(rawClientApis);
+        if(clientApis) {
+            result.data["display"]["client_apis"] = *clientApis;
+        } else {
+            addEglError(result.errors, "host_egl_client_apis_invalid",
+                        "The host EGL client API set was outside the report contract");
+        }
+    }
+
+    bool queryColorComponentType = displayExtensions &&
+        std::find(displayExtensions->begin(), displayExtensions->end(),
+                  "EGL_EXT_pixel_format_float") != displayExtensions->end();
+    collectHostEglConfigurations(display, queryColorComponentType, getHostProcAddress,
+                                 eglGetError, result.data, result.errors);
+
+    bool deviceQueryExtension = clientExtensions &&
+        std::find(clientExtensions->begin(), clientExtensions->end(),
+                  "EGL_EXT_device_query") != clientExtensions->end();
+    if(deviceQueryExtension && eglQueryDisplayAttrib != nullptr && eglQueryDeviceString != nullptr) {
+        EGLAttrib deviceAttribute = 0;
+        constexpr EGLint EGL_DEVICE_EXT_VALUE = 0x322C;
+        if(eglQueryDisplayAttrib(display, EGL_DEVICE_EXT_VALUE, &deviceAttribute) == EGL_FALSE) {
+            eglGetError();
+            return result;
+        }
+        if(deviceAttribute == 0) {
+            return result;
+        }
+        result.deviceQueryAvailable = true;
+        const char* deviceExtensionString = eglQueryDeviceString(
+            reinterpret_cast<EglDevice>(deviceAttribute), EGL_EXTENSIONS);
+        if(deviceExtensionString == nullptr) {
+            eglGetError();
+        } else if(auto deviceExtensions = parseEglExtensionSet(deviceExtensionString)) {
+            result.deviceBackend = backendFromDeviceExtensions(*deviceExtensions);
+        }
     }
     return result;
 }
@@ -1267,25 +1801,22 @@ void GraphicsCapabilityReport::recordGraphicsContextCreated(
     } else if(!egl.resolverAvailable || !egl.currentDisplayAvailable) {
         hostEgl["status"] = "unavailable";
         hostEgl["data"] = nullptr;
-    } else if(egl.vendor.empty() && egl.runtimeVersion.empty()) {
-        hostEgl["status"] = "error";
-        hostEgl["data"] = nullptr;
-        hostEgl["errors"].push_back({
-            {"code", "host_egl_identity_query_failed"},
-            {"message", "The active host EGL display did not expose safe vendor or version identity"}
-        });
     } else {
-        hostEgl["status"] = "partial";
-        hostEgl["data"] = makeEglLayerData("game_window_host_resolver", egl.vendor,
-                                             egl.runtimeVersion);
-        hostEgl["errors"].push_back({
-            {"code", "egl_capability_collection_incomplete"},
-            {"message", "EGL initialization, extensions, client APIs, and configurations were not collected"}
-        });
         if(egl.vendor.empty() || egl.runtimeVersion.empty()) {
+            addEglError(egl.errors, "host_egl_identity_query_failed",
+                        "The active host EGL display did not expose safe vendor and version identity");
+        }
+        if(!eglLayerDataComplete(egl.data) && egl.errors.empty()) {
+            addEglError(egl.errors, "host_egl_capability_collection_incomplete",
+                        "The active host EGL display did not expose the complete capability contract");
+        }
+        hostEgl["status"] = egl.errors.empty() && eglLayerDataComplete(egl.data)
+            ? "collected" : "partial";
+        hostEgl["data"] = egl.data;
+        for(const auto& error : egl.errors) {
             hostEgl["errors"].push_back({
-                {"code", "host_egl_identity_query_failed"},
-                {"message", "The active host EGL display did not expose safe vendor and version identity"}
+                {"code", error.code},
+                {"message", error.message}
             });
         }
     }
@@ -1366,32 +1897,32 @@ void GraphicsCapabilityReport::recordGraphicsContextCreated(
     }
 }
 
-void GraphicsCapabilityReport::recordGuestEglIdentity(const char* vendor, const char* version) {
-    auto safeVendor = boundedAsciiEglString(vendor);
-    auto safeVersion = boundedAsciiEglString(version);
+void GraphicsCapabilityReport::recordGuestEglCapabilities() {
+    auto egl = queryGuestEglSnapshot();
 
     std::lock_guard<std::mutex> lock(impl->mutex);
     auto& guestEgl = impl->document["sections"]["guest_egl"];
     guestEgl["errors"] = json::array();
-    if(safeVendor.empty() && safeVersion.empty()) {
+    if(egl.data.is_null()) {
         guestEgl["status"] = "error";
         guestEgl["data"] = nullptr;
         guestEgl["errors"].push_back({
-            {"code", "guest_egl_identity_query_failed"},
-            {"message", "The synthetic guest EGL implementation did not expose safe vendor or version identity"}
+            {"code", "guest_egl_capability_snapshot_unavailable"},
+            {"message", "The synthetic guest EGL capability snapshot was unavailable"}
         });
         return;
     }
-    guestEgl["status"] = "partial";
-    guestEgl["data"] = makeEglLayerData("minecraft_fake_egl_exports", safeVendor, safeVersion);
-    guestEgl["errors"].push_back({
-        {"code", "egl_capability_collection_incomplete"},
-        {"message", "EGL initialization, extensions, client APIs, and configurations were not collected"}
-    });
-    if(safeVendor.empty() || safeVersion.empty()) {
+    if(!eglLayerDataComplete(egl.data) && egl.errors.empty()) {
+        addEglError(egl.errors, "guest_egl_capability_collection_incomplete",
+                    "The synthetic guest EGL implementation did not expose the complete capability contract");
+    }
+    guestEgl["status"] = egl.errors.empty() && eglLayerDataComplete(egl.data)
+        ? "collected" : "partial";
+    guestEgl["data"] = std::move(egl.data);
+    for(const auto& error : egl.errors) {
         guestEgl["errors"].push_back({
-            {"code", "guest_egl_identity_query_failed"},
-            {"message", "The synthetic guest EGL implementation did not expose safe vendor and version identity"}
+            {"code", error.code},
+            {"message", error.message}
         });
     }
 }

@@ -553,15 +553,14 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     FakeEGL::setProcAddrFunction(windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
     if(capabilityReport) {
-        Log::info("CapabilityReport", "Collecting the guest-visible EGL identity");
+        Log::info("CapabilityReport", "Collecting the guest-visible EGL capabilities");
         try {
-            auto guestEgl = FakeEGL::getCapabilityInfo();
-            capabilityReport->recordGuestEglIdentity(guestEgl.vendor, guestEgl.version);
+            capabilityReport->recordGuestEglCapabilities();
             writeCapabilityReport();
         } catch(const std::exception& exception) {
-            Log::error("CapabilityReport", "Could not record the guest-visible EGL identity: %s", exception.what());
+            Log::error("CapabilityReport", "Could not record the guest-visible EGL capabilities: %s", exception.what());
         } catch(...) {
-            Log::error("CapabilityReport", "Could not record the guest-visible EGL identity");
+            Log::error("CapabilityReport", "Could not record the guest-visible EGL capabilities");
         }
     }
     if(options.graphicsApi == GraphicsApi::OPENGL_ES2) {
