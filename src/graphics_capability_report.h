@@ -11,6 +11,7 @@ class GraphicsCapabilityReport {
 public:
     using HostFunction = void* (*)();
     using HostProcAddress = HostFunction (*)(const char*);
+    using GuestProcAddress = void* (*)(const char*);
 
     struct MinecraftIdentity {
         std::string package;
@@ -50,6 +51,8 @@ public:
     void recordMinecraftManifestParseFailed();
     void recordGraphicsContextCreated(const GraphicsContextInfo& contextInfo,
                                       HostProcAddress getHostProcAddress);
+    void recordGuestGl(const GraphicsContextInfo& contextInfo,
+                       GuestProcAddress getGuestProcAddress);
     void recordGraphicsContextCreationFailed();
     void refreshEnvironment();
     void finishPartial();

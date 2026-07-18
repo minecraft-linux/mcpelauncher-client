@@ -14,6 +14,7 @@ private:
     static JniSupport *jniSupport;
     static thread_local std::unique_ptr<FakeLooper> currentLooper;
     static std::function<void(const GraphicsContextInfo&)> graphicsContextCreatedCallback;
+    static std::function<void(const GraphicsContextInfo&)> guestGlReadyCallback;
     static std::function<void()> graphicsContextCreationFailedCallback;
     bool prepared = false;
     bool textInput = false;
@@ -65,9 +66,11 @@ public:
 
     static void setGraphicsContextCallbacks(
         std::function<void(const GraphicsContextInfo&)> created,
-        std::function<void()> failed) {
+        std::function<void()> failed,
+        std::function<void(const GraphicsContextInfo&)> guestGlReady) {
         graphicsContextCreatedCallback = std::move(created);
         graphicsContextCreationFailedCallback = std::move(failed);
+        guestGlReadyCallback = std::move(guestGlReady);
     }
 
     static void initHybrisHooks(std::unordered_map<std::string, void *> &syms);

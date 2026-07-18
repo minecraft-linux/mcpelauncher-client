@@ -19,6 +19,7 @@
 JniSupport *FakeLooper::jniSupport;
 thread_local std::unique_ptr<FakeLooper> FakeLooper::currentLooper;
 std::function<void(const GraphicsContextInfo&)> FakeLooper::graphicsContextCreatedCallback;
+std::function<void(const GraphicsContextInfo&)> FakeLooper::guestGlReadyCallback;
 std::function<void()> FakeLooper::graphicsContextCreationFailedCallback;
 
 void FakeLooper::initWindow() {
@@ -105,6 +106,16 @@ void FakeLooper::initializeWindow() {
         }
     }
     FakeEGL::setupGLOverrides();
+    if(guestGlReadyCallback) {
+        Log::info("CapabilityReport", "Collecting the guest-visible GL capabilities");
+        try {
+            guestGlReadyCallback(associatedWindow->getGraphicsContextInfo());
+        } catch(const std::exception& exception) {
+            Log::error("CapabilityReport", "Could not record the guest-visible GL capabilities: %s", exception.what());
+        } catch(...) {
+            Log::error("CapabilityReport", "Could not record the guest-visible GL capabilities");
+        }
+    }
 }
 
 void FakeLooper::prepare() {

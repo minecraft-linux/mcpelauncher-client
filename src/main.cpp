@@ -261,6 +261,13 @@ int main(int argc, char* argv[]) {
                     if(!report->writeSnapshot(error)) {
                         Log::error("CapabilityReport", "%s", error.c_str());
                     }
+                },
+                [report](const GraphicsContextInfo& contextInfo) {
+                    report->recordGuestGl(contextInfo, fake_egl::eglGetProcAddress);
+                    std::string error;
+                    if(!report->writeSnapshot(error)) {
+                        Log::error("CapabilityReport", "%s", error.c_str());
+                    }
                 });
         } catch(const std::exception& exception) {
             Log::error("CapabilityReport", "Could not enable graphics context reporting: %s", exception.what());

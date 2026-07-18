@@ -650,6 +650,286 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
     return result;
 }
 
+struct GuestGlError {
+    const char* code;
+    const char* message;
+};
+
+struct GlScalarLimit {
+    const char* key;
+    unsigned int parameter;
+};
+
+constexpr GlScalarLimit GLES31_SCALAR_LIMITS[] = {
+    {"max_texture_size", 0x0D33},
+    {"max_3d_texture_size", 0x8073},
+    {"max_cube_map_texture_size", 0x851C},
+    {"max_array_texture_layers", 0x88FF},
+    {"max_texture_image_units", 0x8872},
+    {"max_vertex_texture_image_units", 0x8B4C},
+    {"max_compute_texture_image_units", 0x91BC},
+    {"max_combined_texture_image_units", 0x8B4D},
+    {"max_renderbuffer_size", 0x84E8},
+    {"max_vertex_attribs", 0x8869},
+    {"max_varying_vectors", 0x8DFC},
+    {"max_draw_buffers", 0x8824},
+    {"max_color_attachments", 0x8CDF},
+    {"max_samples", 0x8D57},
+    {"max_framebuffer_width", 0x9315},
+    {"max_framebuffer_height", 0x9316},
+    {"max_framebuffer_samples", 0x9318},
+    {"max_color_texture_samples", 0x910E},
+    {"max_depth_texture_samples", 0x910F},
+    {"max_integer_samples", 0x9110},
+    {"max_vertex_uniform_vectors", 0x8DFB},
+    {"max_fragment_uniform_vectors", 0x8DFD},
+    {"max_vertex_uniform_blocks", 0x8A2B},
+    {"max_fragment_uniform_blocks", 0x8A2D},
+    {"max_compute_uniform_blocks", 0x91BB},
+    {"max_combined_uniform_blocks", 0x8A2E},
+    {"max_uniform_buffer_bindings", 0x8A2F},
+    {"uniform_buffer_offset_alignment", 0x8A34},
+    {"max_uniform_locations", 0x826E},
+    {"max_compute_uniform_components", 0x8263},
+    {"max_compute_work_group_invocations", 0x90EB},
+    {"max_compute_shared_memory_size", 0x8262},
+    {"max_compute_shader_storage_blocks", 0x90DB},
+    {"max_vertex_shader_storage_blocks", 0x90D6},
+    {"max_fragment_shader_storage_blocks", 0x90DA},
+    {"max_combined_shader_storage_blocks", 0x90DC},
+    {"max_shader_storage_buffer_bindings", 0x90DD},
+    {"shader_storage_buffer_offset_alignment", 0x90DF},
+    {"max_image_units", 0x8F38},
+    {"max_vertex_image_uniforms", 0x90CA},
+    {"max_fragment_image_uniforms", 0x90CE},
+    {"max_compute_image_uniforms", 0x91BD},
+    {"max_combined_image_uniforms", 0x90CF},
+    {"max_combined_shader_output_resources", 0x8F39},
+    {"max_atomic_counter_buffer_bindings", 0x92DC},
+    {"max_atomic_counter_buffer_size", 0x92D8},
+    {"max_vertex_atomic_counter_buffers", 0x92CC},
+    {"max_fragment_atomic_counter_buffers", 0x92D0},
+    {"max_compute_atomic_counter_buffers", 0x8264},
+    {"max_combined_atomic_counter_buffers", 0x92D1},
+    {"max_vertex_atomic_counters", 0x92D2},
+    {"max_fragment_atomic_counters", 0x92D6},
+    {"max_compute_atomic_counters", 0x8265},
+    {"max_combined_atomic_counters", 0x92D7}
+};
+
+constexpr GlScalarLimit GLES31_INT64_LIMITS[] = {
+    {"max_uniform_block_size", 0x8A30},
+    {"max_shader_storage_block_size", 0x90DE}
+};
+
+constexpr std::size_t MAX_GL_IDENTITY_LENGTH = 1024;
+constexpr std::size_t MAX_GL_EXTENSION_LENGTH = 255;
+constexpr std::size_t MAX_GL_EXTENSION_COUNT = 1024;
+constexpr std::size_t MAX_GL_EXTENSION_BYTES = 64 * 1024;
+
+void addGuestGlError(std::vector<GuestGlError>& errors, const char* code, const char* message) {
+    auto duplicate = std::find_if(errors.begin(), errors.end(), [code](const GuestGlError& error) {
+        return strcmp(error.code, code) == 0;
+    });
+    if(duplicate == errors.end()) {
+        errors.push_back({code, message});
+    }
+}
+
+bool nonEmptyEnvironmentValue(const char* name) {
+    const char* value = std::getenv(name);
+    return value != nullptr && value[0] != '\0';
+}
+
+std::optional<std::string> boundedAsciiGlString(const unsigned char* value, std::size_t maximumLength,
+                                                bool allowEmpty = false) {
+    if(value == nullptr) {
+        return std::nullopt;
+    }
+    std::size_t length = 0;
+    while(length <= maximumLength && value[length] != 0) {
+        unsigned char character = value[length];
+        if(character < 0x20 || character > 0x7E) {
+            return std::nullopt;
+        }
+        ++length;
+    }
+    if((length == 0 && !allowEmpty) || length > maximumLength) {
+        return std::nullopt;
+    }
+    return std::string(reinterpret_cast<const char*>(value), length);
+}
+
+bool validGlExtensionToken(const std::string& extension) {
+    if(extension.size() < 4 || extension.size() > MAX_GL_EXTENSION_LENGTH ||
+       extension.rfind("GL_", 0) != 0) {
+        return false;
+    }
+    return std::all_of(extension.begin() + 3, extension.end(), [](unsigned char character) {
+        return std::isalnum(character) != 0 || character == '_';
+    });
+}
+
+bool versionAtLeast(int major, int minor, int requiredMajor, int requiredMinor) {
+    return major > requiredMajor || (major == requiredMajor && minor >= requiredMinor);
+}
+
+std::optional<json> collectGles31Limits(GraphicsCapabilityReport::GuestProcAddress getGuestProcAddress,
+                                        std::vector<GuestGlError>& errors) {
+    using GlGetIntegerv = void (*)(unsigned int, int*);
+    using GlGetInteger64v = void (*)(unsigned int, std::int64_t*);
+    using GlGetIntegeriV = void (*)(unsigned int, unsigned int, int*);
+
+    auto glGetIntegerv = reinterpret_cast<GlGetIntegerv>(getGuestProcAddress("glGetIntegerv"));
+    auto glGetInteger64v = reinterpret_cast<GlGetInteger64v>(getGuestProcAddress("glGetInteger64v"));
+    auto glGetIntegeriV = reinterpret_cast<GlGetIntegeriV>(getGuestProcAddress("glGetIntegeri_v"));
+    if(glGetIntegerv == nullptr || glGetInteger64v == nullptr || glGetIntegeriV == nullptr) {
+        addGuestGlError(errors, "gl_query_entry_point_unavailable",
+                        "A required guest GL query entry point was unavailable");
+        return std::nullopt;
+    }
+
+    json limits = json::object();
+    bool valid = true;
+    for(const auto& limit : GLES31_SCALAR_LIMITS) {
+        int value = -1;
+        glGetIntegerv(limit.parameter, &value);
+        if(value < 0) {
+            valid = false;
+        }
+        limits[limit.key] = value < 0 ? json(nullptr) : json(value);
+    }
+    for(const auto& limit : GLES31_INT64_LIMITS) {
+        std::int64_t value = -1;
+        glGetInteger64v(limit.parameter, &value);
+        if(value < 0) {
+            valid = false;
+        }
+        limits[limit.key] = value < 0 ? json(nullptr) : json(value);
+    }
+
+    int viewportDimensions[2] = {-1, -1};
+    glGetIntegerv(0x0D3A, viewportDimensions);
+    if(viewportDimensions[0] < 0 || viewportDimensions[1] < 0) {
+        valid = false;
+        limits["max_viewport_dims"] = nullptr;
+    } else {
+        limits["max_viewport_dims"] = {viewportDimensions[0], viewportDimensions[1]};
+    }
+
+    auto collectIndexedVector = [&](const char* key, unsigned int parameter) {
+        int values[3] = {-1, -1, -1};
+        for(unsigned int index = 0; index < 3; ++index) {
+            glGetIntegeriV(parameter, index, &values[index]);
+        }
+        if(values[0] < 0 || values[1] < 0 || values[2] < 0) {
+            valid = false;
+            limits[key] = nullptr;
+        } else {
+            limits[key] = {values[0], values[1], values[2]};
+        }
+    };
+    collectIndexedVector("max_compute_work_group_count", 0x91BE);
+    collectIndexedVector("max_compute_work_group_size", 0x91BF);
+
+    if(!valid) {
+        addGuestGlError(errors, "gl_limit_query_failed",
+                        "One or more required OpenGL ES 3.1 limits could not be collected");
+        return std::nullopt;
+    }
+    return limits;
+}
+
+std::optional<std::vector<std::string>> collectGuestGlExtensions(
+    GraphicsCapabilityReport::GuestProcAddress getGuestProcAddress,
+    bool indexed,
+    std::optional<std::string>& enumerationMethod,
+    std::vector<GuestGlError>& errors) {
+    using GlGetString = const unsigned char* (*)(unsigned int);
+    using GlGetStringi = const unsigned char* (*)(unsigned int, unsigned int);
+    using GlGetIntegerv = void (*)(unsigned int, int*);
+
+    auto glGetString = reinterpret_cast<GlGetString>(getGuestProcAddress("glGetString"));
+    std::vector<std::string> extensions;
+    std::size_t aggregateBytes = 0;
+
+    if(indexed) {
+        enumerationMethod = "indexed";
+        auto glGetStringi = reinterpret_cast<GlGetStringi>(getGuestProcAddress("glGetStringi"));
+        auto glGetIntegerv = reinterpret_cast<GlGetIntegerv>(getGuestProcAddress("glGetIntegerv"));
+        if(glGetStringi == nullptr || glGetIntegerv == nullptr) {
+            addGuestGlError(errors, "gl_query_entry_point_unavailable",
+                            "A required guest GL query entry point was unavailable");
+            return std::nullopt;
+        }
+        int extensionCount = -1;
+        glGetIntegerv(0x821D, &extensionCount);
+        if(extensionCount < 0) {
+            addGuestGlError(errors, "gl_extension_query_failed",
+                            "The guest GL extension count could not be collected");
+            return std::nullopt;
+        }
+        if(static_cast<std::size_t>(extensionCount) > MAX_GL_EXTENSION_COUNT) {
+            addGuestGlError(errors, "gl_extension_size_limit_exceeded",
+                            "The guest GL extension set exceeded the report size limit");
+            return std::nullopt;
+        }
+        extensions.reserve(static_cast<std::size_t>(extensionCount));
+        for(int index = 0; index < extensionCount; ++index) {
+            auto extension = boundedAsciiGlString(glGetStringi(0x1F03, static_cast<unsigned int>(index)),
+                                                  MAX_GL_EXTENSION_LENGTH);
+            if(!extension || !validGlExtensionToken(*extension)) {
+                addGuestGlError(errors, "gl_extension_data_invalid",
+                                "The guest GL extension set contained invalid data");
+                return std::nullopt;
+            }
+            aggregateBytes += extension->size();
+            if(aggregateBytes > MAX_GL_EXTENSION_BYTES) {
+                addGuestGlError(errors, "gl_extension_size_limit_exceeded",
+                                "The guest GL extension set exceeded the report size limit");
+                return std::nullopt;
+            }
+            extensions.push_back(std::move(*extension));
+        }
+    } else {
+        enumerationMethod = "legacy_string";
+        if(glGetString == nullptr) {
+            addGuestGlError(errors, "gl_query_entry_point_unavailable",
+                            "A required guest GL query entry point was unavailable");
+            return std::nullopt;
+        }
+        auto combined = boundedAsciiGlString(glGetString(0x1F03), MAX_GL_EXTENSION_BYTES, true);
+        if(!combined) {
+            addGuestGlError(errors, "gl_extension_query_failed",
+                            "The guest GL extension string could not be collected");
+            return std::nullopt;
+        }
+        std::istringstream stream(*combined);
+        std::string extension;
+        while(stream >> extension) {
+            if(extensions.size() >= MAX_GL_EXTENSION_COUNT) {
+                addGuestGlError(errors, "gl_extension_size_limit_exceeded",
+                                "The guest GL extension set exceeded the report size limit");
+                return std::nullopt;
+            }
+            if(!validGlExtensionToken(extension)) {
+                addGuestGlError(errors, "gl_extension_data_invalid",
+                                "The guest GL extension set contained invalid data");
+                return std::nullopt;
+            }
+            extensions.push_back(std::move(extension));
+        }
+    }
+
+    std::sort(extensions.begin(), extensions.end());
+    if(std::adjacent_find(extensions.begin(), extensions.end()) != extensions.end()) {
+        addGuestGlError(errors, "gl_extension_data_invalid",
+                        "The guest GL extension set contained duplicate entries");
+        return std::nullopt;
+    }
+    return extensions;
+}
+
 bool writeAll(int descriptor, const std::string& payload, std::string& error) {
     std::size_t offset = 0;
     while(offset < payload.size()) {
@@ -986,6 +1266,125 @@ void GraphicsCapabilityReport::recordGraphicsContextCreated(
     }
 }
 
+void GraphicsCapabilityReport::recordGuestGl(
+    const GraphicsContextInfo& contextInfo, GuestProcAddress getGuestProcAddress) {
+    std::vector<GuestGlError> errors;
+    if(getGuestProcAddress == nullptr) {
+        std::lock_guard<std::mutex> lock(impl->mutex);
+        auto& guestGl = impl->document["sections"]["guest_gl"];
+        guestGl["status"] = "error";
+        guestGl["data"] = nullptr;
+        guestGl["errors"] = json::array({{{"code", "gl_query_entry_point_unavailable"},
+                                           {"message", "The Minecraft guest GL resolver was unavailable"}}});
+        return;
+    }
+
+    using GlGetString = const unsigned char* (*)(unsigned int);
+    auto glGetString = reinterpret_cast<GlGetString>(getGuestProcAddress("glGetString"));
+    if(glGetString == nullptr) {
+        std::lock_guard<std::mutex> lock(impl->mutex);
+        auto& guestGl = impl->document["sections"]["guest_gl"];
+        guestGl["status"] = "error";
+        guestGl["data"] = nullptr;
+        guestGl["errors"] = json::array({{{"code", "gl_query_entry_point_unavailable"},
+                                           {"message", "A required guest GL query entry point was unavailable"}}});
+        return;
+    }
+
+    bool vendorOverride = nonEmptyEnvironmentValue("ANGLE_GL_VENDOR");
+    bool rendererOverride = nonEmptyEnvironmentValue("ANGLE_GL_RENDERER");
+    bool versionOverride = nonEmptyEnvironmentValue("ANGLE_GL_VERSION");
+
+    auto queryIdentity = [&](unsigned int name, bool overridden) -> std::optional<std::string> {
+        if(overridden) {
+            return std::nullopt;
+        }
+        return boundedAsciiGlString(glGetString(name), MAX_GL_IDENTITY_LENGTH);
+    };
+    auto vendor = queryIdentity(0x1F00, vendorOverride);
+    auto renderer = queryIdentity(0x1F01, rendererOverride);
+    auto version = queryIdentity(0x1F02, versionOverride);
+    auto shadingLanguageVersion = queryIdentity(0x8B8C, false);
+
+    if(vendorOverride || rendererOverride || versionOverride) {
+        addGuestGlError(errors, "gl_identity_override_redacted",
+                        "One or more GL identity strings were redacted because an override environment variable was present");
+    }
+    if((!vendorOverride && !vendor) || (!rendererOverride && !renderer) ||
+       (!versionOverride && !version) || !shadingLanguageVersion) {
+        addGuestGlError(errors, "gl_identity_query_failed",
+                        "One or more guest GL identity strings could not be collected safely");
+    }
+
+    GraphicsClientApi clientApi = contextInfo.clientApi;
+    int versionMajor = contextInfo.versionMajor;
+    int versionMinor = contextInfo.versionMinor;
+    if((clientApi == GraphicsClientApi::UNKNOWN || versionMajor < 0 || versionMinor < 0) && version) {
+        if(clientApi == GraphicsClientApi::UNKNOWN) {
+            clientApi = version->rfind("OpenGL ES", 0) == 0 ? GraphicsClientApi::OPENGL_ES
+                                                              : GraphicsClientApi::OPENGL;
+        }
+        if(auto parsed = parseContextVersion(*version)) {
+            versionMajor = parsed->first;
+            versionMinor = parsed->second;
+        }
+    }
+
+    std::optional<std::string> extensionEnumeration;
+    std::optional<std::vector<std::string>> extensions;
+    if(versionMajor < 0 || versionMinor < 0) {
+        addGuestGlError(errors, "gl_context_identity_incomplete",
+                        "The active context version was unavailable for safe GL extension queries");
+    } else {
+        extensions = collectGuestGlExtensions(getGuestProcAddress,
+                                               versionAtLeast(versionMajor, versionMinor, 3, 0),
+                                               extensionEnumeration, errors);
+    }
+
+    json limits = nullptr;
+    bool supportsGles31 = clientApi == GraphicsClientApi::OPENGL_ES &&
+                          versionAtLeast(versionMajor, versionMinor, 3, 1);
+    if(supportsGles31) {
+        if(auto collectedLimits = collectGles31Limits(getGuestProcAddress, errors)) {
+            limits = std::move(*collectedLimits);
+        }
+    } else {
+        addGuestGlError(errors, "gl_gles31_limits_unsupported",
+                        "The active context does not expose the OpenGL ES 3.1 core limit set");
+    }
+
+    auto optionalStringJson = [](const std::optional<std::string>& value) {
+        return value ? json(*value) : json(nullptr);
+    };
+
+    json data = {
+        {"query_path", "minecraft_guest_resolver"},
+        {"identity", {
+            {"vendor", optionalStringJson(vendor)},
+            {"renderer", optionalStringJson(renderer)},
+            {"version", optionalStringJson(version)},
+            {"shading_language_version", optionalStringJson(shadingLanguageVersion)},
+            {"override_environment_present", {
+                {"vendor", vendorOverride},
+                {"renderer", rendererOverride},
+                {"version", versionOverride}
+            }}
+        }},
+        {"extension_enumeration", optionalStringJson(extensionEnumeration)},
+        {"extensions", extensions ? json(*extensions) : json(nullptr)},
+        {"limits", limits}
+    };
+
+    std::lock_guard<std::mutex> lock(impl->mutex);
+    auto& guestGl = impl->document["sections"]["guest_gl"];
+    guestGl["status"] = errors.empty() ? "collected" : "partial";
+    guestGl["data"] = std::move(data);
+    guestGl["errors"] = json::array();
+    for(const auto& error : errors) {
+        guestGl["errors"].push_back({{"code", error.code}, {"message", error.message}});
+    }
+}
+
 void GraphicsCapabilityReport::recordGraphicsContextCreationFailed() {
     std::lock_guard<std::mutex> lock(impl->mutex);
     impl->document["capture"]["status"] = "failed";
@@ -1001,6 +1400,11 @@ void GraphicsCapabilityReport::recordGraphicsContextCreationFailed() {
     angle["status"] = "unavailable";
     angle["data"] = nullptr;
     angle["errors"] = json::array();
+
+    auto& guestGl = impl->document["sections"]["guest_gl"];
+    guestGl["status"] = "unavailable";
+    guestGl["data"] = nullptr;
+    guestGl["errors"] = json::array();
 }
 
 void GraphicsCapabilityReport::refreshEnvironment() {
