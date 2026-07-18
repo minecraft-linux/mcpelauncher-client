@@ -248,8 +248,9 @@ int main(int argc, char* argv[]) {
         try {
             FakeLooper::setGraphicsContextCallbacks(
                 [report](const GraphicsContextInfo& contextInfo) {
-                    auto getHostProcAddress = GameWindowManager::getManager()->getProcAddrFunc();
-                    report->recordGraphicsContextCreated(contextInfo, getHostProcAddress);
+                    auto windowManager = GameWindowManager::getManager();
+                    report->recordGraphicsContextCreated(contextInfo, windowManager->getProcAddrFunc(),
+                                                          windowManager->getEglProcAddrFunc());
                     std::string error;
                     if(!report->writeSnapshot(error)) {
                         Log::error("CapabilityReport", "%s", error.c_str());
@@ -549,8 +550,20 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
             Log::info("FMOD", "Failed to load host libfmod: '%s', use pulseaudio/sdl3 backend with android fmod if available", e.what());
         }
     }
-    FakeEGL::setProcAddrFunction((void* (*)(const char*))windowManager->getProcAddrFunc());
+    FakeEGL::setProcAddrFunction(windowManager->getProcAddrFunc());
     FakeEGL::installLibrary();
+    if(capabilityReport) {
+        Log::info("CapabilityReport", "Collecting the guest-visible EGL identity");
+        try {
+            auto guestEgl = FakeEGL::getCapabilityInfo();
+            capabilityReport->recordGuestEglIdentity(guestEgl.vendor, guestEgl.version);
+            writeCapabilityReport();
+        } catch(const std::exception& exception) {
+            Log::error("CapabilityReport", "Could not record the guest-visible EGL identity: %s", exception.what());
+        } catch(...) {
+            Log::error("CapabilityReport", "Could not record the guest-visible EGL identity");
+        }
+    }
     if(options.graphicsApi == GraphicsApi::OPENGL_ES2) {
         // GLFW needs a window to let eglGetProcAddress return symbols
         FakeLooper::initWindow();

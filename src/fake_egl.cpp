@@ -18,17 +18,22 @@
 std::vector<FakeEGL::SwapBuffersCallback> FakeEGL::swapBuffersCallbacks = {};
 std::mutex FakeEGL::swapBuffersCallbacksLock;
 
+FakeEGL::CapabilityInfo FakeEGL::getCapabilityInfo() {
+    return {1, 5, "mcpelauncher", "1.5 mcpelauncher", ""};
+}
+
 namespace fake_egl {
 
 static thread_local EGLSurface currentDrawSurface;
-static void *(*hostProcAddrFn)(const char *);
+static FakeEGL::HostProcAddress hostProcAddrFn;
 static std::unordered_map<std::string, void *> hostProcOverrides;
 
 EGLBoolean eglInitialize(EGLDisplay display, EGLint *major, EGLint *minor) {
+    auto capabilityInfo = FakeEGL::getCapabilityInfo();
     if(major)
-        *major = 1;
+        *major = capabilityInfo.initializeMajor;
     if(minor)
-        *minor = 5;
+        *minor = capabilityInfo.initializeMinor;
     return EGL_TRUE;
 }
 
@@ -41,12 +46,13 @@ EGLint eglGetError() {
 }
 
 char const *eglQueryString(EGLDisplay display, EGLint name) {
+    auto capabilityInfo = FakeEGL::getCapabilityInfo();
     if(name == EGL_VENDOR)
-        return "mcpelauncher";
+        return capabilityInfo.vendor;
     if(name == EGL_VERSION)
-        return "1.5 mcpelauncher";
+        return capabilityInfo.version;
     if(name == EGL_EXTENSIONS)
-        return "";
+        return capabilityInfo.extensions;
     Log::warn("FakeEGL", "eglQueryString %x", name);
     return nullptr;
 }
@@ -145,14 +151,14 @@ void *eglGetProcAddress(const char *name) {
     auto it = hostProcOverrides.find(name);
     if(it != hostProcOverrides.end())
         return it->second;
-    return hostProcAddrFn(name);
+    return reinterpret_cast<void*>(hostProcAddrFn(name));
 }
 
 }  // namespace fake_egl
 
 bool FakeEGL::enableTexturePatch = false;
 
-void FakeEGL::setProcAddrFunction(void *(*fn)(const char *)) {
+void FakeEGL::setProcAddrFunction(HostProcAddress fn) {
     fake_egl::hostProcAddrFn = fn;
 }
 

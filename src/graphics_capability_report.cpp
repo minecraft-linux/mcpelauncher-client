@@ -6,6 +6,10 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+#define __ANDROID__
+#include <EGL/egl.h>
+#undef __ANDROID__
+
 #ifdef MCPELAUNCHER_HAS_OPENSSL
 #include <openssl/crypto.h>
 #include <openssl/opensslv.h>
@@ -580,9 +584,53 @@ BackendObservation backendFromAngleRenderer(const std::string& renderer) {
 
 struct HostEglObservation {
     BackendObservation deviceBackend;
+    std::string vendor;
     std::string runtimeVersion;
-    bool queryAvailable = false;
+    bool resolverAvailable = false;
+    bool currentDisplayAvailable = false;
+    bool deviceQueryAvailable = false;
 };
+
+constexpr std::size_t MAX_EGL_IDENTITY_LENGTH = 1024;
+
+std::string boundedAsciiEglString(const char* value) {
+    if(value == nullptr) {
+        return {};
+    }
+    std::size_t length = 0;
+    while(length <= MAX_EGL_IDENTITY_LENGTH && value[length] != '\0') {
+        auto character = static_cast<unsigned char>(value[length]);
+        if(character < 0x20 || character > 0x7E) {
+            return {};
+        }
+        ++length;
+    }
+    if(length == 0 || length > MAX_EGL_IDENTITY_LENGTH) {
+        return {};
+    }
+    return std::string(value, length);
+}
+
+json makeEglLayerData(const char* queryPath, const std::string& vendor,
+                      const std::string& version) {
+    return {
+        {"query_path", queryPath},
+        {"client", {
+            {"extensions", nullptr}
+        }},
+        {"display", {
+            {"initialization", nullptr},
+            {"vendor", stringOrNull(vendor)},
+            {"version", stringOrNull(version)},
+            {"client_apis", nullptr},
+            {"extensions", nullptr}
+        }},
+        {"configurations", {
+            {"reported_count", nullptr},
+            {"items", nullptr}
+        }}
+    };
+}
 
 HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHostProcAddress) {
     HostEglObservation result;
@@ -590,11 +638,12 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
         return result;
     }
 
-    using EglGetCurrentDisplay = void* (*)();
-    using EglQueryDisplayAttrib = unsigned int (*)(void*, int, std::intptr_t*);
-    using EglQueryDeviceString = const char* (*)(void*, int);
-    using EglQueryString = const char* (*)(void*, int);
-    using EglGetError = unsigned int (*)();
+    using EglGetCurrentDisplay = decltype(&eglGetCurrentDisplay);
+    using EglQueryString = decltype(&eglQueryString);
+    using EglGetError = decltype(&eglGetError);
+    using EglQueryDisplayAttrib = EGLBoolean (EGLAPIENTRY *)(EGLDisplay, EGLint, EGLAttrib*);
+    using EglDevice = void*;
+    using EglQueryDeviceString = const char* (EGLAPIENTRY *)(EglDevice, EGLint);
 
     auto eglGetCurrentDisplay = reinterpret_cast<EglGetCurrentDisplay>(getHostProcAddress("eglGetCurrentDisplay"));
     auto eglQueryDisplayAttrib = reinterpret_cast<EglQueryDisplayAttrib>(getHostProcAddress("eglQueryDisplayAttribEXT"));
@@ -602,19 +651,26 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
     auto eglQueryString = reinterpret_cast<EglQueryString>(getHostProcAddress("eglQueryString"));
     auto eglGetError = reinterpret_cast<EglGetError>(getHostProcAddress("eglGetError"));
 
-    constexpr int EGL_VERSION_VALUE = 0x3054;
-    constexpr int EGL_EXTENSIONS_VALUE = 0x3055;
-    constexpr int EGL_DEVICE_EXT_VALUE = 0x322C;
-
     if(eglGetCurrentDisplay == nullptr || eglQueryString == nullptr) {
         return result;
     }
-    void* display = eglGetCurrentDisplay();
-    if(display == nullptr) {
+    result.resolverAvailable = true;
+    EGLDisplay display = eglGetCurrentDisplay();
+    if(display == EGL_NO_DISPLAY) {
         return result;
     }
-    if(const char* value = eglQueryString(display, EGL_VERSION_VALUE)) {
-        result.runtimeVersion = value;
+    result.currentDisplayAvailable = true;
+    const char* vendor = eglQueryString(display, EGL_VENDOR);
+    if(vendor == nullptr && eglGetError != nullptr) {
+        eglGetError();
+    }
+    result.vendor = boundedAsciiEglString(vendor);
+    const char* version = eglQueryString(display, EGL_VERSION);
+    if(version == nullptr && eglGetError != nullptr) {
+        eglGetError();
+    }
+    if(const char* value = version) {
+        result.runtimeVersion = boundedAsciiEglString(value);
     }
 
     // EGL 1.5 guarantees the no-display client extension query. On older EGL
@@ -626,13 +682,20 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
     if(!canQueryClientExtensions || eglQueryDisplayAttrib == nullptr || eglQueryDeviceString == nullptr) {
         return result;
     }
-    const char* clientExtensions = eglQueryString(nullptr, EGL_EXTENSIONS_VALUE);
-    if(clientExtensions == nullptr || !hasExtensionToken(clientExtensions, "EGL_EXT_device_query")) {
+    const char* clientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+    if(clientExtensions == nullptr) {
+        if(eglGetError != nullptr) {
+            eglGetError();
+        }
+        return result;
+    }
+    if(!hasExtensionToken(clientExtensions, "EGL_EXT_device_query")) {
         return result;
     }
 
-    std::intptr_t deviceAttribute = 0;
-    if(eglQueryDisplayAttrib(display, EGL_DEVICE_EXT_VALUE, &deviceAttribute) == 0 || deviceAttribute == 0) {
+    EGLAttrib deviceAttribute = 0;
+    constexpr EGLint EGL_DEVICE_EXT_VALUE = 0x322C;
+    if(eglQueryDisplayAttrib(display, EGL_DEVICE_EXT_VALUE, &deviceAttribute) == EGL_FALSE || deviceAttribute == 0) {
         // A supported query that failed generated this diagnostic EGL error;
         // consume it so capability collection cannot perturb later EGL calls.
         if(eglGetError != nullptr) {
@@ -640,8 +703,8 @@ HostEglObservation queryHostEgl(GraphicsCapabilityReport::HostProcAddress getHos
         }
         return result;
     }
-    result.queryAvailable = true;
-    const char* extensions = eglQueryDeviceString(reinterpret_cast<void*>(deviceAttribute), EGL_EXTENSIONS_VALUE);
+    result.deviceQueryAvailable = true;
+    const char* extensions = eglQueryDeviceString(reinterpret_cast<EglDevice>(deviceAttribute), EGL_EXTENSIONS);
     if(extensions != nullptr) {
         result.deviceBackend = backendFromDeviceExtensions(extensions);
     } else if(eglGetError != nullptr) {
@@ -1133,13 +1196,19 @@ void GraphicsCapabilityReport::recordMinecraftUnavailable(const char* code, cons
 }
 
 void GraphicsCapabilityReport::recordGraphicsContextCreated(
-    const GraphicsContextInfo& contextInfo, HostProcAddress getHostProcAddress) {
+    const GraphicsContextInfo& contextInfo, HostProcAddress getHostGlProcAddress,
+    HostProcAddress getHostEglProcAddress) {
     constexpr unsigned int GL_RENDERER_VALUE = 0x1F01;
     constexpr unsigned int GL_VERSION_VALUE = 0x1F02;
 
-    std::string glRenderer = queryHostGlString(getHostProcAddress, GL_RENDERER_VALUE);
-    std::string glVersion = queryHostGlString(getHostProcAddress, GL_VERSION_VALUE);
-    HostEglObservation egl = queryHostEgl(getHostProcAddress);
+    std::string glRenderer = queryHostGlString(getHostGlProcAddress, GL_RENDERER_VALUE);
+    std::string glVersion = queryHostGlString(getHostGlProcAddress, GL_VERSION_VALUE);
+    bool knownNonEglContext = contextInfo.creationApi == GraphicsContextCreationApi::NATIVE ||
+                              contextInfo.creationApi == GraphicsContextCreationApi::OSMESA;
+    HostEglObservation egl;
+    if(!knownNonEglContext) {
+        egl = queryHostEgl(getHostEglProcAddress);
+    }
 
     GraphicsClientApi clientApi = contextInfo.clientApi;
     if(clientApi == GraphicsClientApi::UNKNOWN && !glVersion.empty()) {
@@ -1190,6 +1259,37 @@ void GraphicsCapabilityReport::recordGraphicsContextCreated(
         context["status"] = "collected";
     }
 
+    auto& hostEgl = impl->document["sections"]["host_egl"];
+    hostEgl["errors"] = json::array();
+    if(knownNonEglContext) {
+        hostEgl["status"] = "not_applicable";
+        hostEgl["data"] = nullptr;
+    } else if(!egl.resolverAvailable || !egl.currentDisplayAvailable) {
+        hostEgl["status"] = "unavailable";
+        hostEgl["data"] = nullptr;
+    } else if(egl.vendor.empty() && egl.runtimeVersion.empty()) {
+        hostEgl["status"] = "error";
+        hostEgl["data"] = nullptr;
+        hostEgl["errors"].push_back({
+            {"code", "host_egl_identity_query_failed"},
+            {"message", "The active host EGL display did not expose safe vendor or version identity"}
+        });
+    } else {
+        hostEgl["status"] = "partial";
+        hostEgl["data"] = makeEglLayerData("game_window_host_resolver", egl.vendor,
+                                             egl.runtimeVersion);
+        hostEgl["errors"].push_back({
+            {"code", "egl_capability_collection_incomplete"},
+            {"message", "EGL initialization, extensions, client APIs, and configurations were not collected"}
+        });
+        if(egl.vendor.empty() || egl.runtimeVersion.empty()) {
+            hostEgl["errors"].push_back({
+                {"code", "host_egl_identity_query_failed"},
+                {"message", "The active host EGL display did not expose safe vendor and version identity"}
+            });
+        }
+    }
+
     const char* rendererOverride = std::getenv("ANGLE_GL_RENDERER");
     bool rendererOverrideActive = rendererOverride != nullptr && rendererOverride[0] != '\0';
     BackendObservation rendererBackend;
@@ -1205,9 +1305,9 @@ void GraphicsCapabilityReport::recordGraphicsContextCreated(
 
     if(!angleActive) {
         angle["data"] = nullptr;
-        bool evidenceUnavailable = contextInfo.creationApi == GraphicsContextCreationApi::EGL &&
+        bool evidenceUnavailable = !knownNonEglContext &&
                                    (glRenderer.empty() || rendererOverrideActive) &&
-                                   egl.runtimeVersion.empty() && !egl.queryAvailable;
+                                   egl.runtimeVersion.empty() && !egl.deviceQueryAvailable;
         angle["status"] = evidenceUnavailable ? "unavailable" : "not_applicable";
         return;
     }
@@ -1263,6 +1363,36 @@ void GraphicsCapabilityReport::recordGraphicsContextCreated(
         });
     } else {
         angle["status"] = "collected";
+    }
+}
+
+void GraphicsCapabilityReport::recordGuestEglIdentity(const char* vendor, const char* version) {
+    auto safeVendor = boundedAsciiEglString(vendor);
+    auto safeVersion = boundedAsciiEglString(version);
+
+    std::lock_guard<std::mutex> lock(impl->mutex);
+    auto& guestEgl = impl->document["sections"]["guest_egl"];
+    guestEgl["errors"] = json::array();
+    if(safeVendor.empty() && safeVersion.empty()) {
+        guestEgl["status"] = "error";
+        guestEgl["data"] = nullptr;
+        guestEgl["errors"].push_back({
+            {"code", "guest_egl_identity_query_failed"},
+            {"message", "The synthetic guest EGL implementation did not expose safe vendor or version identity"}
+        });
+        return;
+    }
+    guestEgl["status"] = "partial";
+    guestEgl["data"] = makeEglLayerData("minecraft_fake_egl_exports", safeVendor, safeVersion);
+    guestEgl["errors"].push_back({
+        {"code", "egl_capability_collection_incomplete"},
+        {"message", "EGL initialization, extensions, client APIs, and configurations were not collected"}
+    });
+    if(safeVendor.empty() || safeVersion.empty()) {
+        guestEgl["errors"].push_back({
+            {"code", "guest_egl_identity_query_failed"},
+            {"message", "The synthetic guest EGL implementation did not expose safe vendor and version identity"}
+        });
     }
 }
 
@@ -1400,6 +1530,11 @@ void GraphicsCapabilityReport::recordGraphicsContextCreationFailed() {
     angle["status"] = "unavailable";
     angle["data"] = nullptr;
     angle["errors"] = json::array();
+
+    auto& hostEgl = impl->document["sections"]["host_egl"];
+    hostEgl["status"] = "unavailable";
+    hostEgl["data"] = nullptr;
+    hostEgl["errors"] = json::array();
 
     auto& guestGl = impl->document["sections"]["guest_gl"];
     guestGl["status"] = "unavailable";

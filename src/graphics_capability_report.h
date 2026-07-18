@@ -9,7 +9,7 @@
 
 class GraphicsCapabilityReport {
 public:
-    using HostFunction = void* (*)();
+    using HostFunction = void (*)();
     using HostProcAddress = HostFunction (*)(const char*);
     using GuestProcAddress = void* (*)(const char*);
 
@@ -50,7 +50,9 @@ public:
     void recordMinecraftManifestNotFound();
     void recordMinecraftManifestParseFailed();
     void recordGraphicsContextCreated(const GraphicsContextInfo& contextInfo,
-                                      HostProcAddress getHostProcAddress);
+                                      HostProcAddress getHostGlProcAddress,
+                                      HostProcAddress getHostEglProcAddress);
+    void recordGuestEglIdentity(const char* vendor, const char* version);
     void recordGuestGl(const GraphicsContextInfo& contextInfo,
                        GuestProcAddress getGuestProcAddress);
     void recordGraphicsContextCreationFailed();

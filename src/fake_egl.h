@@ -33,6 +33,17 @@ void *eglGetProcAddress(const char *name);
 }  // namespace fake_egl
 
 struct FakeEGL {
+    using HostFunction = void (*)();
+    using HostProcAddress = HostFunction (*)(const char*);
+
+    struct CapabilityInfo {
+        EGLint initializeMajor;
+        EGLint initializeMinor;
+        char const *vendor;
+        char const *version;
+        char const *extensions;
+    };
+
     struct SwapBuffersCallback {
         void *user;
         void (*callback)(void *user, EGLDisplay display, EGLSurface surface);
@@ -40,13 +51,17 @@ struct FakeEGL {
     static std::vector<SwapBuffersCallback> swapBuffersCallbacks;
     static std::mutex swapBuffersCallbacksLock;
 
-    static void setProcAddrFunction(void *(*fn)(const char *));
+    static void setProcAddrFunction(HostProcAddress fn);
 
     static void addSwapBuffersCallback(void *user, void (*callback)(void *user, EGLDisplay display, EGLSurface surface));
 
     static void installLibrary();
 
     static void setupGLOverrides();
+
+    // Returns the immutable values implemented by the synthetic libEGL
+    // exports without invoking EGL lifecycle functions for diagnostics.
+    static CapabilityInfo getCapabilityInfo();
 
     static bool enableTexturePatch;
 };
