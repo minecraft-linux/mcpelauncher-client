@@ -4,11 +4,98 @@ project(mcpelauncher-client LANGUAGES CXX ASM)
 
 find_package(CURL REQUIRED)
 
-git_commit_hash(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_COMMIT_HASH)
-git_full_commit_hash(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_COMMIT_HASH_FULL)
-git_describe_version(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_DESCRIBE)
-git_exact_tag(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_VERSION)
-git_worktree_dirty(${CMAKE_CURRENT_SOURCE_DIR} CLIENT_GIT_WORKTREE_DIRTY)
+# Released manifest revisions only provide git_commit_hash(). Define newer
+# metadata helpers only when the parent project has not supplied them.
+if (NOT COMMAND git_full_commit_hash)
+    function(git_full_commit_hash DIR OUT_VAL)
+        set(OUTPUT "")
+        if (GIT_EXEC)
+            execute_process(
+                    COMMAND "${GIT_EXEC}" rev-parse HEAD
+                    WORKING_DIRECTORY "${DIR}"
+                    RESULT_VARIABLE RESULT
+                    OUTPUT_VARIABLE OUTPUT
+                    ERROR_QUIET
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            if (NOT RESULT EQUAL 0)
+                set(OUTPUT "")
+            endif()
+        endif()
+        set(${OUT_VAL} "${OUTPUT}" PARENT_SCOPE)
+    endfunction()
+endif()
+
+if (NOT COMMAND git_describe_version)
+    function(git_describe_version DIR OUT_VAL)
+        set(OUTPUT "")
+        if (GIT_EXEC)
+            execute_process(
+                    COMMAND "${GIT_EXEC}" describe --tags --always
+                    WORKING_DIRECTORY "${DIR}"
+                    RESULT_VARIABLE RESULT
+                    OUTPUT_VARIABLE OUTPUT
+                    ERROR_QUIET
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            if (NOT RESULT EQUAL 0)
+                set(OUTPUT "")
+            endif()
+        endif()
+        set(${OUT_VAL} "${OUTPUT}" PARENT_SCOPE)
+    endfunction()
+endif()
+
+if (NOT COMMAND git_exact_tag)
+    function(git_exact_tag DIR OUT_VAL)
+        set(OUTPUT "")
+        if (GIT_EXEC)
+            execute_process(
+                    COMMAND "${GIT_EXEC}" describe --tags --exact-match
+                    WORKING_DIRECTORY "${DIR}"
+                    RESULT_VARIABLE RESULT
+                    OUTPUT_VARIABLE OUTPUT
+                    ERROR_QUIET
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            if (NOT RESULT EQUAL 0)
+                set(OUTPUT "")
+            endif()
+        endif()
+        set(${OUT_VAL} "${OUTPUT}" PARENT_SCOPE)
+    endfunction()
+endif()
+
+if (NOT COMMAND git_worktree_dirty)
+    function(git_worktree_dirty DIR OUT_VAL)
+        set(OUTPUT "")
+        set(DIRTY "")
+        if (GIT_EXEC)
+            execute_process(
+                    COMMAND "${GIT_EXEC}" status --porcelain --untracked-files=no
+                    WORKING_DIRECTORY "${DIR}"
+                    RESULT_VARIABLE RESULT
+                    OUTPUT_VARIABLE OUTPUT
+                    ERROR_QUIET
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            if (RESULT EQUAL 0)
+                if ("${OUTPUT}" STREQUAL "")
+                    set(DIRTY "false")
+                else()
+                    set(DIRTY "true")
+                endif()
+            endif()
+        endif()
+        set(${OUT_VAL} "${DIRTY}" PARENT_SCOPE)
+    endfunction()
+endif()
+
+git_commit_hash("${CMAKE_CURRENT_SOURCE_DIR}" CLIENT_GIT_COMMIT_HASH)
+git_full_commit_hash("${CMAKE_CURRENT_SOURCE_DIR}" CLIENT_GIT_COMMIT_HASH_FULL)
+git_describe_version("${CMAKE_CURRENT_SOURCE_DIR}" CLIENT_GIT_DESCRIBE)
+git_exact_tag("${CMAKE_CURRENT_SOURCE_DIR}" CLIENT_VERSION)
+git_worktree_dirty("${CMAKE_CURRENT_SOURCE_DIR}" CLIENT_GIT_WORKTREE_DIRTY)
 
 set(GENERATOR_TOOL_VERSION "")
 if (CMAKE_MAKE_PROGRAM)
