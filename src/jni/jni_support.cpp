@@ -139,6 +139,11 @@ void JniSupport::registerMinecraftNatives(void* (*symResolver)(const char*)) {
                                                           },
                     symResolver);
     registerNatives(JellyBeanDeviceManager::getDescriptor(), {{"onInputDeviceAddedNative", "(I)V"}, {"onInputDeviceRemovedNative", "(I)V"}}, symResolver);
+    // Other JNI libraries may register callbacks with the same Java names later.
+    // Preserve libHttpClient's callbacks so requests can be routed back to their owner.
+    HttpClientRequest::setLibHttpClientCallbacks(
+        symResolver("Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted"),
+        symResolver("Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed"));
     registerNatives(HttpClientRequest::getDescriptor(), {{"OnRequestCompleted", "(JLcom/xbox/httpclient/HttpClientResponse;)V"}, {"OnRequestFailed", "(JLjava/lang/String;)V"}, {"OnRequestFailed", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V"}}, symResolver);
     registerNatives(HttpClientWebSocket::getDescriptor(), {{"onMessage", "(Ljava/lang/String;)V"}, {"onBinaryMessage", "(Ljava/nio/ByteBuffer;)V"}, {"onOpen", "()V"}, {"onClose", "(I)V"}, {"onFailure", "()V"}}, symResolver);
     registerNatives(WebView::getDescriptor(), {
