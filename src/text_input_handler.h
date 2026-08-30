@@ -12,6 +12,7 @@ public:
     using CaretCallback = std::function<void(int)>;
 
 private:
+    bool usesLegacyTextInput = false;
     bool enabled = false, multiline = false, altPressed = false;
     std::string currentText;
     size_t currentTextPosition = 0;
@@ -61,4 +62,8 @@ public:
     void setKeepLastCharOnce();
 
     bool getKeepLastCharOnce();
+
+    bool getUsesLegacyTextInput() {
+        return usesLegacyTextInput;
+    };
 };

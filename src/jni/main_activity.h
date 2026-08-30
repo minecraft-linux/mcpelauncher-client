@@ -99,15 +99,15 @@ private:
     FakeJni::JInt lastChar = 0;
 
 public:
-    unsigned char *(*stbi_load_from_memory)(unsigned char const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
-    void (*stbi_image_free)(void *retval_from_stbi_load);
+    unsigned char* (*stbi_load_from_memory)(unsigned char const* buffer, int len, int* x, int* y, int* channels_in_file, int desired_channels);
+    void (*stbi_image_free)(void* retval_from_stbi_load);
 
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", NativeActivity)
 
     std::string storageDirectory;
-    TextInputHandler *textInput = nullptr;
+    TextInputHandler* textInput = nullptr;
     std::function<void()> quitCallback;
-    GameWindow *window;
+    GameWindow* window;
 
     int getAndroidVersion() {
         return BuildVersion::SDK_INT;
@@ -182,7 +182,7 @@ public:
     FakeJni::JBoolean hasWriteExternalStoragePermission() {
         return true;
     }
-    
+
     FakeJni::JBoolean hasReadMediaImagesPermission() {
         return true;
     }
@@ -269,6 +269,10 @@ public:
     }
 
     FakeJni::JLong getUsableSpace(std::shared_ptr<FakeJni::JString> str) {
+        return 1024LL * 1024LL * 1024LL * 1024LL;
+    }
+
+    FakeJni::JLong getTotalSpace(std::shared_ptr<FakeJni::JString> str) {
         return 1024LL * 1024LL * 1024LL * 1024LL;
     }
 

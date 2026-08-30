@@ -20,20 +20,20 @@ private:
         GamepadData();
     };
     struct KeyboardInputCallback {
-        void *user;
-        bool (*callback)(void *user, int keyCode, int action);
+        void* user;
+        bool (*callback)(void* user, int keyCode, int action);
     };
     struct MouseButtonCallback {
-        void *user;
-        bool (*callback)(void *user, double x, double y, int button, int action);
+        void* user;
+        bool (*callback)(void* user, double x, double y, int button, int action);
     };
     struct MousePositionCallback {
-        void *user;
-        bool (*callback)(void *user, double x, double y, bool relative);
+        void* user;
+        bool (*callback)(void* user, double x, double y, bool relative);
     };
     struct MouseScrollCallback {
-        void *user;
-        bool (*callback)(void *user, double x, double y, double dx, double dy);
+        void* user;
+        bool (*callback)(void* user, double x, double y, double dx, double dy);
     };
 
     std::vector<KeyboardInputCallback> keyboardCallbacks;
@@ -45,9 +45,9 @@ private:
     std::mutex mousePositionCallbacksLock;
     std::mutex mouseScrollCallbacksLock;
 
-    GameWindow &window;
-    JniSupport &jniSupport;
-    FakeInputQueue &inputQueue;
+    GameWindow& window;
+    JniSupport& jniSupport;
+    FakeInputQueue& inputQueue;
     std::unordered_map<int, GamepadData> gamepads;
     int32_t buttonState = 0;
     KeyCode lastKey = (KeyCode)0;
@@ -81,7 +81,7 @@ private:
     void sendTouchEvent(int32_t pointerId, int32_t action, float x, float y);
 
 public:
-    WindowCallbacks(GameWindow &window, JniSupport &jniSupport, FakeInputQueue &inputQueue);
+    WindowCallbacks(GameWindow& window, JniSupport& jniSupport, FakeInputQueue& inputQueue);
 
     static void loadGamepadMappings();
 
@@ -109,17 +109,17 @@ public:
     void onTouchUpdate(int id, double x, double y);
     void onTouchEnd(int id, double x, double y);
     void onKeyboard(KeyCode key, KeyAction action, int mods);
-    void onKeyboardText(std::string const &c);
-    void onDrop(std::string const &path);
-    void onPaste(std::string const &str);
+    void onKeyboardText(std::string const& c);
+    void onDrop(std::string const& path);
+    void onPaste(std::string const& str);
     void onGamepadState(int gamepad, bool connected);
     void onGamepadButton(int gamepad, GamepadButtonId btn, bool pressed);
     void onGamepadAxis(int gamepad, GamepadAxisId ax, float value);
 
-    void addKeyboardCallback(void *user, bool (*callback)(void *user, int keyCode, int action));
-    void addMouseButtonCallback(void *user, bool (*callback)(void *user, double x, double y, int button, int action));
-    void addMousePositionCallback(void *user, bool (*callback)(void *user, double x, double y, bool relative));
-    void addMouseScrollCallback(void *user, bool (*callback)(void *user, double x, double y, double dx, double dy));
+    void addKeyboardCallback(void* user, bool (*callback)(void* user, int keyCode, int action));
+    void addMouseButtonCallback(void* user, bool (*callback)(void* user, double x, double y, int button, int action));
+    void addMousePositionCallback(void* user, bool (*callback)(void* user, double x, double y, bool relative));
+    void addMouseScrollCallback(void* user, bool (*callback)(void* user, double x, double y, double dx, double dy));
 
     void setDelayedPaste();
 

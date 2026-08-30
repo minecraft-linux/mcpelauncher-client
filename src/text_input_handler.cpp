@@ -2,6 +2,7 @@
 #include "utf8_util.h"
 
 void TextInputHandler::enable(std::string text, bool multiline) {
+    usesLegacyTextInput = true;
     enabled = true;
     this->multiline = multiline;
     enabledNo++;

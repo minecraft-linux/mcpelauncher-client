@@ -62,8 +62,8 @@ void WindowCallbacks::startSendEvents() {
     if(delayedPaste > 0) {
         delayedPaste--;
         if(delayedPaste == 0) {
-            jniSupport.getTextInputHandler().onTextInput("\x08");
-            jniSupport.getTextInputHandler().onTextInput(lastPasteStr);
+            jniSupport.onTextInput("\x08");
+            jniSupport.onTextInput(lastPasteStr);
         }
     }
 }
@@ -433,14 +433,17 @@ void WindowCallbacks::onKeyboard(KeyCode key, KeyAction action, int mods) {
         int modCTRL = mods & KEY_MOD_CTRL;
 #endif
 
-        if(modCTRL && action == KeyAction::PRESS && key == KeyCode::C && jniSupport.getTextInputHandler().getCopyText() != "") {
-            window.setClipboardText(jniSupport.getTextInputHandler().getCopyText());
+        if(modCTRL && action == KeyAction::PRESS && key == KeyCode::C && jniSupport.getTextInputCopyText() != "") {
+            window.setClipboardText(jniSupport.getTextInputCopyText());
         } else {
-            jniSupport.getTextInputHandler().onKeyPressed(key, action, mods);
+            jniSupport.onTextInputKeyPressed(key, action, mods);
         }
 
         if(key == KeyCode::FN11 && action == KeyAction::PRESS)
             setFullscreen(!Settings::fullscreen);
+
+        if(jniSupport.textInputConsumesKey(key, mods))
+            return;
 
         if(useDirectKeyboardInput && (action == KeyAction::PRESS || action == KeyAction::RELEASE)) {
             if(Keyboard::useLegacyKeyboard) {
@@ -518,10 +521,10 @@ void WindowCallbacks::onKeyboardText(std::string const& c) {
         return;
     }
 #endif
-    if(c == "\n" && !jniSupport.getTextInputHandler().isMultiline())
+    if(c == "\n" && !jniSupport.isTextInputMultiline())
         jniSupport.onReturnKeyPressed();
     else
-        jniSupport.getTextInputHandler().onTextInput(c);
+        jniSupport.onTextInput(c);
 }
 void WindowCallbacks::onDrop(std::string const& path) {
     jniSupport.importFile(path);
@@ -533,7 +536,7 @@ void WindowCallbacks::onPaste(std::string const& str) {
     if(Settings::enable_keyboard_autofocus_paste_patches_1_20_60) {
         lastPasteStr = str;
     }
-    jniSupport.getTextInputHandler().onTextInput(str);
+    jniSupport.onTextInput(str);
 }
 void WindowCallbacks::onGamepadState(int gamepad, bool connected) {
     Log::trace("WindowCallbacks", "Gamepad %s #%i", connected ? "connected" : "disconnected", gamepad);

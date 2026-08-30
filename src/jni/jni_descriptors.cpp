@@ -7,6 +7,7 @@
 #include "package_source.h"
 #include "http_stub.h"
 #include "fmod.h"
+#include "charset.h"
 #ifdef HAVE_PULSEAUDIO
 #include "pulseaudio.h"
 #endif
@@ -51,6 +52,13 @@ BEGIN_NATIVE_DESCRIPTOR(BuildVersion){Field<&BuildVersion::SDK_INT>{}, "SDK_INT"
 
     BEGIN_NATIVE_DESCRIPTOR(Locale){Function<&Locale::getDefault>{}, "getDefault"},
     {Function<&Locale::toString>{}, "toString"},
+    END_NATIVE_DESCRIPTOR
+
+    BEGIN_NATIVE_DESCRIPTOR(CharBuffer){Function<&CharBuffer::toString>{}, "toString"},
+    END_NATIVE_DESCRIPTOR
+
+    BEGIN_NATIVE_DESCRIPTOR(Charset){Function<&Charset::forName>{}, "forName"},
+    {Function<&Charset::decode>{}, "decode"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(UUID){Function<&UUID::randomUUID>{}, "randomUUID"},
@@ -141,6 +149,7 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {Function<&MainActivity::getAllocatableBytes>{}, "getAllocatableBytes"},
     {Function<&MainActivity::calculateAvailableDiskFreeSpace>{}, "calculateAvailableDiskFreeSpace"},
     {Function<&MainActivity::getUsableSpace>{}, "getUsableSpace"},
+    {Function<&MainActivity::getTotalSpace>{}, "getTotalSpace"},
     END_NATIVE_DESCRIPTOR
 
     BEGIN_NATIVE_DESCRIPTOR(AccountManager){Function<&AccountManager::get>{}, "get"},
@@ -378,5 +387,5 @@ END_NATIVE_DESCRIPTOR
 BEGIN_NATIVE_DESCRIPTOR(AndroidJniHelperMultiplayer){Function<&AndroidJniHelperMultiplayer::createUUID>{}, "createUUID"},
     END_NATIVE_DESCRIPTOR
 
-BEGIN_NATIVE_DESCRIPTOR(EventTracerHelperMultiplayer){Function<&EventTracerHelperMultiplayer::getPlayFabEventCommonFields>{}, "getPlayFabEventCommonFields"},
+    BEGIN_NATIVE_DESCRIPTOR(EventTracerHelperMultiplayer){Function<&EventTracerHelperMultiplayer::getPlayFabEventCommonFields>{}, "getPlayFabEventCommonFields"},
     END_NATIVE_DESCRIPTOR

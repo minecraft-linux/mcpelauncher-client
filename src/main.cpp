@@ -32,6 +32,7 @@
 #include "fake_audio.h"
 #endif
 #include "fake_looper.h"
+#include "fake_text_input.h"
 #include "fake_window.h"
 #include "fake_assetmanager.h"
 #include "fake_egl.h"
@@ -91,13 +92,13 @@ public:
 };
 
 std::string normalizePath(const std::string& path) {
-    if (!path.empty() && path[path.length() - 1] != '/')
+    if(!path.empty() && path[path.length() - 1] != '/')
         return path + '/';
     return path;
 }
 
 #ifdef __APPLE__
-extern "C" __attribute__((weak)) const char * elg_lib = "";
+extern "C" __attribute__((weak)) const char* elg_lib = "";
 #endif
 
 static std::string getOptionsPath() {
@@ -234,8 +235,8 @@ int main(int argc, char* argv[]) {
         manifest << manifestFileStream.rdbuf();
         auto smanifest = manifest.str();
 
-        axml::AXMLFile manifestFile (smanifest.data(), smanifest.size());
-        axml::AXMLParser manifestParser (manifestFile);
+        axml::AXMLFile manifestFile(smanifest.data(), smanifest.size());
+        axml::AXMLParser manifestParser(manifestFile);
         ApkInfo apkInfo = ApkInfo::fromXml(manifestParser);
 
         Log::info("Launcher", "Minecraft Package: %s", apkInfo.package.c_str());
@@ -502,6 +503,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
 
     std::vector<mcpelauncher_hook_t> mcpeHooks;
     FakeSwappyGL::initHooks(mcpeHooks);
+    FakeTextInput::initHooks(mcpeHooks);
 
     Log::trace("Launcher", "Loading Minecraft library");
     static void* handle = MinecraftUtils::loadMinecraftLib(reinterpret_cast<void*>(&CorePatches::showMousePointer), reinterpret_cast<void*>(&CorePatches::hideMousePointer), reinterpret_cast<void*>(&CorePatches::setFullscreen), reinterpret_cast<void*>(&FakeLooper::onGameActivityClose), mcpeHooks);
@@ -653,7 +655,7 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
             static const uintptr_t bad_controls[] = {
                 0x13701258,  // overlaps with rand_meth data (garbage bytes)
             };
-            for (auto offset : bad_controls) {
+            for(auto offset : bad_controls) {
                 auto* ctrl = (EmutlsControl*)((uintptr_t)base + offset);
                 ctrl->size = 8;
                 ctrl->align = 8;
@@ -667,9 +669,9 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     // Vibrant Visuals Crash Nvidia
     // Issue: https://github.com/minecraft-linux/mcpelauncher-manifest/issues/1584
     if(MinecraftVersion::isAtLeast(1, 21, 130, 0)) {
-        auto _glGetString = (const char*(*)(int)) windowManager->getProcAddrFunc()("glGetString");
+        auto _glGetString = (const char* (*)(int))windowManager->getProcAddrFunc()("glGetString");
         if(_glGetString) {
-            auto renderer = _glGetString(0x1F01); // GL_RENDERER
+            auto renderer = _glGetString(0x1F01);  // GL_RENDERER
             if(renderer != nullptr && strstr(renderer, "NVIDIA") != nullptr) {
                 properties::property_list properties(':');
                 properties::property<int> volumetricFogQuality(properties, "volumetric_fog_quality", 0);

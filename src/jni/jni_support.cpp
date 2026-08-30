@@ -39,9 +39,18 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <regex>
+#include "charset.h"
 #include <sstream>
 #if !defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE > 8
 #include <filesystem>
+#endif
+
+#ifndef NDEBUG
+#define FAKE_TEXT_INPUT_INFO(...) Log::info("FakeTextInput", __VA_ARGS__)
+#define FAKE_TEXT_INPUT_ERROR(...) Log::error("FakeTextInput", __VA_ARGS__)
+#else
+#define FAKE_TEXT_INPUT_INFO(...) ((void)0)
+#define FAKE_TEXT_INPUT_ERROR(...) ((void)0)
 #endif
 
 void JniSupport::registerJniClasses() {
@@ -78,6 +87,9 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<HttpClientRequest>();
     vm.registerClass<HttpClientResponse>();
     vm.registerClass<HttpClientWebSocket>();
+
+    vm.registerClass<CharBuffer>();
+    vm.registerClass<Charset>();
 
     vm.registerClass<InputStream>();
     vm.registerClass<ByteArrayInputStream>();
@@ -275,6 +287,22 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameAct
         gameActivity.externalDataPath = "/external";
         gameActivity.javaGameActivity = activityRef;
         gameActivity.sdkVersion = activity->getAndroidVersion();
+
+        FakeTextInput::registerActivity(
+            &gameActivity, [this](GameActivity* source, const GameTextInputState* state) {
+                FAKE_TEXT_INPUT_INFO(
+                    "forwarding to game callback=%p length=%d selection=[%d,%d]",
+                    (void*)gameActivityCallbacks.onTextInputEvent,
+                    state ? state->text_length : -1,
+                    state ? state->selection.start : -1,
+                    state ? state->selection.end : -1);
+                if(gameActivityCallbacks.onTextInputEvent) {
+                    gameActivityCallbacks.onTextInputEvent(source, state);
+                    FAKE_TEXT_INPUT_INFO("game callback returned");
+                } else {
+                    FAKE_TEXT_INPUT_ERROR("game has no onTextInputEvent callback");
+                }
+            });
 
         Log::trace("JniSupport", "Invoking nativeRegisterThis\n");
         auto registerThis = activity->getClass().getMethod("()V", "nativeRegisterThis");
