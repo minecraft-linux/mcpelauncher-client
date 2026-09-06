@@ -2,6 +2,10 @@
 #include <mcpelauncher/path_helper.h>
 #include <mcpelauncher/linker.h>
 #include "jni_support.h"
+#include <chrono>
+#include <cstdlib>
+#include <thread>
+#include <unistd.h>
 #include "xbox_live.h"
 #include "fmod.h"
 #include "lib_http_client.h"
@@ -434,6 +438,14 @@ void JniSupport::requestExitGame() {
     gameExitCond.notify_all();
     std::thread([this]() {
         JniSupport::stopGame();
+    }).detach();
+    // The game's own teardown can wedge on the main thread (seen on macOS: localtime_r spinning inside a
+    // corrupted heap) and burn a core forever, so bound it. write()/_Exit() are chosen because they never allocate.
+    std::thread([]() {
+        std::this_thread::sleep_for(std::chrono::seconds(30));
+        static const char msg[] = "JniSupport: game did not exit within 30s of shutdown request, forcing exit\n";
+        write(STDERR_FILENO, msg, sizeof(msg) - 1);
+        _Exit(0);
     }).detach();
 }
 
