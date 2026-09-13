@@ -7,6 +7,7 @@
 #include <log.h>
 #include <libc_shim.h>
 #include <android/compat.h>
+#include <jni.h>
 #include "fake_assetmanager.h"
 
 struct AAsset {
@@ -27,6 +28,10 @@ FakeAssetManager::FakeAssetManager(std::string rootDir) {
 }
 
 namespace fake_assetmanager {
+
+AAssetManager *AAssetManager_fromJava(JNIEnv *env, jobject javaAssetManager) {
+    return (AAssetManager *)javaAssetManager;
+}
 
 AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mode) {
     std::string fullPath;
@@ -185,6 +190,7 @@ const char *AAssetDir_getNextFileName(AAssetDir *assetDir) {
 
 void FakeAssetManager::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
     using namespace fake_assetmanager;
+    syms["AAssetManager_fromJava"] = (void *)AAssetManager_fromJava;
     syms["AAssetManager_open"] = (void *)AAssetManager_open;
     syms["AAssetManager_openDir"] = (void *)AAssetManager_openDir;
     syms["AAsset_close"] = (void *)AAsset_close;

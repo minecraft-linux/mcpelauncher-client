@@ -320,3 +320,41 @@ class PlayIntegrity : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/PlayIntegrity")
 };
+
+class CharBuffer : public FakeJni::JObject {
+public:
+    std::shared_ptr<jnivm::String> data;
+public:
+    DEFINE_CLASS_NAME("java/nio/CharBuffer")
+    std::shared_ptr<FakeJni::JString> toString();
+    CharBuffer(std::shared_ptr<jnivm::String> data) : data(data) {}
+};
+
+class Charset : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("java/nio/charset/Charset")
+    static std::shared_ptr<Charset> forName(std::shared_ptr<FakeJni::JString>);
+    std::shared_ptr<CharBuffer> decode(std::shared_ptr<jnivm::ByteBuffer>);
+};
+
+class TextInputState : public FakeJni::JObject {
+public:
+    DEFINE_CLASS_NAME("com/google/androidgamesdk/gametextinput/State")
+    TextInputState(std::shared_ptr<FakeJni::JString> text, FakeJni::JInt selectionStart_in, FakeJni::JInt selectionEnd_in,
+                   FakeJni::JInt composingRegionStart_in, FakeJni::JInt composingRegionEnd_in);
+    std::shared_ptr<FakeJni::JString> text;
+    FakeJni::JInt selectionStart;
+    FakeJni::JInt selectionEnd;
+    FakeJni::JInt composingRegionStart;
+    FakeJni::JInt composingRegionEnd;
+};
+
+class TextInputConnection : public FakeJni::JObject {
+public:
+    std::shared_ptr<TextInputState> state;
+    TextInputHandler *textInput = nullptr;
+    DEFINE_CLASS_NAME("com/google/androidgamesdk/gametextinput/InputConnection")
+    void setState(std::shared_ptr<TextInputState>);
+    void setSoftKeyboardActive(FakeJni::JBoolean, FakeJni::JInt);
+    void restartInput();
+};

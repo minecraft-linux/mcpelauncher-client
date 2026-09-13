@@ -43,6 +43,7 @@
 #if !defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE > 8
 #include <filesystem>
 #endif
+#include "fake_looper.h"
 
 void JniSupport::registerJniClasses() {
     vm.registerClass<File>();
@@ -126,6 +127,11 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<AudioDevice>();
 #endif
     vm.registerClass<AndroidJniHelperMultiplayer>();
+
+    vm.registerClass<TextInputState>();
+    vm.registerClass<TextInputConnection>();
+    vm.registerClass<Charset>();
+    vm.registerClass<CharBuffer>();
 }
 
 void JniSupport::registerMinecraftNatives(void* (*symResolver)(const char*)) {
@@ -220,7 +226,7 @@ void JniSupport::registerNatives(std::shared_ptr<FakeJni::JClass const> clazz,
         throw std::runtime_error("RegisterNatives failed");
 }
 
-void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameActivity_createFunc* gameOnCreate,
+void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, void* game,
                            void* stbiLoadFromMemory, void* stbiImageFree) {
     FakeJni::LocalFrame frame(vm);
 
@@ -237,11 +243,14 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameAct
     activity->stbi_load_from_memory = (decltype(activity->stbi_load_from_memory))stbiLoadFromMemory;
     activity->stbi_image_free = (decltype(activity->stbi_image_free))stbiImageFree;
 
-    assetManager = std::make_unique<FakeAssetManager>(PathHelper::getGameDir() + "assets");
+    assetManager = std::make_shared<FakeAssetManager>(PathHelper::getGameDir() + "assets");
+    assetManager->clazz = vm.findClass("android/content/res/AssetManager");
 
     XboxLiveHelper::getInstance().setJvm(&vm);
 
     isGameActivity = (activityOnCreate == nullptr);
+
+    jobject textInputConnection = nullptr;
 
     if(activityOnCreate != nullptr) {
         nativeActivity.callbacks = &nativeActivityCallbacks;
@@ -267,26 +276,28 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameAct
         nativeActivityCallbacks.onNativeWindowCreated(&nativeActivity, window);
         // nativeActivityCallbacks.onResume(&nativeActivity);
     } else {
-        gameActivity.callbacks = &gameActivityCallbacks;
-        gameActivity.vm = (JavaVM*)&vm;
-        gameActivity.assetManager = (AAssetManager*)assetManager.get();
-        gameActivity.env = (JNIEnv*)&frame.getJniEnv();
-        gameActivity.internalDataPath = "/internal";
-        gameActivity.externalDataPath = "/external";
-        gameActivity.javaGameActivity = activityRef;
-        gameActivity.sdkVersion = activity->getAndroidVersion();
+        auto GameActivity_register = (int (*)(JNIEnv *env) )linker::dlsym(game, "GameActivity_register");
+        if(GameActivity_register)
+            GameActivity_register(&frame.getJniEnv());
+        
+        auto c = frame.getJniEnv().FindClass("com/google/androidgamesdk/Config");
+        auto ctr = frame.getJniEnv().GetMethodID(c, "<init>", "()V");
+        auto initNative = (jlong(*)(
+    JNIEnv *env, jobject javaGameActivity, jstring internalDataDir,
+    jstring obbDir, jstring externalDataDir, jobject jAssetMgr,
+    jbyteArray savedState, jobject javaConfig))linker::dlsym(game, "Java_com_google_androidgamesdk_GameActivity_initializeNativeCode");
+        gameActivity = (GameActivity *) initNative(&frame.getJniEnv(), (jobject)(jnivm::Object*)activity.get(), frame.getJniEnv().NewStringUTF("/internal"), frame.getJniEnv().NewStringUTF("/obb"), frame.getJniEnv().NewStringUTF("/external"), (jobject)(jnivm::Object*)assetManager.get(), frame.getJniEnv().NewByteArray(0), frame.getJniEnv().NewObject(c, ctr));
+        gameActivityCallbacks = gameActivity->callbacks;
 
-        Log::trace("JniSupport", "Invoking nativeRegisterThis\n");
-        auto registerThis = activity->getClass().getMethod("()V", "nativeRegisterThis");
-        if(registerThis)
-            registerThis->invoke(frame.getJniEnv(), activity.get());
-
-        Log::trace("JniSupport", "Invoking GameActivity_onCreate\n");
-        gameOnCreate(&gameActivity, nullptr, 0);
-
+        auto gc = vm.findClass("com/google/androidgamesdk/GameActivity");
+        auto ic = vm.findClass("com/google/androidgamesdk/gametextinput/InputConnection");
+        ctr = frame.getJniEnv().GetMethodID((jclass)(jnivm::Object*)ic.get(), "<init>", "()V");
+        auto connection = gc->getMethod("(JLcom/google/androidgamesdk/gametextinput/InputConnection;)V", "setInputConnectionNative");
+        textInputConnection = frame.getJniEnv().NewObject((jclass)(jnivm::Object*)ic.get(), ctr);
+        connection->invoke(frame.getJniEnv(), activity.get(), (jlong)gameActivity, textInputConnection);
         Log::trace("JniSupport", "Invoking start activity callbacks\n");
-        gameActivityCallbacks.onStart(&gameActivity);
-        gameActivityCallbacks.onNativeWindowCreated(&gameActivity, window);
+        gameActivityCallbacks->onStart(gameActivity);
+        gameActivityCallbacks->onNativeWindowCreated(gameActivity, window);
     }
 
     std::shared_ptr<NetworkMonitor> network;
@@ -312,6 +323,27 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, GameAct
                 }
             }
         }).detach();
+    }
+    if(!textInputConnection) {
+        return;
+    }
+    while(true) {
+        int outFd;
+        int outEvents;
+        void *outData;
+        FakeLooper::currentLooper->pollAll(0, &outFd, &outEvents, &outData);
+        auto con = (TextInputConnection*)(jnivm::Object*)textInputConnection;
+        con->textInput = &textInput;
+        if (con->state && con->state->selectionEnd != textInput.getCursorPosition()) {
+            *con->state->text = textInput.getText();
+            con->state->selectionEnd = textInput.getCursorPosition();
+            con->state->selectionStart = textInput.getCopyPosition();
+            auto gc = vm.findClass("com/google/androidgamesdk/GameActivity");
+            auto ic = vm.findClass("com/google/androidgamesdk/gametextinput/InputConnection");
+            auto onTextInputEventNative = gc->getMethod("(JLcom/google/androidgamesdk/gametextinput/State;)V", "onTextInputEventNative");
+            onTextInputEventNative->invoke(frame.getJniEnv(), activity.get(), (jlong)gameActivity, (jobject)(jnivm::Object*)con->state.get());
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
@@ -408,9 +440,9 @@ void JniSupport::stopGame() {
         nativeOnDestroy->invoke(frame.getJniEnv(), activity.get());
 
     if(isGameActivity) {
-        gameActivityCallbacks.onPause(&gameActivity);
-        gameActivityCallbacks.onStop(&gameActivity);
-        gameActivityCallbacks.onDestroy(&gameActivity);
+        gameActivityCallbacks->onPause(gameActivity);
+        gameActivityCallbacks->onStop(gameActivity);
+        gameActivityCallbacks->onDestroy(gameActivity);
     } else {
         nativeActivityCallbacks.onPause(&nativeActivity);
         nativeActivityCallbacks.onStop(&nativeActivity);

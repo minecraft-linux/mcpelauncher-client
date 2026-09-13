@@ -538,3 +538,43 @@ void MainActivity::lockCursor() {
 void MainActivity::unlockCursor() {
     CorePatches::showMousePointer();
 }
+
+std::shared_ptr<FakeJni::JString> CharBuffer::toString() {
+    return this->data;
+}
+
+std::shared_ptr<Charset> Charset::forName(std::shared_ptr<FakeJni::JString> arg0) {
+    return std::make_shared<Charset>();
+}
+
+std::shared_ptr<CharBuffer> Charset::decode(std::shared_ptr<jnivm::ByteBuffer> arg0) {
+    return std::make_shared<CharBuffer>(std::make_shared<FakeJni::JString>(std::string((const char*)arg0->buffer, arg0->capacity)));
+}
+
+TextInputState::TextInputState(std::shared_ptr<FakeJni::JString> text, FakeJni::JInt selectionStart_in, FakeJni::JInt selectionEnd_in,
+                               FakeJni::JInt composingRegionStart_in, FakeJni::JInt composingRegionEnd_in)
+    : text(text), selectionStart(selectionStart_in), selectionEnd(selectionEnd_in),
+      composingRegionStart(composingRegionStart_in), composingRegionEnd(composingRegionEnd_in) {
+}
+
+void TextInputConnection::setState(std::shared_ptr<TextInputState> arg0) {
+    this->state = arg0;
+    if(textInput) {
+        textInput->update(this->state ? this->state->text->asStdString() : "");
+        textInput->setCursorPosition(this->state ? this->state->selectionEnd : 0);
+    }
+}
+
+void TextInputConnection::setSoftKeyboardActive(FakeJni::JBoolean arg0, FakeJni::JInt arg1) {
+    if(arg0) {
+        if(textInput)
+            textInput->enable(this->state ? this->state->text->asStdString() : "", false);
+    } else {
+        if(textInput)
+            textInput->disable();
+    }
+}
+
+void TextInputConnection::restartInput() {
+    
+}
