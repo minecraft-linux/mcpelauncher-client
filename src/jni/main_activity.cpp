@@ -539,6 +539,21 @@ void MainActivity::unlockCursor() {
     CorePatches::showMousePointer();
 }
 
+void JGameActivity::finish() {
+    
+}
+
+void JGameActivity::setWindowFlags(FakeJni::JInt flags, FakeJni::JInt mask) {
+    
+}
+
+void JGameActivity::setImeEditorInfoFields(FakeJni::JInt inputType, FakeJni::JInt actionId, FakeJni::JInt imeOptions) {
+    if(connection) {
+        connection->inputType = inputType;
+    }
+}
+
+
 std::shared_ptr<FakeJni::JString> CharBuffer::toString() {
     return this->data;
 }
@@ -568,7 +583,7 @@ void TextInputConnection::setState(std::shared_ptr<TextInputState> arg0) {
 void TextInputConnection::setSoftKeyboardActive(FakeJni::JBoolean arg0, FakeJni::JInt arg1) {
     if(arg0) {
         if(textInput)
-            textInput->enable(this->state ? this->state->text->asStdString() : "", false);
+            textInput->enable(this->state ? this->state->text->asStdString() : "", (inputType & 1 << 17) != 0);
     } else {
         if(textInput)
             textInput->disable();

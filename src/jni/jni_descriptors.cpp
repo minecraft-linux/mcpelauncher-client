@@ -156,6 +156,12 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {FakeJni::Function<&TextInputConnection::setSoftKeyboardActive>{}, "setSoftKeyboardActive", FakeJni::JMethodID::PUBLIC },
     {FakeJni::Function<&TextInputConnection::restartInput>{}, "restartInput", FakeJni::JMethodID::PUBLIC },
     END_NATIVE_DESCRIPTOR
+
+    BEGIN_NATIVE_DESCRIPTOR(JGameActivity)
+    {FakeJni::Function<&JGameActivity::finish>{}, "finish", FakeJni::JMethodID::PUBLIC },
+    {FakeJni::Function<&JGameActivity::setWindowFlags>{}, "setWindowFlags", FakeJni::JMethodID::PUBLIC },
+    {FakeJni::Function<&JGameActivity::setImeEditorInfoFields>{}, "setImeEditorInfoFields", FakeJni::JMethodID::PUBLIC },
+    END_NATIVE_DESCRIPTOR
     
     BEGIN_NATIVE_DESCRIPTOR(CharBuffer)
     {FakeJni::Function<&CharBuffer::toString>{}, "toString", FakeJni::JMethodID::PUBLIC },

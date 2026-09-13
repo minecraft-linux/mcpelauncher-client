@@ -71,6 +71,15 @@ public:
     DEFINE_CLASS_NAME("android/app/NativeActivity", Activity)
 };
 
+class JGameActivity : public NativeActivity {
+public:
+    class TextInputConnection* connection;
+    DEFINE_CLASS_NAME("com/google/androidgamesdk/GameActivity", NativeActivity)
+    void finish();
+    void setWindowFlags(FakeJni::JInt flags, FakeJni::JInt mask);
+    void setImeEditorInfoFields(FakeJni::JInt inputType, FakeJni::JInt actionId, FakeJni::JInt imeOptions);
+};
+
 class NetworkMonitor : public FakeJni::JObject {
 public:
     DEFINE_CLASS_NAME("com/mojang/minecraftpe/NetworkMonitor")
@@ -93,7 +102,7 @@ public:
     }
 };
 #include <fstream>
-class MainActivity : public NativeActivity {
+class MainActivity : public JGameActivity {
 private:
     bool ignoreNextHideKeyboard = false;
     FakeJni::JInt lastChar = 0;
@@ -102,7 +111,7 @@ public:
     unsigned char *(*stbi_load_from_memory)(unsigned char const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
     void (*stbi_image_free)(void *retval_from_stbi_load);
 
-    DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", NativeActivity)
+    DEFINE_CLASS_NAME("com/mojang/minecraftpe/MainActivity", JGameActivity)
 
     std::string storageDirectory;
     TextInputHandler *textInput = nullptr;
@@ -353,6 +362,7 @@ class TextInputConnection : public FakeJni::JObject {
 public:
     std::shared_ptr<TextInputState> state;
     TextInputHandler *textInput = nullptr;
+    FakeJni::JInt inputType = 0;
     DEFINE_CLASS_NAME("com/google/androidgamesdk/gametextinput/InputConnection")
     void setState(std::shared_ptr<TextInputState>);
     void setSoftKeyboardActive(FakeJni::JBoolean, FakeJni::JInt);

@@ -132,6 +132,7 @@ void JniSupport::registerJniClasses() {
     vm.registerClass<TextInputConnection>();
     vm.registerClass<Charset>();
     vm.registerClass<CharBuffer>();
+    vm.registerClass<JGameActivity>();
 }
 
 void JniSupport::registerMinecraftNatives(void* (*symResolver)(const char*)) {
@@ -324,26 +325,26 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, void* g
             }
         }).detach();
     }
-    if(!textInputConnection) {
-        return;
-    }
-    while(true) {
-        int outFd;
-        int outEvents;
-        void *outData;
-        FakeLooper::currentLooper->pollAll(0, &outFd, &outEvents, &outData);
+    if(textInputConnection) {
         auto con = (TextInputConnection*)(jnivm::Object*)textInputConnection;
-        con->textInput = &textInput;
-        if (con->state && con->state->selectionEnd != textInput.getCursorPosition()) {
-            *con->state->text = textInput.getText();
-            con->state->selectionEnd = textInput.getCursorPosition();
-            con->state->selectionStart = textInput.getCopyPosition();
-            auto gc = vm.findClass("com/google/androidgamesdk/GameActivity");
-            auto ic = vm.findClass("com/google/androidgamesdk/gametextinput/InputConnection");
-            auto onTextInputEventNative = gc->getMethod("(JLcom/google/androidgamesdk/gametextinput/State;)V", "onTextInputEventNative");
-            onTextInputEventNative->invoke(frame.getJniEnv(), activity.get(), (jlong)gameActivity, (jobject)(jnivm::Object*)con->state.get());
+        activity->connection = con;
+        while(true) {
+            int outFd;
+            int outEvents;
+            void *outData;
+            FakeLooper::currentLooper->pollAll(0, &outFd, &outEvents, &outData);
+            con->textInput = &textInput;
+            if (con->state && con->state->selectionEnd != textInput.getCursorPosition()) {
+                *con->state->text = textInput.getText();
+                con->state->selectionEnd = textInput.getCursorPosition();
+                con->state->selectionStart = textInput.getCopyPosition();
+                auto gc = vm.findClass("com/google/androidgamesdk/GameActivity");
+                auto ic = vm.findClass("com/google/androidgamesdk/gametextinput/InputConnection");
+                auto onTextInputEventNative = gc->getMethod("(JLcom/google/androidgamesdk/gametextinput/State;)V", "onTextInputEventNative");
+                onTextInputEventNative->invoke(frame.getJniEnv(), activity.get(), (jlong)gameActivity, (jobject)(jnivm::Object*)con->state.get());
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
