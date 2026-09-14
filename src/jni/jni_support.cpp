@@ -327,23 +327,24 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, void* g
     }
     if(textInputConnection) {
         auto con = (TextInputConnection*)(jnivm::Object*)textInputConnection;
+        con->textInput = &textInput;
         activity->connection = con;
+        auto gc = vm.findClass("com/google/androidgamesdk/GameActivity");
+        auto onTextInputEventNative = gc->getMethod("(JLcom/google/androidgamesdk/gametextinput/State;)V", "onTextInputEventNative");
+        useGameActivityTextInput = onTextInputEventNative;
         while(true) {
             int outFd;
             int outEvents;
             void *outData;
             FakeLooper::currentLooper->pollAll(0, &outFd, &outEvents, &outData);
-            con->textInput = &textInput;
-            if (con->state && con->state->selectionEnd != textInput.getCursorPosition()) {
-                *con->state->text = textInput.getText();
-                con->state->selectionEnd = textInput.getCursorPosition();
-                con->state->selectionStart = textInput.getCopyPosition();
-                auto gc = vm.findClass("com/google/androidgamesdk/GameActivity");
-                auto ic = vm.findClass("com/google/androidgamesdk/gametextinput/InputConnection");
-                auto onTextInputEventNative = gc->getMethod("(JLcom/google/androidgamesdk/gametextinput/State;)V", "onTextInputEventNative");
-                onTextInputEventNative->invoke(frame.getJniEnv(), activity.get(), (jlong)gameActivity, (jobject)(jnivm::Object*)con->state.get());
+            auto state = con->state;
+            if (state && (*state->text != textInput.getText() || state->selectionEnd != textInput.getCursorPosition())) {
+                *state->text = textInput.getText();
+                state->selectionEnd = textInput.getCursorPosition();
+                state->selectionStart = textInput.getCopyPosition();
+                onTextInputEventNative->invoke(frame.getJniEnv(), activity.get(), (jlong)gameActivity, (jobject)(jnivm::Object*)state.get());
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(textInput.isEnabled() ? 10 : 100));
         }
     }
 }
@@ -499,7 +500,7 @@ void JniSupport::onWindowResized(int newWidth, int newHeight) {
 }
 
 void JniSupport::onSetTextboxText(std::string const& text) {
-    if(!Settings::enable_keyboard_autofocus_patches_1_20_60 || getTextInputHandler().isEnabled()) {
+    if(!useGameActivityTextInput && (!Settings::enable_keyboard_autofocus_patches_1_20_60 || getTextInputHandler().isEnabled())) {
         FakeJni::LocalFrame frame(vm);
         auto setText = activity->getClass().getMethod("(Ljava/lang/String;II)V", "nativeSetTextboxText");
         if(setText) {
@@ -518,6 +519,8 @@ void JniSupport::setLastChar(FakeJni::JInt sym) {
 }
 
 void JniSupport::onCaretPosition(int pos) {
+    if(useGameActivityTextInput)
+        return;
     auto method = activity->getClass().getMethod("(I)V", "nativeCaretPosition");
     FakeJni::LocalFrame frame;
     if(method) {

@@ -486,7 +486,7 @@ FakeJni::JInt MainActivity::getKeyFromKeyCode(FakeJni::JInt keyCode, FakeJni::JI
         return 0;
     }
 
-    if(keyCode >= AKEYCODE_F1 && keyCode <= AKEYCODE_F12) {
+    if(keyCode >= AKEYCODE_F1 && keyCode <= AKEYCODE_F12 || textInput->isEnabled() /* Would cause flickering in commandblock textediting while in textedit mode */) {
         return 0;
     }
     auto ret = lastChar;
@@ -536,6 +536,8 @@ void MainActivity::lockCursor() {
 }
 
 void MainActivity::unlockCursor() {
+    FakeJni::LocalFrame frame;
+    ((jnivm::VM&)frame.getJniEnv().getVM()).GenerateClassDump("/Users/christopher/Documents/minecraft/m1-build/cl.cpp");
     CorePatches::showMousePointer();
 }
 

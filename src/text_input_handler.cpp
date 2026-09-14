@@ -55,14 +55,14 @@ void TextInputHandler::onTextInput(std::string const& text) {
         auto deleteStart = currentTextPosition - 1;
         if(altPressed) {
             if(strchr(spaces, currentText[deleteStart])) {
-                while(deleteStart > 0) {
+                while(/* unsigned int! */(int)deleteStart > 0) {
                     deleteStart--;
                     if(deleteStart < 1 || !strchr(spaces, currentText[deleteStart - 1]) || !strchr(spaces, currentText[deleteStart])) {
                         break;
                     }
                 }
             }
-            while(deleteStart > 0) {
+            while(/* unsigned int! */(int)deleteStart > 0) {
                 deleteStart--;
                 if(deleteStart < 1 || strchr(spaces, currentText[deleteStart - 1]) || strchr(spaces, currentText[deleteStart])) {
                     break;
@@ -72,7 +72,7 @@ void TextInputHandler::onTextInput(std::string const& text) {
         } else {
             currentTextPositionUTF--;
         }
-        while(deleteStart > 0 && (currentText[deleteStart] & 0b11000000) == 0b10000000)
+        while(/* unsigned int! */(int)deleteStart > 0 && (currentText[deleteStart] & 0b11000000) == 0b10000000)
             deleteStart--;
         currentText.erase(currentText.begin() + deleteStart, currentText.begin() + currentTextPosition);
         currentTextPosition = deleteStart;

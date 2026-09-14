@@ -5,6 +5,8 @@
 class UTF8Util {
 public:
     static int getCharByteSize(char c) {
+        if((c & 0b11111000) == 0b11110000)
+            return 4;
         if((c & 0b11110000) == 0b11100000)
             return 3;
         else if((c & 0b11100000) == 0b11000000)

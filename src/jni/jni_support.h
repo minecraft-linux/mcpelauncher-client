@@ -34,6 +34,7 @@ private:
     std::mutex gameExitMutex;
     bool gameExitVal = false, looperRunning = false;
     TextInputHandler textInput;
+    bool useGameActivityTextInput = false;
 
     void registerJniClasses();
 
