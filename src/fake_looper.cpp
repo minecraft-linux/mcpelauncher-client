@@ -135,6 +135,8 @@ int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **ou
             }
         }
     }
+
+    bool hasCallback = false;
     
     for(auto&& androidEvent : androidEvents) {
         pollfd f;
@@ -142,6 +144,7 @@ int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **ou
         f.events = androidEvent.events;
         if(poll(&f, 1, 0) > 0) {
             if(androidEvent.callback) {
+                hasCallback = true;
                 androidEvent.callback(androidEvent.fd, androidEvent.events, androidEvent.data);
             } else {
                 androidEvent.fill(outFd, outData);
@@ -163,5 +166,5 @@ int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **ou
     if(associatedWindowCallbacks != nullptr) {
         associatedWindowCallbacks->markRequeueGamepadInput();
     }
-    return ALOOPER_POLL_TIMEOUT;
+    return hasCallback ? ALOOPER_POLL_CALLBACK : ALOOPER_POLL_TIMEOUT;
 }

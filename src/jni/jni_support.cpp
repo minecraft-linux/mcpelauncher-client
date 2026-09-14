@@ -325,7 +325,7 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, void* g
             }
         }).detach();
     }
-    if(textInputConnection) {
+    if(textInputConnection && FakeLooper::currentLooper != nullptr) {
         auto con = (TextInputConnection*)(jnivm::Object*)textInputConnection;
         con->textInput = &textInput;
         activity->connection = con;
@@ -336,9 +336,10 @@ void JniSupport::startGame(ANativeActivity_createFunc* activityOnCreate, void* g
             int outFd;
             int outEvents;
             void *outData;
-            FakeLooper::currentLooper->pollAll(0, &outFd, &outEvents, &outData);
+            // run all pending callbacks
+            while(FakeLooper::currentLooper->pollAll(0, &outFd, &outEvents, &outData) == ALOOPER_POLL_CALLBACK);
             auto state = con->state;
-            if (state && (*state->text != textInput.getText() || state->selectionEnd != textInput.getCursorPosition())) {
+            if (state && (*state->text != textInput.getText() || state->selectionEnd != textInput.getCursorPosition() || state->selectionStart != textInput.getCopyPosition())) {
                 *state->text = textInput.getText();
                 state->selectionEnd = textInput.getCursorPosition();
                 state->selectionStart = textInput.getCopyPosition();
