@@ -11,6 +11,9 @@ jobs:
             "ref": ${{ tojson(github.sha) }}
           }
         ]
+      suffix: "-sdl3"
+      appImageFlags: |-
+        -l -DGAMEWINDOW_SYSTEM=SDL3 -l -DSDL_VIDEO_DRIVER_X11_SUPPORTS_GENERIC_EVENTS=1
  macOS:
     uses: minecraft-linux/macos-builder/.github/workflows/main.yml@main
     with:

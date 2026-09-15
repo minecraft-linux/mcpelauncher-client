@@ -10,7 +10,6 @@
 class FakeLooper {
 private:
     static JniSupport *jniSupport;
-    static thread_local std::unique_ptr<FakeLooper> currentLooper;
     bool prepared = false;
     bool textInput = false;
     int menuSize = 0;
@@ -18,9 +17,10 @@ private:
     struct EventEntry {
         int fd, ident, events;
         void *data;
+        ALooper_callbackFunc callback;
 
-        EventEntry() : ident(-1) {}
-        EventEntry(int fd, int ident, int events, void *data) : fd(fd), ident(ident), events(events), data(data) {}
+        EventEntry() : ident(-1), callback(nullptr) {}
+        EventEntry(int fd, int ident, int events, void *data, ALooper_callbackFunc callback) : fd(fd), ident(ident), events(events), data(data), callback(callback) {}
 
         void fill(int *outFd, void **outData) const {
             if(outFd)
@@ -33,7 +33,7 @@ private:
             return ident != -1;
         }
     };
-    EventEntry androidEvent;
+    std::vector<EventEntry> androidEvents;
     EventEntry inputEntry;
     FakeInputQueue fakeInputQueue;
 
@@ -43,6 +43,7 @@ private:
     void initializeWindow();
 
 public:
+    static thread_local std::unique_ptr<FakeLooper> currentLooper;
     static void setJniSupport(JniSupport *support) {
         jniSupport = support;
     }

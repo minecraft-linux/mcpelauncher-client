@@ -143,6 +143,35 @@ BEGIN_NATIVE_DESCRIPTOR(MainActivity){Constructor<MainActivity>{}},
     {Function<&MainActivity::getUsableSpace>{}, "getUsableSpace"},
     END_NATIVE_DESCRIPTOR
 
+    BEGIN_NATIVE_DESCRIPTOR(TextInputState)
+    {FakeJni::Constructor<TextInputState, std::shared_ptr<FakeJni::JString>, FakeJni::JInt, FakeJni::JInt, FakeJni::JInt, FakeJni::JInt>{}},
+    {FakeJni::Field<&TextInputState::text>{}, "text", FakeJni::JFieldID::PUBLIC },
+    {FakeJni::Field<&TextInputState::selectionStart>{}, "selectionStart", FakeJni::JFieldID::PUBLIC },
+    {FakeJni::Field<&TextInputState::selectionEnd>{}, "selectionEnd", FakeJni::JFieldID::PUBLIC },
+    {FakeJni::Field<&TextInputState::composingRegionStart>{}, "composingRegionStart", FakeJni::JFieldID::PUBLIC },
+    {FakeJni::Field<&TextInputState::composingRegionEnd>{}, "composingRegionEnd", FakeJni::JFieldID::PUBLIC },
+    END_NATIVE_DESCRIPTOR
+    BEGIN_NATIVE_DESCRIPTOR(TextInputConnection)
+    {FakeJni::Function<&TextInputConnection::setState>{}, "setState", FakeJni::JMethodID::PUBLIC },
+    {FakeJni::Function<&TextInputConnection::setSoftKeyboardActive>{}, "setSoftKeyboardActive", FakeJni::JMethodID::PUBLIC },
+    {FakeJni::Function<&TextInputConnection::restartInput>{}, "restartInput", FakeJni::JMethodID::PUBLIC },
+    END_NATIVE_DESCRIPTOR
+
+    BEGIN_NATIVE_DESCRIPTOR(JGameActivity)
+    {FakeJni::Function<&JGameActivity::finish>{}, "finish", FakeJni::JMethodID::PUBLIC },
+    {FakeJni::Function<&JGameActivity::setWindowFlags>{}, "setWindowFlags", FakeJni::JMethodID::PUBLIC },
+    {FakeJni::Function<&JGameActivity::setImeEditorInfoFields>{}, "setImeEditorInfoFields", FakeJni::JMethodID::PUBLIC },
+    END_NATIVE_DESCRIPTOR
+    
+    BEGIN_NATIVE_DESCRIPTOR(CharBuffer)
+    {FakeJni::Function<&CharBuffer::toString>{}, "toString", FakeJni::JMethodID::PUBLIC },
+    END_NATIVE_DESCRIPTOR
+    BEGIN_NATIVE_DESCRIPTOR(Charset)
+    {FakeJni::Function<&Charset::forName>{}, "forName", FakeJni::JMethodID::PUBLIC | FakeJni::JMethodID::STATIC },
+    {FakeJni::Function<&Charset::decode>{}, "decode", FakeJni::JMethodID::PUBLIC },
+    END_NATIVE_DESCRIPTOR
+
+
     BEGIN_NATIVE_DESCRIPTOR(AccountManager){Function<&AccountManager::get>{}, "get"},
     {Function<&AccountManager::getAccountsByType>{}, "getAccountsByType"},
     END_NATIVE_DESCRIPTOR

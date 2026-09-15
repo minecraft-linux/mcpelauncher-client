@@ -22,18 +22,19 @@ private:
 
     Baron::Jvm vm;
     ANativeActivityCallbacks nativeActivityCallbacks;
-    GameActivityCallbacks gameActivityCallbacks;
+    GameActivityCallbacks* gameActivityCallbacks;
     ANativeActivity nativeActivity;
-    GameActivity gameActivity;
+    GameActivity* gameActivity;
     std::shared_ptr<MainActivity> activity;
     jobject activityRef;
-    std::unique_ptr<FakeAssetManager> assetManager;
+    std::shared_ptr<FakeAssetManager> assetManager;
     ANativeWindow *window;
     AInputQueue *inputQueue;
     std::condition_variable gameExitCond;
     std::mutex gameExitMutex;
     bool gameExitVal = false, looperRunning = false;
     TextInputHandler textInput;
+    bool useGameActivityTextInput = false;
 
     void registerJniClasses();
 
@@ -45,7 +46,7 @@ public:
 
     void registerMinecraftNatives(void *(*symResolver)(const char *));
 
-    void startGame(ANativeActivity_createFunc *activityOnCreate, GameActivity_createFunc *gameCreate,
+    void startGame(ANativeActivity_createFunc *activityOnCreate, void* game,
                    void *stbiLoadFromMemory, void *stbiImageFree);
 
     void importFile(std::string path);
@@ -81,15 +82,15 @@ public:
     void setLastChar(FakeJni::JInt sym);
 
     void sendKeyDown(const GameActivityKeyEvent *event) {
-        gameActivityCallbacks.onKeyDown(&gameActivity, event);
+        gameActivityCallbacks->onKeyDown(gameActivity, event);
     }
 
     void sendKeyUp(const GameActivityKeyEvent *event) {
-        gameActivityCallbacks.onKeyUp(&gameActivity, event);
+        gameActivityCallbacks->onKeyUp(gameActivity, event);
     }
 
     void sendMotionEvent(const GameActivityMotionEvent *event) {
-        gameActivityCallbacks.onTouchEvent(&gameActivity, event);
+        gameActivityCallbacks->onTouchEvent(gameActivity, event);
     }
 
     bool isGameActivityVersion() {

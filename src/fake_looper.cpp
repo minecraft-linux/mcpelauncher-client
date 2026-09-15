@@ -45,6 +45,13 @@ void FakeLooper::initHybrisHooks(std::unordered_map<std::string, void *> &syms) 
     syms["ALooper_pollOnce"] = (void *)+[](int timeoutMillis, int *outFd, int *outEvents, void **outData) {
         return currentLooper->pollAll(timeoutMillis, outFd, outEvents, outData);
     };
+    syms["ALooper_forThread"] = (void *)+[]() {
+        if(!currentLooper) {
+            currentLooper = std::make_unique<FakeLooper>();
+        }
+        return (ALooper *)(void *)currentLooper.get();
+    };
+
 
     syms["AInputQueue_attachLooper"] = (void *)+[](AInputQueue *queue, ALooper *looper, int ident, ALooper_callbackFunc callback, void *data) {
         ((FakeLooper *)(void *)looper)->attachInputQueue(ident, callback, data);
@@ -104,11 +111,7 @@ FakeLooper::~FakeLooper() {
 }
 
 int FakeLooper::addFd(int fd, int ident, int events, ALooper_callbackFunc callback, void *data) {
-    if(androidEvent)
-        return -1;
-    if(callback != nullptr)
-        throw std::runtime_error("callback is not supported");
-    androidEvent = EventEntry(fd, ident, events, data);
+    androidEvents.emplace_back(fd, ident, events, data, callback);
     return 1;
 }
 
@@ -117,29 +120,38 @@ void FakeLooper::attachInputQueue(int ident, ALooper_callbackFunc callback, void
         throw std::runtime_error("attachInputQueue already called on this looper");
     if(callback != nullptr)
         throw std::runtime_error("callback is not supported");
-    inputEntry = EventEntry(-1, ident, 0, data);
+    inputEntry = EventEntry(-1, ident, 0, data, nullptr);
 }
 
 int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData) {
-    associatedWindowCallbacks->startSendEvents();
-    if(textInput != jniSupport->getTextInputHandler().isEnabled()) {
-        textInput = jniSupport->getTextInputHandler().isEnabled();
-        if(textInput) {
-            associatedWindow->startTextInput();
-        } else {
-            associatedWindow->stopTextInput();
+    if(associatedWindowCallbacks != nullptr) {
+        associatedWindowCallbacks->startSendEvents();
+        if(textInput != jniSupport->getTextInputHandler().isEnabled()) {
+            textInput = jniSupport->getTextInputHandler().isEnabled();
+            if(textInput) {
+                associatedWindow->startTextInput();
+            } else {
+                associatedWindow->stopTextInput();
+            }
         }
     }
+
+    bool hasCallback = false;
     
-    if(androidEvent) {
+    for(auto&& androidEvent : androidEvents) {
         pollfd f;
         f.fd = androidEvent.fd;
         f.events = androidEvent.events;
         if(poll(&f, 1, 0) > 0) {
-            androidEvent.fill(outFd, outData);
-            if(outEvents)
-                *outEvents = f.revents;
-            return androidEvent.ident;
+            if(androidEvent.callback) {
+                hasCallback = true;
+                androidEvent.callback(androidEvent.fd, androidEvent.events, androidEvent.data);
+            } else {
+                androidEvent.fill(outFd, outData);
+                if(outEvents)
+                    *outEvents = f.revents;
+                return androidEvent.ident;
+            }
         }
     }
 
@@ -148,7 +160,11 @@ int FakeLooper::pollAll(int timeoutMillis, int *outFd, int *outEvents, void **ou
         return inputEntry.ident;
     }
 
-    associatedWindow->pollEvents();
-    associatedWindowCallbacks->markRequeueGamepadInput();
-    return ALOOPER_POLL_TIMEOUT;
+    if(associatedWindow != nullptr) {
+        associatedWindow->pollEvents();
+    }
+    if(associatedWindowCallbacks != nullptr) {
+        associatedWindowCallbacks->markRequeueGamepadInput();
+    }
+    return hasCallback ? ALOOPER_POLL_CALLBACK : ALOOPER_POLL_TIMEOUT;
 }

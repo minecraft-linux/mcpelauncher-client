@@ -4,10 +4,11 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+#include <jnivm.h>
 
 struct AAssetManager;
 
-struct FakeAssetManager {
+struct FakeAssetManager : jnivm::Object {
     std::string rootDir;
 
     FakeAssetManager(std::string rootDir);
