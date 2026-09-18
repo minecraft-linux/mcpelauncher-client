@@ -663,6 +663,33 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
             }
         }
     }
+    if(MinecraftVersion::isExactly(1, 26, 51, 1)) {
+        // Fix corrupted __emutls_control struct in libminecraftpe.so (1.26.51.1 build).
+        // Found by scanning .text for calls to __emutls_get_address@plt, tracing each
+        // call's "lea rdi, [rip+X]" argument back to its control struct, and validating
+        // all 78 structs found this way; struct at file-vaddr 0x175cfb70 (.data) had
+        // garbage size/align/index/templ, matching the runtime "Corrupted
+        // __emutls_get_address alignment: ..." crash log exactly.
+        {
+            struct EmutlsControl {
+                size_t size;
+                size_t align;
+                uintptr_t index;
+                void* templ;
+            };
+            static const uintptr_t bad_controls[] = {
+                0x175cfb70,
+            };
+            for (auto offset : bad_controls) {
+                auto* ctrl = (EmutlsControl*)((uintptr_t)base + offset);
+                ctrl->size = 8;
+                ctrl->align = 8;
+                ctrl->index = 0;
+                ctrl->templ = nullptr;
+                Log::info("Launcher", "Fixed corrupted emutls control at base+0x%lx", (unsigned long)offset);
+            }
+        }
+    }
 #endif
     // Vibrant Visuals Crash Nvidia
     // Issue: https://github.com/minecraft-linux/mcpelauncher-manifest/issues/1584
