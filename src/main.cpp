@@ -1,5 +1,6 @@
 #include <log.h>
 #include <dlfcn.h>
+#include <csignal>
 #include <game_window_manager.h>
 #include <argparser.h>
 #include <mcpelauncher/minecraft_utils.h>
@@ -121,6 +122,9 @@ static void saveOptions(properties::property_list& properties) {
 void readOptions();
 
 int main(int argc, char* argv[]) {
+    // Android app processes ignore SIGPIPE; the game writes to reset sockets without MSG_NOSIGNAL
+    // and libc-shim stubs signal(), so the game cannot opt out itself.
+    signal(SIGPIPE, SIG_IGN);
     if(argc == 2 && argv[1][0] != '-') {
         Log::info("Sendfile", "sending file");
         simpleipc::client::service_client sc(PathHelper::getPrimaryDataDirectory() + "file_handler");
