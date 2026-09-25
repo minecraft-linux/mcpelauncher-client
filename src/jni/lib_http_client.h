@@ -33,6 +33,7 @@ public:
 
     static FakeJni::JBoolean isNetworkAvailable(std::shared_ptr<Context> context);
     static std::shared_ptr<HttpClientRequest> createClientRequest();
+    static void setLibHttpClientCallbacks(void *completed, void *failed);
 
     void setHttpUrl(std::shared_ptr<FakeJni::JString> url);
     void setHttpMethodAndBody(std::shared_ptr<FakeJni::JString> method, std::shared_ptr<FakeJni::JString> contentType, std::shared_ptr<FakeJni::JByteArray> body);

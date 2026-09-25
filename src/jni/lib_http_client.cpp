@@ -1,10 +1,54 @@
 #include "lib_http_client.h"
 #include "../util.h"
 #include <log.h>
+#include <mcpelauncher/linker.h>
 #include <curl/curl.h>
+#include <cstdint>
+#include <cstring>
+#include <string_view>
 #include <thread>
 
 using namespace std::placeholders;
+
+namespace {
+void *libHttpOnRequestCompleted = nullptr;
+void *libHttpOnRequestFailed = nullptr;
+
+bool isLibHttpClientSourceCall(FakeJni::JLong sourceCall) {
+    if(sourceCall == 0) {
+        return false;
+    }
+
+    // The first pointer identifies the native implementation that created the call.
+    void *owner = nullptr;
+    auto sourceCallPtr = reinterpret_cast<const void *>(static_cast<uintptr_t>(sourceCall));
+    std::memcpy(&owner, sourceCallPtr, sizeof(owner));
+
+    Dl_info info{};
+    if(owner == nullptr || linker::dladdr(owner, &info) == 0 || info.dli_fname == nullptr) {
+        return false;
+    }
+
+    std::string_view path(info.dli_fname);
+    auto separator = path.find_last_of('/');
+    auto basename = separator == std::string_view::npos ? path : path.substr(separator + 1);
+    return basename == "libHttpClient.Android.so";
+}
+
+template <typename... Args>
+void invokeRequestCallback(jnivm::MethodProxy callback, FakeJni::Env &env, HttpClientRequest *request,
+                           FakeJni::JLong sourceCall, void *libHttpCallback, Args... args) {
+    if(libHttpCallback != nullptr && isLibHttpClientSourceCall(sourceCall)) {
+        jnivm::Method method;
+        method.native = libHttpCallback;
+        method.signature = static_cast<jnivm::Method *>(callback)->signature;
+        method.invoke(env, request, sourceCall, args...);
+        return;
+    }
+
+    callback->invoke(env, request, sourceCall, args...);
+}
+}  // namespace
 
 bool slist_contains(struct curl_slist *list, const char *str) {
     struct curl_slist *current = list;
@@ -37,6 +81,11 @@ FakeJni::JBoolean HttpClientRequest::isNetworkAvailable(std::shared_ptr<Context>
 
 std::shared_ptr<HttpClientRequest> HttpClientRequest::createClientRequest() {
     return std::make_shared<HttpClientRequest>();
+}
+
+void HttpClientRequest::setLibHttpClientCallbacks(void *completed, void *failed) {
+    libHttpOnRequestCompleted = completed;
+    libHttpOnRequestFailed = failed;
 }
 
 void HttpClientRequest::setHttpUrl(std::shared_ptr<FakeJni::JString> url) {
@@ -165,18 +214,21 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
                 Log::trace("HttpClient", "Response: code: %ld", response_code);
 #endif
                 auto method = getClass().getMethod("(JLcom/xbox/httpclient/HttpClientResponse;)V", "OnRequestCompleted");
-                method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(sourceCall, response_code, response, headers)));
+                invokeRequestCallback(method, frame.getJniEnv(), this, sourceCall, libHttpOnRequestCompleted,
+                                      frame.getJniEnv().createLocalReference(std::make_shared<HttpClientResponse>(sourceCall, response_code, response, headers)));
             } else {
                 // Detect if https://github.com/microsoft/libHttpClient/commit/bea2069547e6d480342476cf328b651584e2ada5 is compiled into the binary
                 if(NetworkObserver::getDescriptor()->getMethod("(Ljava/lang/String;)V", "Log")) {
                     auto method = getClass().getMethod("(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V", "OnRequestFailed");
-                    method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")),
-                                   frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
-                                   frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
-                                   ret == CURLE_COULDNT_RESOLVE_PROXY || ret == CURLE_COULDNT_RESOLVE_HOST || ret == CURLE_COULDNT_CONNECT);
+                    invokeRequestCallback(method, frame.getJniEnv(), this, sourceCall, libHttpOnRequestFailed,
+                                          frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")),
+                                          frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
+                                          frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
+                                          ret == CURLE_COULDNT_RESOLVE_PROXY || ret == CURLE_COULDNT_RESOLVE_HOST || ret == CURLE_COULDNT_CONNECT);
                 } else {
                     auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
-                    method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
+                    invokeRequestCallback(method, frame.getJniEnv(), this, sourceCall, libHttpOnRequestFailed,
+                                          frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
                 }
             }
         } catch(...) {
@@ -187,13 +239,15 @@ void HttpClientRequest::doRequestAsync(FakeJni::JLong sourceCall) {
             FakeJni::LocalFrame frame(*jvm);
             if(NetworkObserver::getDescriptor()->getMethod("(Ljava/lang/String;)V", "Log")) {
                 auto method = getClass().getMethod("(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V", "OnRequestFailed");
-                method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")),
-                               frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
-                               frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
-                               false);
+                invokeRequestCallback(method, frame.getJniEnv(), this, sourceCall, libHttpOnRequestFailed,
+                                      frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")),
+                                      frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
+                                      frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("")),
+                                      false);
             } else {
                 auto method = getClass().getMethod("(JLjava/lang/String;)V", "OnRequestFailed");
-                method->invoke(frame.getJniEnv(), this, sourceCall, frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
+                invokeRequestCallback(method, frame.getJniEnv(), this, sourceCall, libHttpOnRequestFailed,
+                                      frame.getJniEnv().createLocalReference(std::make_shared<FakeJni::JString>("Error")));
             }
         }
     }).detach();
