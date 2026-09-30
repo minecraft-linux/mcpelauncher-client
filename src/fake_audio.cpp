@@ -5,6 +5,7 @@
 #include <mcpelauncher/fmod_utils.h>
 #include <thread>
 #include "util.h"
+#include <log.h>
 
 int32_t FakeAudio::defaultSampleRate = 48000;
 int32_t FakeAudio::defaultNumChannels = 2;
@@ -137,13 +138,44 @@ void FakeAudio::initHybrisHooks(std::unordered_map<std::string, void *> &syms) {
 }
 
 void FakeAudio::updateDefaults() {
-    SDL_AudioSpec spec;
-    int sampleFrames;
-    SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &sampleFrames);
+    // SDL_GetAudioDeviceFormat's return value was previously ignored, and
+    // sampleFrames was read uninitialized. Most of the time SDL_GetAudioDeviceFormat
+    // succeeds so this went unnoticed, but for roughly two minutes after a system
+    // suspend/resume (while the default playback device is being re-resolved) it
+    // can fail, or succeed while reporting a buffer size of 0 frames. Either way
+    // defaultBufSize would end up 0 or garbage.
+    //
+    // FakeAudioStreamBuilder::bufferCap and FakeAudioStream::bufferSize both default
+    // to defaultBufSize, so every stream opened during that window reported
+    // getBufferSizeInFrames()/getFramesPerBurst()/getBufferCapacityInFrames() as 0
+    // frames. FMOD (reasonably) treats that as unusable, closes the stream, and
+    // retries roughly once a second -- audible as silence plus a frame hitch on
+    // every attempt, for as long as the condition lasts (observed: up to ~150s,
+    // ~128 attempts, on Steam Deck / PipeWire after suspend).
+    //
+    // Fix: check the return value, and never let a failed or degenerate query
+    // overwrite the last known-good defaults.
+    SDL_AudioSpec spec{};
+    int sampleFrames = 0;
 
-    defaultSampleRate = ReadEnvInt("AUDIO_SAMPLE_RATE", spec.freq);
-    defaultNumChannels = spec.channels;
-    defaultBufSize = sampleFrames;
+    if (!SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &sampleFrames)) {
+        auto err = SDL_GetError();
+        Log::warn("FakeAudio", "SDL_GetAudioDeviceFormat failed (%s), keeping previous audio defaults (rate=%d channels=%d bufSize=%d)",
+                  err ? err : "no message", defaultSampleRate, defaultNumChannels, defaultBufSize);
+        return;
+    }
+
+    if (spec.freq > 0) {
+        defaultSampleRate = ReadEnvInt("AUDIO_SAMPLE_RATE", spec.freq);
+    }
+    if (spec.channels > 0) {
+        defaultNumChannels = spec.channels;
+    }
+    if (sampleFrames > 0) {
+        defaultBufSize = sampleFrames;
+    } else {
+        Log::warn("FakeAudio", "SDL_GetAudioDeviceFormat reported a buffer size of 0 frames, keeping previous bufSize=%d", defaultBufSize);
+    }
 
     FmodUtils::setSampleRate(defaultSampleRate);
 }
