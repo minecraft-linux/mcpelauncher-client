@@ -37,6 +37,7 @@
 #include "fake_egl.h"
 #include "symbols.h"
 #include "core_patches.h"
+#include "pairip_plt_workaround.h"
 #include "thread_mover.h"
 #include <FileUtil.h>
 #include <properties/property.h>
@@ -542,6 +543,13 @@ Hardware	: Qualcomm Technologies, Inc MSM8998
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%" PRIXPTR, (uintptr_t)MinecraftUtils::getLibraryBase(handle));
     base = MinecraftUtils::getLibraryBase(handle);
+
+    // Apply Google PairIP DRM workarounds to libPlayFabMultiplayer.so. The
+    // library is brought in as a transitive dependency of libminecraftpe.so;
+    // PairIP scrambles its PLT and encrypts its .data, so without this fixup
+    // the game crashes shortly after the main thread starts. Implementation
+    // is a no-op on non-x86_64 architectures.
+    mcpelauncher::apply_pairip_plt_workaround();
 
     if(!freeOnly.get()) {
         modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
