@@ -18,6 +18,9 @@ private:
         void *_Nullable errorCallbackUser = NULL;
 
         int32_t bufferCap = defaultBufSize;
+        int32_t sampleRate = 0;  // 0 = use default
+        int32_t channelCount = 0;  // 0 = use default
+        aaudio_format_t format = AAUDIO_FORMAT_UNSPECIFIED;
     };
 
     struct FakeAudioStream {

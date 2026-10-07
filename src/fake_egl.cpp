@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "imgui_ui.h"
 #include <map>
+#include <regex>
 
 #define __ANDROID__
 #include <EGL/egl.h>
@@ -295,5 +296,109 @@ void FakeEGL::setupGLOverrides() {
             ((void (*)(unsigned int target, int level, int xoffset, int yoffset, int width, int height, unsigned int format, unsigned int type, const void *data))(fake_egl::hostProcAddrFn("glTexSubImage2D")))(target, level, xoffset, yoffset, width, height, format, type, data);
         };
     }
+
+    // NVIDIA GL_MAX_IMAGE_UNITS fix: remap image binding values >= 8 to val % 8
+    // ONLY on lines declaring image uniforms (image2D, image2DArray, etc.)
+    // Sampler and UBO bindings must NOT be remapped (higher limits)
+    fake_egl::hostProcOverrides["glShaderSource"] = (void *)+[](unsigned int shader, int count, const char *const *string, const int *length) {
+        static bool logged = false;
+        auto realFn = (void (*)(unsigned int, int, const char *const *, const int *))fake_egl::hostProcAddrFn("glShaderSource");
+        std::vector<std::string> modifiedSources(count);
+        std::vector<const char *> newPtrs(count);
+        std::vector<int> newLens(count);
+        std::regex bindingRe(R"((binding\s*=\s*)(\d+))");
+        bool anyChanged = false;
+        for (int i = 0; i < count; i++) {
+            std::string src;
+            if (length && length[i] >= 0) {
+                src = std::string(string[i], length[i]);
+            } else {
+                src = std::string(string[i]);
+            }
+            std::string result;
+            size_t pos = 0;
+            while (pos < src.size()) {
+                size_t eol = src.find('\n', pos);
+                if (eol == std::string::npos) eol = src.size();
+                std::string line = src.substr(pos, eol - pos);
+                // Only remap bindings on lines declaring image uniforms
+                if (line.find("image") != std::string::npos) {
+                    std::string newLine;
+                    std::sregex_iterator it(line.begin(), line.end(), bindingRe), end;
+                    size_t lastPos = 0;
+                    for (; it != end; ++it) {
+                        auto &m = *it;
+                        int val = std::stoi(m[2].str());
+                        newLine.append(line, lastPos, m.position() - lastPos);
+                        if (val >= 8) {
+                            newLine.append(m[1].str() + std::to_string(val % 8));
+                            anyChanged = true;
+                        } else {
+                            newLine.append(m[0].str());
+                        }
+                        lastPos = m.position() + m.length();
+                    }
+                    newLine.append(line, lastPos, line.size() - lastPos);
+                    result += newLine;
+                } else {
+                    result += line;
+                }
+                if (eol < src.size()) result += '\n';
+                pos = eol + 1;
+            }
+            modifiedSources[i] = std::move(result);
+            newPtrs[i] = modifiedSources[i].c_str();
+            newLens[i] = (int)modifiedSources[i].size();
+        }
+        if (anyChanged && !logged) {
+            Log::info("FakeEGL", "Remapped shader image binding >= 8 to val %% 8 (NVIDIA fix, image-only)");
+            logged = true;
+        }
+        realFn(shader, count, newPtrs.data(), newLens.data());
+    };
+
+    fake_egl::hostProcOverrides["glBindImageTexture"] = (void *)+[](unsigned int unit, unsigned int texture, int level, unsigned char layered, int layer, unsigned int access, unsigned int format) {
+        static bool logged = false;
+        auto realFn = (void (*)(unsigned int, unsigned int, int, unsigned char, int, unsigned int, unsigned int))fake_egl::hostProcAddrFn("glBindImageTexture");
+        if (unit >= 8) {
+            if (!logged) {
+                Log::info("FakeEGL", "Remapped glBindImageTexture unit %u -> %u (NVIDIA fix)", unit, unit % 8);
+                logged = true;
+            }
+            unit = unit % 8;
+        }
+        realFn(unit, texture, level, layered, layer, access, format);
+    };
+
+    fake_egl::hostProcOverrides["glCompileShader"] = (void *)+[](unsigned int shader) {
+        auto realCompile = (void (*)(unsigned int))fake_egl::hostProcAddrFn("glCompileShader");
+        auto realGetiv = (void (*)(unsigned int, unsigned int, int *))fake_egl::hostProcAddrFn("glGetShaderiv");
+        auto realGetLog = (void (*)(unsigned int, int, int *, char *))fake_egl::hostProcAddrFn("glGetShaderInfoLog");
+        realCompile(shader);
+        int status = 0;
+        realGetiv(shader, 0x8B81 /*GL_COMPILE_STATUS*/, &status);
+        if (!status) {
+            char buf[2048];
+            int len = 0;
+            realGetLog(shader, sizeof(buf), &len, buf);
+            Log::error("FakeEGL", "Shader compile error: %.*s", len, buf);
+        }
+    };
+
+    fake_egl::hostProcOverrides["glLinkProgram"] = (void *)+[](unsigned int program) {
+        auto realLink = (void (*)(unsigned int))fake_egl::hostProcAddrFn("glLinkProgram");
+        auto realGetiv = (void (*)(unsigned int, unsigned int, int *))fake_egl::hostProcAddrFn("glGetProgramiv");
+        auto realGetLog = (void (*)(unsigned int, int, int *, char *))fake_egl::hostProcAddrFn("glGetProgramInfoLog");
+        realLink(program);
+        int status = 0;
+        realGetiv(program, 0x8B82 /*GL_LINK_STATUS*/, &status);
+        if (!status) {
+            char buf[2048];
+            int len = 0;
+            realGetLog(program, sizeof(buf), &len, buf);
+            Log::error("FakeEGL", "Program link error: %.*s", len, buf);
+        }
+    };
+
     GLCorePatch::installGL(fake_egl::hostProcOverrides, fake_egl::eglGetProcAddress);
 }
