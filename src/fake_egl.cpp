@@ -1,5 +1,7 @@
 #include "fake_egl.h"
 #include "gl_core_patch.h"
+#include "apple_arm64_gl_abi.h"
+#include "norm16_target_patch.h"
 #include "settings.h"
 #include "imgui_ui.h"
 #include <map>
@@ -208,6 +210,24 @@ void FakeEGL::setupGLOverrides() {
     fake_egl::hostProcOverrides["glVertexAttribDivisorOES"] = nullptr;
     // MESA 23.1 blackscreen Workaround End
     fake_egl::hostProcOverrides["glInvalidateFramebuffer"] = (void *)+[]() {};  // Stub for a NVIDIA bug
+
+    static const char *rendererOverride = getenv("MCPELAUNCHER_GL_RENDERER");
+    static const char *vendorOverride = getenv("MCPELAUNCHER_GL_VENDOR");
+
+    if(rendererOverride || vendorOverride) {
+        fake_egl::hostProcOverrides["glGetString"] = (void *)+[](unsigned int name) -> const unsigned char * {
+            if(name == 0x1F01 && rendererOverride) {
+                return (const unsigned char *)rendererOverride;
+            }
+
+            if(name == 0x1F00 && vendorOverride) {
+                return (const unsigned char *)vendorOverride;
+            }
+
+            return ((const unsigned char *(*)(unsigned int))(fake_egl::hostProcAddrFn("glGetString")))(name);
+        };
+    }
+
     if(FakeEGL::enableTexturePatch) {
         // Minecraft Intel/Amd Texture Bug 1.16.210-1.17.2 and beyond
         // This patch reduces the visual glitch of blocks, does not work with high resolution textures
@@ -295,5 +315,9 @@ void FakeEGL::setupGLOverrides() {
             ((void (*)(unsigned int target, int level, int xoffset, int yoffset, int width, int height, unsigned int format, unsigned int type, const void *data))(fake_egl::hostProcAddrFn("glTexSubImage2D")))(target, level, xoffset, yoffset, width, height, format, type, data);
         };
     }
+#ifdef __APPLE__
+    Norm16TargetPatch::install(fake_egl::hostProcOverrides, fake_egl::hostProcAddrFn);
+#endif
     GLCorePatch::installGL(fake_egl::hostProcOverrides, fake_egl::eglGetProcAddress);
+    AppleArm64GLABI::install(fake_egl::hostProcOverrides, fake_egl::hostProcAddrFn);
 }

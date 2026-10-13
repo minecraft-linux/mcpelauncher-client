@@ -257,6 +257,13 @@ int main(int argc, char* argv[]) {
             elg_lib = strdup(libEGL.data());
             setenv("ANGLE_DEFAULT_PLATFORM", "vulkan", true);
             setenv("VK_ICD_FILENAMES", MoltenVK_icd.data(), true);
+#if defined(__aarch64__)
+            // The game only offers Vibrant Visuals to GPUs it knows, so report one unless the user chose otherwise
+            setenv("MCPELAUNCHER_GL_VENDOR", "Qualcomm", false);
+            setenv("MCPELAUNCHER_GL_RENDERER", "Adreno (TM) 740", false);
+            // Without this, invalidated attachments break water reflections in Vibrant Visuals
+            setenv("ANGLE_FEATURE_OVERRIDES_ENABLED", "preferSkippingInvalidateForEmulatedFormats", false);
+#else
             // Vibrant Visuals not fully supported
             properties::property_list properties(':');
             properties::property<int> graphicsMode(properties, "graphics_mode", 2);
@@ -267,6 +274,7 @@ int main(int argc, char* argv[]) {
                 graphicsMode.set(1);
                 saveOptions(properties);
             }
+#endif
         } else {
             Log::error("Launcher", "Failed to find one of '%s' and '%s'", libEGL.data(), MoltenVK_icd.data());
             Log::error("Launcher", "Expect seeing a black screen, you have been warned");
