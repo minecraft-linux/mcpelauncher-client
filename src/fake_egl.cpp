@@ -1,5 +1,6 @@
 #include "fake_egl.h"
 #include "gl_core_patch.h"
+#include "apple_arm64_gl_abi.h"
 #include "settings.h"
 #include "imgui_ui.h"
 #include <map>
@@ -296,4 +297,5 @@ void FakeEGL::setupGLOverrides() {
         };
     }
     GLCorePatch::installGL(fake_egl::hostProcOverrides, fake_egl::eglGetProcAddress);
+    AppleArm64GLABI::install(fake_egl::hostProcOverrides, fake_egl::hostProcAddrFn);
 }
