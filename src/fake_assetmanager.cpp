@@ -3,6 +3,10 @@
 #include <cerrno>
 #include <FileUtil.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <log.h>
 #include <libc_shim.h>
@@ -10,9 +14,20 @@
 #include <jni.h>
 #include "fake_assetmanager.h"
 
+// ok so newer versions pack textures into big .brarchive files (ui.brarchive is ~16MB) and open
+// them once per entry, thousands of times while joining a server. Android just maps assets, so
+// we mmap too instead of reading the whole file on every open.
 struct AAsset {
+    const char *data = nullptr;
+    size_t size = 0;
+    void *mapping = nullptr;
     std::string buffer;
     off64_t offset = 0;
+
+    ~AAsset() {
+        if(mapping)
+            munmap(mapping, size);
+    }
 };
 struct AAssetDir {
     DIR *dir;
@@ -53,12 +68,38 @@ AAsset *AAssetManager_open(FakeAssetManager *amgr, const char *filename, int mod
     Log::trace("AAssetManager", "Opening file '%s' as '%s'\n", filename, fullPath.c_str());
 #endif
 
-    std::string content;
-    if(!FileUtil::readFile(fullPath, content))
+    int fd = open(fullPath.c_str(), O_RDONLY | O_CLOEXEC);
+    if(fd < 0)
         return nullptr;
+    struct stat st;
+    if(fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) {
+        close(fd);
+        return nullptr;
+    }
 
     auto ret = new AAsset;
-    ret->buffer = content;
+    size_t size = (size_t)st.st_size;
+    // hmm, AAsset_getBuffer has always handed out a NUL terminated string and some callers may
+    // parse it as text. The tail of the last mapped page is zero filled, so that only breaks when
+    // the size is an exact page multiple, those (and empty files) just get read into a buffer.
+    if(size > 0 && size % (size_t)getpagesize() != 0) {
+        void *mapping = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
+        if(mapping != MAP_FAILED) {
+            ret->mapping = mapping;
+            ret->data = (const char *)mapping;
+            ret->size = size;
+        }
+    }
+    close(fd);
+
+    if(!ret->mapping) {
+        if(!FileUtil::readFile(fullPath, ret->buffer)) {
+            delete ret;
+            return nullptr;
+        }
+        ret->data = ret->buffer.c_str();
+        ret->size = ret->buffer.size();
+    }
     return ret;
 }
 
@@ -102,24 +143,24 @@ int AAsset_isAllocated(AAsset *asset) {
 }
 
 ssize_t AAsset_read(AAsset *asset, void *buf, size_t count) {
-    if(asset->offset > asset->buffer.size()) {
+    if(asset->offset > asset->size) {
         return 0;
     }
-    size_t max_len = asset->buffer.size() - asset->offset;
+    size_t max_len = asset->size - asset->offset;
     if(count > max_len) {
         count = max_len;
     }
     if(count == 0) {
         return 0;
     }
-    memcpy(buf, &asset->buffer[asset->offset], count);
+    memcpy(buf, asset->data + asset->offset, count);
     asset->offset += count;
     return (ssize_t)count;
 }
 
 off64_t AAsset_seek64(AAsset *asset, off64_t offset, int whence) {
     off64_t cur_pos = asset->offset;
-    off64_t max_pos = asset->buffer.size();
+    off64_t max_pos = asset->size;
     off64_t new_offset;
 
     if(whence == SEEK_SET) {
@@ -140,23 +181,23 @@ off_t AAsset_seek(AAsset *asset, off_t offset, int whence) {
 }
 
 off64_t AAsset_getLength64(AAsset *asset) {
-    return (off64_t)asset->buffer.size();
+    return (off64_t)asset->size;
 }
 
 off_t AAsset_getLength(AAsset *asset) {
-    return (off_t)asset->buffer.size();
+    return (off_t)asset->size;
 }
 
 off64_t AAsset_getRemainingLength64(AAsset *asset) {
-    return (off64_t)(asset->buffer.size() - asset->offset);
+    return (off64_t)(asset->size - asset->offset);
 }
 
 off_t AAsset_getRemainingLength(AAsset *asset) {
-    return (off_t)(asset->buffer.size() - asset->offset);
+    return (off_t)(asset->size - asset->offset);
 }
 
 const void *AAsset_getBuffer(AAsset *asset) {
-    return asset->buffer.c_str();
+    return asset->data;
 }
 
 void AAssetDir_close(AAssetDir *assetDir) {
